@@ -11,6 +11,18 @@ if (!function_exists("abort")) {
         exit();
     }
 }
+if (!function_exists("base_dir")) {
+    function base_dir(): string
+    {
+        $here = realpath(__DIR__) ?: __DIR__;
+
+        if (str_contains($here, DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR)) {
+            return dirname($here, 4);
+        }
+
+        return dirname($here);
+    }
+}
 
 if (!function_exists("dd")) {
     function dd(...$vars): never
