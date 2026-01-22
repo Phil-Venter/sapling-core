@@ -4,7 +4,10 @@ namespace Sapling\Core;
 
 final class Router
 {
-    public function __construct(public string $method, public string $path) {}
+    public function __construct(
+        private(set) string $method,
+        private(set) string $path
+    ) {}
 
     public static function fromGlobals(): self
     {
@@ -29,32 +32,31 @@ final class Router
         }
 
         $pattern = self::normalizePath($pattern);
+
         if (!str_contains($pattern, "{")) {
             if ($this->path !== $pattern) {
                 return;
             }
 
-            $this->invoke($handler)->send();
-            exit();
+            $this->invoke($handler);
         }
 
-        $pattern = preg_replace('#\{\s+([a-zA-Z_]\w*)\s+\}#', '%%$1%%', $pattern);
-        $quoted = preg_quote($pattern, '#');
-        $regex = preg_replace('#%%([a-zA-Z_]\w*)%%#', '(?P<$1>[^/]+)', $quoted);
+        $normalised = preg_replace('#\{\s*([a-zA-Z_]\w*)\s*\}#', '%%$1%%', $pattern);
+        $regex = preg_replace('#%%([a-zA-Z_]\w*)%%#', '(?P<$1>[^/]+)', preg_quote($normalised, '#'));
 
         if (!preg_match("#^{$regex}$#", $this->path, $matches)) {
             return;
         }
 
         $args = [];
+
         foreach ($matches as $k => $v) {
             if (is_string($k)) {
                 $args[$k] = rawurldecode($v);
             }
         }
 
-        $this->invoke($handler, $args)->send();
-        exit();
+        $this->invoke($handler, $args);
     }
 
     private static function normalizePath(string $path): string
@@ -64,23 +66,21 @@ final class Router
         return "/" . ltrim($path, "/");
     }
 
-    private function invoke(callable $handler, array $args = []): Response
+    private function invoke(callable $handler, array $args = []): void
     {
         try {
             $res = $handler(...$args);
+
+            if ($res instanceof Response) {
+                $res->send();
+            } else {
+                Response::noContent()->send();
+            }
         } catch (\Throwable $e) {
-            return Response::exception($e);
+            Response::exception($e)->send();
         }
 
-        if ($res instanceof Response) {
-            return $res;
-        }
-
-        if (is_string($res) || $res instanceof \Stringable) {
-            return Response::ok($res);
-        }
-
-        return Response::noContent();
+        exit();
     }
 
     /* -----------------------

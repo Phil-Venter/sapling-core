@@ -103,6 +103,10 @@ final class Response
         return new self($body, 404, $headers);
     }
 
+    /* -----------------------
+       UTILITY
+    ------------------------ */
+
     public static function exception(\Throwable $exception, array $headers = []): self
     {
         $code = (int) $exception->getCode();

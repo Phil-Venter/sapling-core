@@ -15,6 +15,7 @@ final class Environment
     {
         foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
             $line = trim($line);
+
             if (str_starts_with($line, "#") || !str_contains($line, "=")) {
                 continue;
             }
@@ -31,6 +32,7 @@ final class Environment
         }
 
         $hashPos = strpos($value, "#");
+
         if (false !== $hashPos) {
             $value = rtrim(substr($value, 0, $hashPos));
         }
@@ -40,6 +42,7 @@ final class Environment
         }
 
         $lower = strtolower($value);
+
         return match (true) {
             $lower === "true" => true,
             $lower === "false" => false,

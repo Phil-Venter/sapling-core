@@ -14,19 +14,26 @@ final class Template
     public static function render(string $template, array|object $vars = []): string
     {
         $map = self::$map;
+
         foreach (self::flatten($vars) as $key => $value) {
             $map["unsafe:$key"] = $value;
             $map["url:$key"] = rawurlencode($value);
-            $map[$key] = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
+            $map[$key] = e($value);
         }
 
-        $map["dump"] = sprintf("<pre>%s</pre>", htmlspecialchars(print_r($map, true), ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8"));
-        return preg_replace_callback("/{{\s*([A-Za-z0-9_.:-]+)\s*}}/", fn($match) => $map[$match[1]] ?? "<!-- {$match[0]} -->", $template);
+        $map["dump"] = sprintf("<pre>%s</pre>", e(print_r($map, true)));
+
+        return preg_replace_callback(
+            "/{{\s*([A-Za-z0-9_.:-]+)\s*}}/",
+            fn($match) => $map[$match[1]] ?? "<!-- {$match[0]} -->",
+            $template
+        );
     }
 
     private static function flatten(array|object $data, string $prefix = ""): array
     {
         $vars = [];
+
         if (is_object($data)) {
             if ($data instanceof \Traversable) {
                 $data = iterator_to_array($data);
@@ -37,6 +44,7 @@ final class Template
 
         foreach ($data as $key => $val) {
             $key = trim((string) $key);
+
             if ($key === "") {
                 continue;
             }
@@ -51,6 +59,7 @@ final class Template
             };
 
             $path = $prefix === "" ? $key : "{$prefix}.{$key}";
+
             if (is_array($val) || is_object($val)) {
                 $vars += self::flatten($val, $path);
             } else {
