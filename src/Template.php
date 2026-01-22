@@ -11,7 +11,7 @@ final class Template
         self::$map[$key] = $value;
     }
 
-    public static function render(string $template, array|object $vars = []): string
+    public static function render(string $template, iterable|object $vars = []): string
     {
         $map = self::$map;
 
@@ -30,16 +30,12 @@ final class Template
         );
     }
 
-    private static function flatten(array|object $data, string $prefix = ""): array
+    private static function flatten(iterable|object $data, string $prefix = ""): array
     {
         $vars = [];
 
         if (is_object($data)) {
-            if ($data instanceof \Traversable) {
-                $data = iterator_to_array($data);
-            } else {
-                $data = get_object_vars($data);
-            }
+            $data = get_object_vars($data);
         }
 
         foreach ($data as $key => $val) {
@@ -51,10 +47,9 @@ final class Template
 
             $val = match (true) {
                 $val === null => "",
-                $val instanceof \BackedEnum => (string) $val->value,
+                $val instanceof \BackedEnum => $val->value,
                 $val instanceof \UnitEnum => $val->name,
                 $val instanceof \DateTimeInterface => $val->format("j M Y"),
-                $val instanceof \Stringable, is_scalar($val) => (string) $val,
                 default => $val,
             };
 
@@ -63,7 +58,7 @@ final class Template
             if (is_array($val) || is_object($val)) {
                 $vars += self::flatten($val, $path);
             } else {
-                $vars[$path] = $val;
+                $vars[$path] = (string) $val;
             }
         }
 

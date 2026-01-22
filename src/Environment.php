@@ -25,7 +25,7 @@ final class Environment
         }
     }
 
-    protected static function autoCastString(string $value): mixed
+    private static function autoCastString(string $value): mixed
     {
         if (preg_match("/^([\"']).*\1$/", $value)) {
             return substr($value, 1, -1);
@@ -33,12 +33,12 @@ final class Environment
 
         $hashPos = strpos($value, "#");
 
-        if (false !== $hashPos) {
+        if ($hashPos !== false) {
             $value = rtrim(substr($value, 0, $hashPos));
-        }
 
-        if (preg_match("/^([\"']).*\1$/", $value)) {
-            return substr($value, 1, -1);
+            if (preg_match("/^([\"']).*\1$/", $value)) {
+                return substr($value, 1, -1);
+            }
         }
 
         $lower = strtolower($value);

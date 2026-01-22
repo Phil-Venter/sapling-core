@@ -4,6 +4,14 @@
    UTILITIES
    ------------------------ */
 
+if (!function_exists("abort")) {
+    function abort(int $status, string $body = ""): never
+    {
+        new Sapling\Core\Response($body, $status)->send();
+        exit();
+    }
+}
+
 if (!function_exists("dd")) {
     function dd(...$vars): never
     {
@@ -16,6 +24,27 @@ if (!function_exists("e")) {
     function e(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
+    }
+}
+
+if (!function_exists("env")) {
+    function env(string $key): mixed
+    {
+        return Sapling\Core\Environment::get($key);
+    }
+}
+
+if (!function_exists("input")) {
+    function input(string $key): mixed
+    {
+        return $_POST[$key] ?? null;
+    }
+}
+
+if (!function_exists("query")) {
+    function query(string $key): mixed
+    {
+        return $_GET[$key] ?? null;
     }
 }
 
@@ -36,6 +65,7 @@ if (!function_exists("session_init")) {
 
         $_SESSION["_flash"]["old"] = $_SESSION["_flash"]["new"] ?? [];
         $_SESSION["_flash"]["new"] = [];
+
         return true;
     }
 }

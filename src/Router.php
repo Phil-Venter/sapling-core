@@ -25,6 +25,13 @@ final class Router
         return new self($method, self::normalizePath($path));
     }
 
+    private static function normalizePath(string $path): string
+    {
+        $path = preg_replace("#/+#", "/", $path);
+        $path = rtrim($path, "/") . "/";
+        return "/" . ltrim($path, "/");
+    }
+
     public function route(string $method, string $pattern, callable $handler): void
     {
         if (strtoupper($method) !== $this->method) {
@@ -57,13 +64,6 @@ final class Router
         }
 
         $this->invoke($handler, $args);
-    }
-
-    private static function normalizePath(string $path): string
-    {
-        $path = preg_replace("#/+#", "/", $path);
-        $path = rtrim($path, "/") . "/";
-        return "/" . ltrim($path, "/");
     }
 
     private function invoke(callable $handler, array $args = []): void
