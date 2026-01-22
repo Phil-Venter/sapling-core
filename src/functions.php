@@ -1,0 +1,75 @@
+<?php
+
+/* -----------------------
+   UTILITIES
+   ------------------------ */
+
+if (!function_exists("dd")) {
+    function dd(...$vars): never
+    {
+        var_dump(...$vars);
+        exit();
+    }
+}
+
+if (!function_exists("e")) {
+    function e(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
+    }
+}
+
+/* -----------------------
+   SESSION
+   ------------------------ */
+
+if (!function_exists("session_init")) {
+    function session_init(): bool
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return true;
+        }
+
+        if (!session_start()) {
+            return false;
+        }
+
+        $_SESSION["_flash"]["old"] = $_SESSION["_flash"]["new"] ?? [];
+        $_SESSION["_flash"]["new"] = [];
+        return true;
+    }
+}
+
+if (!function_exists("csrf")) {
+    function csrf(?string $token = null): string|bool
+    {
+        if (!session_init()) {
+            return func_num_args() === 0 ? "" : false;
+        }
+
+        if (empty($_SESSION["_csrf"])) {
+            $_SESSION["_csrf"] = bin2hex(random_bytes(32));
+        }
+
+        if (func_num_args() === 0) {
+            return $_SESSION["_csrf"];
+        }
+
+        return hash_equals($_SESSION["_csrf"], $token ?? "");
+    }
+}
+
+if (!function_exists("flash")) {
+    function flash(string $key, string $value = ""): ?string
+    {
+        if (!session_init()) {
+            return null;
+        }
+
+        if (func_num_args() > 1) {
+            return $_SESSION["_flash"]["new"][$key] = $value;
+        } else {
+            return $_SESSION["_flash"]["old"][$key] ?? null;
+        }
+    }
+}

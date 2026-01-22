@@ -1,0 +1,17 @@
+{
+    "name": "sapling/core",
+    "description": "Sapling Core: a minimal PHP framework focused on clarity, simplicity, and zero dependencies.",
+    "type": "library",
+    "license": "0BSD",
+    "require": {
+        "php": ">=8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sapling\\Core\\": "src/"
+        },
+        "files": [
+            "src/functions.php"
+        ]
+    }
+}
