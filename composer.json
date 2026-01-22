@@ -13,5 +13,10 @@
         "files": [
             "src/functions.php"
         ]
+    },
+    "scripts": {
+        "sapling:lint": [
+            "find . -name \"*.php\" -not -path \"./vendor/*\" -print0 | xargs -0 -n1 php -l"
+        ]
     }
 }
