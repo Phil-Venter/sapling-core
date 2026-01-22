@@ -2,7 +2,7 @@
 
 namespace Sapling\Core;
 
-final class Response
+final class Response implements \Stringable
 {
     private const array MULTILINE_HEADERS = [
         'set-cookie',
@@ -127,5 +127,10 @@ final class Response
 
         $body = e(sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args));
         return new self("<pre>{$body}</pre>", $status, $headers);
+    }
+
+    public function __toString(): string
+    {
+        return $this->body;
     }
 }
