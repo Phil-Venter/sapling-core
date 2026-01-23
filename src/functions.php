@@ -11,6 +11,7 @@ if (!function_exists("abort")) {
         exit();
     }
 }
+
 if (!function_exists("base_dir")) {
     function base_dir(): string
     {
@@ -50,6 +51,40 @@ if (!function_exists("input")) {
     function input(string $key): mixed
     {
         return $_POST[$key] ?? null;
+    }
+}
+
+if (!function_exists("finish_request")) {
+    function finish_request(Sapling\Core\Response $res): void
+    {
+        ob_start();
+        $res->send();
+        $output = ob_get_clean() ?? "";
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        ignore_user_abort(true);
+
+        if (function_exists("fastcgi_finish_request")) {
+            echo $output;
+            fastcgi_finish_request();
+            return;
+        }
+
+        if ($output === "") {
+            $output = " ";
+        }
+
+        if (!headers_sent()) {
+            header("Connection: close");
+            header("Content-Length: " . strlen($output));
+        }
+
+        echo $output;
+        @ob_flush();
+        flush();
     }
 }
 
