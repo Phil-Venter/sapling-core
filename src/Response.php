@@ -4,13 +4,7 @@ namespace Sapling\Core;
 
 final class Response implements \Stringable
 {
-    private const array MULTILINE_HEADERS = [
-        'set-cookie',
-        'www-authenticate',
-        'proxy-authenticate',
-        'warning',
-        'link',
-    ];
+    private const array MULTILINE_HEADERS = ['set-cookie', 'www-authenticate', 'proxy-authenticate', 'warning', 'link'];
 
     public function __construct(
         private(set) string|\Stringable $body = "",
@@ -53,6 +47,11 @@ final class Response implements \Stringable
         if ($this->status >= 200 && !in_array($this->status, [204, 205, 304], true)) {
             echo $this->body;
         }
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->body;
     }
 
     /* -----------------------
@@ -127,10 +126,5 @@ final class Response implements \Stringable
 
         $body = e(sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args));
         return new self("<pre>{$body}</pre>", $status, $headers);
-    }
-
-    public function __toString(): string
-    {
-        return $this->body;
     }
 }
