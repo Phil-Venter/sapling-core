@@ -4,6 +4,8 @@ namespace Sapling\Core;
 
 final class Router
 {
+    private(set) bool $matched = false;
+
     public function __construct(
         private(set) string $method,
         private(set) string $path
@@ -34,7 +36,7 @@ final class Router
 
     public function route(string $method, string $pattern, callable $handler): void
     {
-        if (strtoupper($method) !== $this->method) {
+        if ($this->matched || strtoupper($method) !== $this->method) {
             return;
         }
 
@@ -46,6 +48,7 @@ final class Router
             }
 
             $this->invoke($handler);
+            return;
         }
 
         $normalised = preg_replace('#\{\s*([a-zA-Z_]\w*)\s*\}#', '%%$1%%', $pattern);
@@ -68,6 +71,8 @@ final class Router
 
     private function invoke(callable $handler, array $args = []): void
     {
+        $this->matched = true;
+
         try {
             $res = $handler(...$args);
 
@@ -79,8 +84,6 @@ final class Router
         } catch (\Throwable $e) {
             Response::exception($e)->send();
         }
-
-        exit();
     }
 
     /* -----------------------
