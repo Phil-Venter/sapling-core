@@ -18,10 +18,10 @@ if (!function_exists("base_dir")) {
         $here = realpath(__DIR__) ?: __DIR__;
 
         if (str_contains($here, DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR)) {
-            return dirname($here, 4);
+            return dirname($here, 4) . DIRECTORY_SEPARATOR;
         }
 
-        return dirname($here);
+        return dirname($here) . DIRECTORY_SEPARATOR;
     }
 }
 
