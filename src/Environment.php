@@ -27,7 +27,7 @@ final class Environment
 
     private static function autoCastString(string $value): mixed
     {
-        if (preg_match("/^([\"']).*\1$/", $value)) {
+        if (preg_match('/^(["\']).*\1$/', $value)) {
             return substr($value, 1, -1);
         }
 
@@ -36,7 +36,7 @@ final class Environment
         if ($hashPos !== false) {
             $value = rtrim(substr($value, 0, $hashPos));
 
-            if (preg_match("/^([\"']).*\1$/", $value)) {
+            if (preg_match('/^(["\']).*\1$/', $value)) {
                 return substr($value, 1, -1);
             }
         }
