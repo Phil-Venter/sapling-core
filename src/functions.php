@@ -78,7 +78,7 @@ if (!function_exists("finish_request")) {
         }
 
         if (!headers_sent()) {
-            header("Connection: close");
+            header("Connection: close", true);
             header("Content-Length: " . strlen($output));
         }
 
