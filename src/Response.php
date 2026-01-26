@@ -23,20 +23,7 @@ final class Response implements \Stringable
             http_response_code($this->status);
 
             foreach ($this->headers as $key => $value) {
-                $key = trim((string) $key);
-
-                if ($key === '' || $value === '' || $value === null || $value === []) {
-                    continue;
-                }
-
-                if (!in_array(strtolower($key), self::MULTILINE_HEADERS, true)) {
-                    header(sprintf("%s: %s", $key, implode(", ", (array) $value)), true);
-                    continue;
-                }
-
-                foreach ((array) $value as $v) {
-                    header(sprintf("%s: %s", $key, $v), false);
-                }
+                $this->buildHeader((string) $key, $value);
             }
         }
 
@@ -53,6 +40,29 @@ final class Response implements \Stringable
     {
         return (string) $this->body;
     }
+
+    private function buildHeader(string $key, string|\Stringable|array $values): void
+    {
+        $key = trim($key);
+        if ($key === '' || strpbrk($key, "\r\n") !== false || !preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/', $key)) {
+            return;
+        }
+
+        $values = array_values(array_filter((array) $values, static fn($v) => strpbrk((string) $v, "\r\n") === false));
+        if ($values === []) {
+            return;
+        }
+
+        if (!in_array(strtolower($key), self::MULTILINE_HEADERS, true)) {
+            header("{$key}: " . implode(', ', array_map('strval', $values)), true);
+            return;
+        }
+
+        foreach ($values as $v) {
+            header("{$key}: " . (string) $v, false);
+        }
+    }
+
 
     /* -----------------------
        COMMON STATUSES

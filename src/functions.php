@@ -68,8 +68,14 @@ if (!function_exists("finish_request")) {
         ignore_user_abort(true);
 
         if (function_exists("fastcgi_finish_request")) {
-            echo $output;
+            if (($_SERVER["REQUEST_METHOD"] ?? "") !== "HEAD") {
+                echo $output;
+            }
             fastcgi_finish_request();
+            return;
+        }
+
+        if (($_SERVER["REQUEST_METHOD"] ?? "") === "HEAD") {
             return;
         }
 
