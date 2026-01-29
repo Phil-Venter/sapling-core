@@ -12,6 +12,14 @@ if (!function_exists("abort")) {
     }
 }
 
+if (!function_exists("dd")) {
+    function dd(...$vars): never
+    {
+        var_dump(...$vars);
+        exit();
+    }
+}
+
 if (!function_exists("base_dir")) {
     function base_dir(): string
     {
@@ -25,21 +33,6 @@ if (!function_exists("base_dir")) {
     }
 }
 
-if (!function_exists("dd")) {
-    function dd(...$vars): never
-    {
-        var_dump(...$vars);
-        exit();
-    }
-}
-
-if (!function_exists("e")) {
-    function e(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
-    }
-}
-
 if (!function_exists("env")) {
     function env(string $key): mixed
     {
@@ -47,10 +40,24 @@ if (!function_exists("env")) {
     }
 }
 
+if (!function_exists("query")) {
+    function query(string $key): mixed
+    {
+        return $_GET[$key] ?? null;
+    }
+}
+
 if (!function_exists("input")) {
     function input(string $key): mixed
     {
         return $_POST[$key] ?? null;
+    }
+}
+
+if (!function_exists("e")) {
+    function e(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
     }
 }
 
@@ -91,13 +98,6 @@ if (!function_exists("finish_request")) {
         echo $output;
         @ob_flush();
         flush();
-    }
-}
-
-if (!function_exists("query")) {
-    function query(string $key): mixed
-    {
-        return $_GET[$key] ?? null;
     }
 }
 
