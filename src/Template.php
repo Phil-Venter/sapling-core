@@ -68,6 +68,10 @@ final class Template
 
             $path = $prefix === "" ? $key : "{$prefix}.{$key}";
 
+            if ($val instanceof \Stringable) {
+                $vars[$prefix . $key] = (string) $val;
+            }
+
             if (is_array($val) || is_object($val)) {
                 $vars += self::flatten($val, $path);
             } else {
