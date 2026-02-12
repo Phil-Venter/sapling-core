@@ -155,7 +155,7 @@ final class Response implements \Stringable
         $code = (int) $exception->getCode();
         $status = $code >= 400 && $code <= 599 ? $code : 500;
 
-        if (env_get("APP_ENV") !== "dev") {
+        if (env_get("APP_ENV", null) !== "dev") {
             $headers += ["Content-Type" => "text/plain; charset=utf-8"];
             return new self("Internal Server Error", $status, $headers);
         }

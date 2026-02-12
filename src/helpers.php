@@ -7,13 +7,16 @@
 if (!function_exists("from_base_dir")) {
     function from_base_dir(string $path = ""): string
     {
-        $here = realpath(__DIR__) ?: __DIR__;
+        $dir = realpath(__DIR__) ?: __DIR__;
 
-        if (str_contains($here, DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR)) {
-            return dirname($here, 4) . DIRECTORY_SEPARATOR . $path;
+        $path = str_replace(["\\", "/"], DIRECTORY_SEPARATOR, $path);
+        $path = ltrim($path, DIRECTORY_SEPARATOR);
+
+        if (str_contains($dir, DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR)) {
+            return dirname($dir, 4) . DIRECTORY_SEPARATOR . $path;
         }
 
-        return dirname($here) . DIRECTORY_SEPARATOR . $path;
+        return dirname($dir) . DIRECTORY_SEPARATOR . $path;
     }
 }
 
@@ -144,16 +147,16 @@ if (!function_exists("input")) {
    ------------------------ */
 
 if (!function_exists("e")) {
-    function e(mixed $value): string
+    function e(mixed $value, ?string $dateFormat = null): string
     {
-        return Sapling\Core\escape($value);
+        return Sapling\Core\escape($value, $dateFormat);
     }
 }
 
 if (!function_exists("render")) {
-    function render(string $template, iterable|object $vars = [], ?string $format = null): string
+    function render(string $template, iterable|object $vars = [], ?string $dateFormat = null): string
     {
-        return Sapling\Core\render_template($template, $vars, $format);
+        return Sapling\Core\render_template($template, $vars, $dateFormat);
     }
 }
 
@@ -221,17 +224,10 @@ if (!function_exists("dd")) {
     }
 }
 
-if (!function_exists("iterator_get")) {
-    function iterator_get(string|\Stringable $key, iterable $arr, mixed $default = null): array
+if (!function_exists("get_by_path")) {
+    function get_by_path(object|iterable $value, string|\Stringable $path, mixed $default = null): mixed
     {
-        return Sapling\Core\iterator_get($key, $arr, $default);
-    }
-}
-
-if (!function_exists("object_get")) {
-    function object_get(string|\Stringable $key, object $obj, mixed $default = null): mixed
-    {
-        return Sapling\Core\object_get($key, $obj, $default);
+        return Sapling\Core\get_by_list($value, array_map("trim", explode(".", (string) $path)), $default);
     }
 }
 
@@ -245,22 +241,22 @@ if (!function_exists("value")) {
 if (!function_exists("tap")) {
     function tap(mixed $value, ?callable $callback = null): mixed
     {
-        if ($callback === null) {
-            if (!is_object($value)) {
-                throw new InvalidArgumentException("Value must be an object when no callback is provided");
-            }
-
-            return new class ($value) {
-                public function __construct(private object $target) {}
-                public function __call(string $method, array $args): object
-                {
-                    $this->target->$method(...$args);
-                    return $this->target;
-                }
-            };
+        if ($callback !== null) {
+            $callback($value);
+            return $value;
         }
 
-        $callback($value);
-        return $value;
+        if (!is_object($value)) {
+            throw new InvalidArgumentException("Value must be an object when no callback is provided");
+        }
+
+        return new class ($value) {
+            public function __construct(private object $target) {}
+            public function __call(string $method, array $args): object
+            {
+                $this->target->$method(...$args);
+                return $this->target;
+            }
+        };
     }
 }
