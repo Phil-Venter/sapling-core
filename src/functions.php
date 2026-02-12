@@ -86,7 +86,7 @@ function render_template(string|\Stringable $template, iterable|object $vars, ?s
    Miscellaneous
    ------------------------ */
 
-function get_by_list(iterable|object $value, array $list, mixed $default): mixed
+function get_by_list(mixed $value, array $list, mixed $default): mixed
 {
     if ($list === []) {
         return $value;
