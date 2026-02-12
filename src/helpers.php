@@ -150,8 +150,8 @@ if (!function_exists("e")) {
     }
 }
 
-if (!function_exists("render_template")) {
-    function render_template(string $template, iterable|object $vars = [], ?string $format = null): string
+if (!function_exists("render")) {
+    function render(string $template, iterable|object $vars = [], ?string $format = null): string
     {
         return Sapling\Core\render_template($template, $vars, $format);
     }
@@ -161,11 +161,13 @@ if (!function_exists("render_template")) {
    Response
    ------------------------ */
 
-if (!function_exists("abort")) {
-    function abort(int $status, string $body = ""): never
+if (!function_exists("abort_if")) {
+    function abort_if(mixed $condition, Closure|Sapling\Core\Response $res)
     {
-        new Sapling\Core\Response($body, $status)->send();
-        exit();
+        if (value($condition)) {
+            value($res)->send();
+            exit();
+        }
     }
 }
 
@@ -173,6 +175,13 @@ if (!function_exists("finish_request")) {
     function finish_request(Sapling\Core\Response $res): void
     {
         $res->send(true);
+    }
+}
+
+if (!function_exists("redirect")) {
+    function redirect(string $to, int $status = 302, array $headers = []): Sapling\Core\Response
+    {
+        return Sapling\Core\Response::redirect($to, $status, $headers);
     }
 }
 
