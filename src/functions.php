@@ -99,11 +99,11 @@ function get_by_list(iterable|object $value, array $list, mixed $default): mixed
     $key = \array_shift($list);
 
     if (\is_array($value) && \array_key_exists($key, $value)) {
-        return get_by_list($list, $value[$key], $default);
+        return get_by_list($value[$key], $list, $default);
     }
 
     if (\is_object($value) && isset($value->$key) && \property_exists($value, $key)) {
-        return get_by_list($list, $value->$key, $default);
+        return get_by_list($value->$key, $list, $default);
     }
 
     return $default;
