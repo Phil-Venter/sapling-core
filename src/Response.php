@@ -162,7 +162,7 @@ final class Response implements \Stringable
 
         $args = [$exception::class, $exception->getMessage(), $exception->getFile(), $exception->getLine(), $exception->getTraceAsString()];
 
-        $body = escape(\sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args));
+        $body = escape(\sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args), null);
         return new self("<pre>{$body}</pre>", $status, $headers);
     }
 }
