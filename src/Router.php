@@ -8,41 +8,41 @@ final class Router
 
     public function __construct(
         private(set) string $method,
-        private(set) string $path
+        private(set) string $path,
     ) {}
 
     public static function fromGlobals(): self
     {
-        $method = strtoupper($_SERVER["REQUEST_METHOD"] ?? "GET");
+        $method = \strtoupper($_SERVER["REQUEST_METHOD"] ?? "GET");
         $method = $method === "HEAD" ? "GET" : $method;
 
         if ($method === "POST" && isset($_POST["_method"])) {
-            $override = strtoupper(trim((string) $_POST["_method"]));
-            if (in_array($override, ["PUT", "PATCH", "DELETE"], true)) {
+            $override = \strtoupper(\trim((string) $_POST["_method"]));
+            if (\in_array($override, ["PUT", "PATCH", "DELETE"], true)) {
                 $method = $override;
             }
         }
 
-        $path = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH) ?: "/";
+        $path = \parse_url($_SERVER["REQUEST_URI"] ?? "/", \PHP_URL_PATH) ?: "/";
         return new self($method, self::normalizePath($path));
     }
 
     private static function normalizePath(string $path): string
     {
-        $path = preg_replace("#/+#", "/", $path);
-        $path = rtrim($path, "/") . "/";
-        return "/" . ltrim($path, "/");
+        $path = \preg_replace("#/+#", "/", $path);
+        $path = \rtrim($path, "/") . "/";
+        return "/" . \ltrim($path, "/");
     }
 
     public function route(string $method, string $pattern, callable $handler): void
     {
-        if ($this->matched || strtoupper($method) !== $this->method) {
+        if ($this->matched || \strtoupper($method) !== $this->method) {
             return;
         }
 
         $pattern = self::normalizePath($pattern);
 
-        if (!str_contains($pattern, "{")) {
+        if (!\str_contains($pattern, "{")) {
             if ($this->path !== $pattern) {
                 return;
             }
@@ -51,18 +51,18 @@ final class Router
             return;
         }
 
-        $normalised = preg_replace('#\{\s*([a-zA-Z_]\w*)\s*\}#', '%%$1%%', $pattern);
-        $regex = preg_replace('#%%([a-zA-Z_]\w*)%%#', '(?P<$1>[^/]+)', preg_quote($normalised, '#'));
+        $normalised = \preg_replace("#\{\s*([a-zA-Z_]\w*)\s*\}#", '%%$1%%', $pattern);
+        $regex = \preg_replace("#%%([a-zA-Z_]\w*)%%#", '(?P<$1>[^/]+)', \preg_quote($normalised, "#"));
 
-        if (!preg_match("#^{$regex}$#", $this->path, $matches)) {
+        if (!\preg_match("#^{$regex}$#", $this->path, $matches)) {
             return;
         }
 
         $args = [];
 
         foreach ($matches as $k => $v) {
-            if (is_string($k)) {
-                $args[$k] = rawurldecode($v);
+            if (\is_string($k)) {
+                $args[$k] = \rawurldecode($v);
             }
         }
 

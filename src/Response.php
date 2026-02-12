@@ -4,12 +4,18 @@ namespace Sapling\Core;
 
 final class Response implements \Stringable
 {
-    private const array MULTILINE_HEADERS = ['set-cookie', 'www-authenticate', 'proxy-authenticate', 'warning', 'link'];
+    private const array MULTILINE_HEADERS = [
+        "set-cookie",
+        "www-authenticate",
+        "proxy-authenticate",
+        "warning",
+        "link",
+    ];
 
     public function __construct(
         private(set) string|\Stringable $body = "",
         private(set) int $status = 200,
-        private(set) array $headers = []
+        private(set) array $headers = [],
     ) {
         $this->headers += [
             "Content-Type" => "text/html; charset=utf-8",
@@ -17,52 +23,80 @@ final class Response implements \Stringable
         ];
     }
 
-    public function send(): void
+    public function send(bool $flush = false): void
     {
-        if (!headers_sent()) {
-            http_response_code($this->status);
+        $isHead = ($_SERVER["REQUEST_METHOD"] ?? null) === "HEAD";
 
-            foreach ($this->headers as $key => $value) {
-                $this->buildHeader((string) $key, $value);
+        if (!\headers_sent()) {
+            \http_response_code($this->status);
+
+            foreach ($this->headers as $key => $values) {
+                $key = \trim($key);
+                if (
+                    $key === ""
+                    || \strpbrk($key, "\r\n") !== false
+                    || !\preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/', $key)
+                ) {
+                    continue;
+                }
+
+                $values = \array_values(\array_filter(
+                    (array) $values,
+                    static fn($v) => \strpbrk((string) $v, "\r\n") === false
+                ));
+
+                if ($values === []) {
+                    continue;
+                } elseif (!\in_array(\strtolower($key), self::MULTILINE_HEADERS, true)) {
+                    \header("{$key}: " . \implode(", ", \array_map("strval", $values)), true);
+                    continue;
+                }
+
+                foreach ($values as $v) {
+                    \header("{$key}: " . (string) $v, false);
+                }
             }
         }
 
-        if (($_SERVER["REQUEST_METHOD"] ?? "") === "HEAD") {
+        if (!$flush) {
+            if (!$isHead && $this->status >= 200 && !\in_array($this->status, [204, 205, 304], true)) {
+                echo $this->body;
+            }
             return;
         }
 
-        if ($this->status >= 200 && !in_array($this->status, [204, 205, 304], true)) {
-            echo $this->body;
+        if (\session_status() === \PHP_SESSION_ACTIVE) {
+            \session_write_close();
         }
+
+        \ignore_user_abort(true);
+
+        if (\function_exists("fastcgi_finish_request")) {
+            if (!$isHead) {
+                echo $this->body;
+            }
+            \fastcgi_finish_request();
+            return;
+        }
+
+        if ($this->body === "") {
+            $this->body = " ";
+        }
+
+        if (!\headers_sent()) {
+            \header("Connection: close", true);
+            \header("Content-Length: " . strlen($this->body));
+        }
+
+        echo $this->body;
+        @\ob_flush();
+        \flush();
     }
 
     public function __toString(): string
     {
         return (string) $this->body;
     }
-
-    private function buildHeader(string $key, string|\Stringable|array $values): void
-    {
-        $key = trim($key);
-        if ($key === '' || strpbrk($key, "\r\n") !== false || !preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/', $key)) {
-            return;
-        }
-
-        $values = array_values(array_filter((array) $values, static fn($v) => strpbrk((string) $v, "\r\n") === false));
-        if ($values === []) {
-            return;
-        }
-
-        if (!in_array(strtolower($key), self::MULTILINE_HEADERS, true)) {
-            header("{$key}: " . implode(', ', array_map('strval', $values)), true);
-            return;
-        }
-
-        foreach ($values as $v) {
-            header("{$key}: " . (string) $v, false);
-        }
-    }
-
 
     /* -----------------------
        COMMON STATUSES
@@ -119,22 +153,16 @@ final class Response implements \Stringable
     public static function exception(\Throwable $exception, array $headers = []): self
     {
         $code = (int) $exception->getCode();
-        $status = ($code >= 400 && $code <= 599) ? $code : 500;
+        $status = $code >= 400 && $code <= 599 ? $code : 500;
 
-        if (Environment::get("APP_ENV") !== "dev") {
+        if (env_get("APP_ENV") !== "dev") {
             $headers += ["Content-Type" => "text/plain; charset=utf-8"];
             return new self("Internal Server Error", $status, $headers);
         }
 
-        $args = [
-            $exception::class,
-            $exception->getMessage(),
-            $exception->getFile(),
-            $exception->getLine(),
-            $exception->getTraceAsString()
-        ];
+        $args = [$exception::class, $exception->getMessage(), $exception->getFile(), $exception->getLine(), $exception->getTraceAsString()];
 
-        $body = e(sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args));
+        $body = escape(\sprintf("%s: %s\n\nin %s:%d\n\n%s", ...$args));
         return new self("<pre>{$body}</pre>", $status, $headers);
     }
 }

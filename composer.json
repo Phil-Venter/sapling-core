@@ -11,7 +11,8 @@
             "Sapling\\Core\\": "src/"
         },
         "files": [
-            "src/helpers.php"
+            "src/helpers.php",
+            "src/functions.php"
         ]
     },
     "scripts": {
