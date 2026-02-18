@@ -68,6 +68,13 @@ if (!function_exists("load_env")) {
     }
 }
 
+if (!function_exists("db")) {
+    function db(?string $name = null): \PDO
+    {
+        return Sapling\Core\Database::get($name);
+    }
+}
+
 /* -----------------------
    Session
    ------------------------ */
@@ -121,24 +128,6 @@ if (!function_exists("session_init")) {
         $_SESSION["_flash"]["new"] = [];
 
         return true;
-    }
-}
-
-/* -----------------------
-   Request
-   ------------------------ */
-
-if (!function_exists("query")) {
-    function query(string $key): mixed
-    {
-        return $_GET[$key] ?? null;
-    }
-}
-
-if (!function_exists("input")) {
-    function input(string $key): mixed
-    {
-        return $_POST[$key] ?? null;
     }
 }
 

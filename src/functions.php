@@ -40,6 +40,17 @@ function env_get(string $key, mixed $default): mixed
 }
 
 /* -----------------------
+   Request
+   ------------------------ */
+
+function normalize_path(string $path): string
+{
+    $path = \preg_replace("#/+#", "/", $path);
+    $path = \rtrim($path, "/") . "/";
+    return "/" . \ltrim($path, "/");
+}
+
+/* -----------------------
    Template
    ------------------------ */
 

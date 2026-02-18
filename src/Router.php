@@ -6,75 +6,45 @@ final class Router
 {
     private(set) bool $matched = false;
 
-    public function __construct(
-        private(set) string $method,
-        private(set) string $path,
-    ) {}
-
-    public static function fromGlobals(): self
-    {
-        $method = \strtoupper($_SERVER["REQUEST_METHOD"] ?? "GET");
-        $method = $method === "HEAD" ? "GET" : $method;
-
-        if ($method === "POST" && isset($_POST["_method"])) {
-            $override = \strtoupper(\trim((string) $_POST["_method"]));
-            if (\in_array($override, ["PUT", "PATCH", "DELETE"], true)) {
-                $method = $override;
-            }
-        }
-
-        $path = \parse_url($_SERVER["REQUEST_URI"] ?? "/", \PHP_URL_PATH) ?: "/";
-        return new self($method, self::normalizePath($path));
-    }
-
-    private static function normalizePath(string $path): string
-    {
-        $path = \preg_replace("#/+#", "/", $path);
-        $path = \rtrim($path, "/") . "/";
-        return "/" . \ltrim($path, "/");
-    }
+    public function __construct(private Request $request) {}
 
     public function route(string $method, string $pattern, callable $handler): void
     {
-        if ($this->matched || \strtoupper($method) !== $this->method) {
+        if ($this->matched || \strtoupper($method) !== $this->request->method) {
             return;
         }
 
-        $pattern = self::normalizePath($pattern);
-
+        $pattern = normalize_path($pattern);
         if (!\str_contains($pattern, "{")) {
-            if ($this->path !== $pattern) {
+            if ($this->request->uri !== $pattern) {
                 return;
             }
-
-            $this->invoke($handler);
+            $this->invoke($handler, $this->request);
             return;
         }
 
         $normalised = \preg_replace("#\{\s*([a-zA-Z_]\w*)\s*\}#", '%%$1%%', $pattern);
         $regex = \preg_replace("#%%([a-zA-Z_]\w*)%%#", '(?P<$1>[^/]+)', \preg_quote($normalised, "#"));
-
-        if (!\preg_match("#^{$regex}$#", $this->path, $matches)) {
+        if (!\preg_match("#^{$regex}$#", $this->request->uri, $matches)) {
             return;
         }
 
-        $args = [];
-
+        $params = [];
         foreach ($matches as $k => $v) {
             if (\is_string($k)) {
-                $args[$k] = \rawurldecode($v);
+                $params[$k] = \rawurldecode($v);
             }
         }
 
-        $this->invoke($handler, $args);
+        $this->invoke($handler, $this->request->withParams($params));
     }
 
-    private function invoke(callable $handler, array $args = []): void
+    private function invoke(callable $handler, Request $request): void
     {
         $this->matched = true;
 
         try {
-            $res = $handler(...$args);
+            $res = $handler($request);
 
             if ($res instanceof Response) {
                 $res->send();
