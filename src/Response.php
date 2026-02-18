@@ -29,7 +29,6 @@ final class Response implements \Stringable
 
         if (!\headers_sent()) {
             \http_response_code($this->status);
-
             foreach ($this->headers as $key => $values) {
                 $key = \trim($key);
                 if (
@@ -70,7 +69,6 @@ final class Response implements \Stringable
         }
 
         \ignore_user_abort(true);
-
         if (\function_exists("fastcgi_finish_request")) {
             if (!$isHead) {
                 echo $this->body;
@@ -79,6 +77,7 @@ final class Response implements \Stringable
             return;
         }
 
+        $this->body = (string) $this->body;
         if ($this->body === "") {
             $this->body = " ";
         }

@@ -113,8 +113,12 @@ function get_by_list(mixed $value, array $list, mixed $default): mixed
         return get_by_list($value[$key], $list, $default);
     }
 
-    if (\is_object($value) && isset($value->$key) && \property_exists($value, $key)) {
-        return get_by_list($value->$key, $list, $default);
+    if (\is_object($value) && \property_exists($value, $key)) {
+        try {
+            return get_by_list($value->$key, $list, $default);
+        } catch (\Error) {
+            return $default;
+        }
     }
 
     return $default;

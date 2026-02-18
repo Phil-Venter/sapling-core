@@ -71,6 +71,12 @@ final class Request
         $contentType = $this->headers["content-type"] ?? ($_SERVER["CONTENT_TYPE"] ?? "");
         $mimeType = \strtolower(\trim(\strtok($contentType, ";")));
 
+        if ($mimeType === "application/x-www-form-urlencoded") {
+            \parse_str($raw, $decoded);
+            $this->normalisedBody = \is_array($decoded) ? $decoded : [];
+            return;
+        }
+
         if ($mimeType === "application/json" || \str_ends_with($mimeType, "+json")) {
             try {
                 $decoded = \json_decode($raw, true, 512, \JSON_THROW_ON_ERROR);
@@ -78,6 +84,7 @@ final class Request
             } catch (\Throwable) {
                 $this->normalisedBody = [];
             }
+            return;
         }
     }
 }

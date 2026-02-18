@@ -17,8 +17,11 @@ if (!function_exists("from_base_dir")) {
         $path = str_replace(["\\", "/"], $ds, $path);
         $path = ltrim($path, $ds);
 
-        if (str_contains($dir, $ds . "vendor" . $ds)) {
-            return dirname($dir, 4) . $ds . $path;
+        $vendorSegment = $ds . "vendor" . $ds;
+        if (str_contains($dir, $vendorSegment)) {
+            $parts = explode($vendorSegment, $dir, 2);
+            $baseDir = rtrim($parts[0], $ds);
+            return $baseDir . $ds . $path;
         }
 
         return dirname($dir) . $ds . $path;
