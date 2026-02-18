@@ -1,5 +1,8 @@
 <?php
 
+global $SAPLING_PDO_OBJECTS;
+$SAPLING_PDO_OBJECTS = [];
+
 /* -----------------------
    Path Handling
    ------------------------ */
@@ -7,16 +10,18 @@
 if (!function_exists("from_base_dir")) {
     function from_base_dir(string $path = ""): string
     {
+        $ds = DIRECTORY_SEPARATOR;
+
         $dir = realpath(__DIR__) ?: __DIR__;
 
-        $path = str_replace(["\\", "/"], DIRECTORY_SEPARATOR, $path);
-        $path = ltrim($path, DIRECTORY_SEPARATOR);
+        $path = str_replace(["\\", "/"], $ds, $path);
+        $path = ltrim($path, $ds);
 
-        if (str_contains($dir, DIRECTORY_SEPARATOR . "vendor" . DIRECTORY_SEPARATOR)) {
-            return dirname($dir, 4) . DIRECTORY_SEPARATOR . $path;
+        if (str_contains($dir, $ds . "vendor" . $ds)) {
+            return dirname($dir, 4) . $ds . $path;
         }
 
-        return dirname($dir) . DIRECTORY_SEPARATOR . $path;
+        return dirname($dir) . $ds . $path;
     }
 }
 
@@ -24,10 +29,34 @@ if (!function_exists("from_base_dir")) {
    Environment
    ------------------------ */
 
-if (!function_exists("env")) {
-    function env(string $key, mixed $default = null): mixed
+if (!function_exists("register_exception_handlers")) {
+    function register_exception_handlers(): void
     {
-        return Sapling\Core\env_get($key, $default);
+        set_error_handler(function (int $severity, string $message, string $file, int $line) {
+            if (error_reporting() & $severity) {
+                throw new \ErrorException($message, 0, $severity, $file, $line);
+            }
+
+            return false;
+        });
+
+        set_exception_handler(function (Throwable $e) {
+            Sapling\Core\Response::exception($e)->send();
+            exit();
+        });
+
+        register_shutdown_function(function () {
+            if (!($err = error_get_last())) {
+                return;
+            }
+
+            if (!in_array($err["type"], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
+                return;
+            }
+
+            Sapling\Core\Response::exception(new \ErrorException($err["message"], 0, $err["type"], $err["file"], $err["line"]))->send();
+            exit();
+        });
     }
 }
 
@@ -68,10 +97,29 @@ if (!function_exists("load_env")) {
     }
 }
 
-if (!function_exists("db")) {
-    function db(?string $name = null): \PDO
+if (!function_exists("env")) {
+    function env(string $key, mixed $default = null): mixed
     {
-        return Sapling\Core\Database::get($name);
+        return Sapling\Core\env_get($key, $default);
+    }
+}
+
+if (!function_exists("register_pdo")) {
+    function register_pdo(PDO $pdo, ?string $name = null, ?callable $resolver = null): void
+    {
+        global $SAPLING_PDO_OBJECTS;
+        if (is_callable($resolver)) {
+            $resolver($pdo);
+        }
+        $SAPLING_PDO_OBJECTS[$name ?? 'default'] = $pdo;
+    }
+}
+
+if (!function_exists("pdo")) {
+    function pdo(?string $name = null): ?PDO
+    {
+        global $SAPLING_PDO_OBJECTS;
+        return $SAPLING_PDO_OBJECTS[$name ?? 'default'] ?? null;
     }
 }
 
