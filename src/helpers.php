@@ -105,13 +105,10 @@ if (!function_exists("env")) {
 }
 
 if (!function_exists("register_pdo")) {
-    function register_pdo(PDO $pdo, ?string $name = null, ?callable $resolver = null): void
+    function register_pdo(PDO $pdo, ?string $name = null): void
     {
         global $SAPLING_PDO_OBJECTS;
-        if (is_callable($resolver)) {
-            $resolver($pdo);
-        }
-        $SAPLING_PDO_OBJECTS[$name ?? 'default'] = $pdo;
+        $SAPLING_PDO_OBJECTS[$name ?? "default"] = $pdo;
     }
 }
 
@@ -119,7 +116,22 @@ if (!function_exists("pdo")) {
     function pdo(?string $name = null): ?PDO
     {
         global $SAPLING_PDO_OBJECTS;
-        return $SAPLING_PDO_OBJECTS[$name ?? 'default'] ?? null;
+        return $SAPLING_PDO_OBJECTS[$name ?? "default"] ?? null;
+    }
+}
+
+if (!function_exists("sane_defaults_for_sqlite_pdo")) {
+    function sane_defaults_for_sqlite_pdo(PDO $pdo): void
+    {
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $pdo->exec("PRAGMA busy_timeout = 5000");
+        $pdo->exec("PRAGMA foreign_keys = ON");
+        $pdo->exec("PRAGMA journal_mode = WAL");
+        $pdo->exec("PRAGMA synchronous = NORMAL");
+        $pdo->exec("PRAGMA cache_size = -2000");
+        $pdo->exec("PRAGMA wal_autocheckpoint = 1000");
     }
 }
 
@@ -239,6 +251,29 @@ if (!function_exists("blank")) {
             $value instanceof Countable => count($value) === 0,
             default => empty($value),
         };
+    }
+}
+
+if (!function_exists("dto")) {
+    function dto(DateTimeInterface|int|string|null $value = null, DateTimeZone|string|null $timezone = null): DateTimeImmutable
+    {
+        $tz = match (true) {
+            $timezone instanceof DateTimeZone => $timezone,
+            is_string($timezone) => new DateTimeZone($timezone),
+            default => new DateTimeZone(date_default_timezone_get()),
+        };
+
+        $dt = match (true) {
+            $value === null => new DateTimeImmutable("now", $tz),
+            $value instanceof DateTimeImmutable => $value,
+            $value instanceof DateTime => DateTimeImmutable::createFromMutable($value),
+            $value instanceof DateTimeInterface => new DateTimeImmutable($value->format("Y-m-d\TH:i:s.uP")),
+            is_int($value) => new DateTimeImmutable("@$value"),
+            is_string($value) => new DateTimeImmutable($value, $tz),
+            default => throw new InvalidArgumentException("Unsupported datetime value"),
+        };
+
+        return $dt->setTimezone($tz);
     }
 }
 
