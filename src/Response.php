@@ -183,7 +183,7 @@ class Response implements \Stringable
     {
         $that = clone $this;
         $that->headers["Content-Type"] = self::CONTENT_TYPE_HTML;
-        $that->body = render_template($template, $vars);
+        $that->body = Template::render($template, $vars);
         return $that;
     }
 
