@@ -4,14 +4,14 @@ namespace Sapling\Core;
 
 class Request
 {
-    private array $normalisedBody;
+    protected array $normalisedBody;
 
     public function __construct(
-        private(set) string $method,
-        private(set) string $uri,
-        private(set) array $headers,
-        private(set) string $body,
-        private(set) array $params = []
+        protected(set) string $method,
+        protected(set) string $uri,
+        protected(set) array $headers,
+        protected(set) string $body,
+        protected(set) array $params = []
     ) {}
 
     public static function fromGlobals(): self
@@ -54,7 +54,7 @@ class Request
         return $this->normalisedBody[$key] ?? $default;
     }
 
-    private function parseBody(): void
+    protected function parseBody(): void
     {
         if (isset($this->normalisedBody)) {
             return;

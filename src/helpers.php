@@ -2,9 +2,6 @@
 
 define("DS", DIRECTORY_SEPARATOR);
 
-global $SAPLING_PDO_OBJECTS;
-$SAPLING_PDO_OBJECTS = [];
-
 /* -----------------------
    Path Handling
    ------------------------ */
@@ -102,34 +99,10 @@ if (!function_exists("env")) {
     }
 }
 
-if (!function_exists("register_pdo")) {
-    function register_pdo(PDO $pdo, ?string $name = null): void
+if (!function_exists('pdo')) {
+    function pdo(?string $name = null): ?\PDO
     {
-        global $SAPLING_PDO_OBJECTS;
-        $SAPLING_PDO_OBJECTS[$name ?? "default"] = $pdo;
-    }
-}
-
-if (!function_exists("pdo")) {
-    function pdo(?string $name = null): ?PDO
-    {
-        global $SAPLING_PDO_OBJECTS;
-        return $SAPLING_PDO_OBJECTS[$name ?? "default"] ?? null;
-    }
-}
-
-if (!function_exists("sane_defaults_for_sqlite_pdo")) {
-    function sane_defaults_for_sqlite_pdo(PDO $pdo): void
-    {
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        $pdo->exec("PRAGMA busy_timeout = 5000");
-        $pdo->exec("PRAGMA foreign_keys = ON");
-        $pdo->exec("PRAGMA journal_mode = WAL");
-        $pdo->exec("PRAGMA synchronous = NORMAL");
-        $pdo->exec("PRAGMA cache_size = -2000");
-        $pdo->exec("PRAGMA wal_autocheckpoint = 1000");
+        return Sapling\Core\Database::get($name);
     }
 }
 
@@ -196,7 +169,7 @@ if (!function_exists("session_init")) {
 if (!function_exists("render")) {
     function render(string|\Stringable $template, iterable|object|string|null $vars = null): string
     {
-        return Sapling\Core\render_template($template, $vars);
+        return Sapling\Core\Template::render($template, $vars);
     }
 }
 
@@ -208,16 +181,16 @@ if (!function_exists("abort_if")) {
     function abort_if(mixed $condition, Closure|Sapling\Core\Response $res)
     {
         if (Sapling\Core\value($condition)) {
-            Sapling\Core\value($res)->send();
+
             exit();
         }
     }
 }
 
 if (!function_exists("finish_request")) {
-    function finish_request(Sapling\Core\Response $res): void
+    function finish_request(Closure|Sapling\Core\Response $res): void
     {
-        $res->send(true);
+        Sapling\Core\value($res)->send(true);
     }
 }
 

@@ -4,11 +4,11 @@ namespace Sapling\Core;
 
 class Response implements \Stringable
 {
-    private const CONTENT_TYPE_HTML = "text/html; charset=utf-8";
-    private const CONTENT_TYPE_JSON = "application/json; charset=utf-8";
-    private const CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
+    protected const CONTENT_TYPE_HTML = "text/html; charset=utf-8";
+    protected const CONTENT_TYPE_JSON = "application/json; charset=utf-8";
+    protected const CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
 
-    private const array MULTILINE_HEADERS = [
+    protected const array MULTILINE_HEADERS = [
         "set-cookie",
         "www-authenticate",
         "proxy-authenticate",
@@ -17,9 +17,9 @@ class Response implements \Stringable
     ];
 
     public function __construct(
-        private(set) string|\Stringable $body = "",
-        private(set) int $status = 200,
-        private(set) array $headers = [],
+        protected(set) string|\Stringable $body = "",
+        protected(set) int $status = 200,
+        protected(set) array $headers = [],
     ) {
         $this->headers += [
             "Content-Type" => self::CONTENT_TYPE_HTML,
@@ -68,7 +68,7 @@ class Response implements \Stringable
         flush();
     }
 
-    private function sendHeaders(): void
+    protected function sendHeaders(): void
     {
         if (headers_sent()) {
             return;

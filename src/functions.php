@@ -40,37 +40,6 @@ function normalize_path(string $path): string
 }
 
 /* -----------------------
-   Template
-   ------------------------ */
-
-function render_template(string|\Stringable $template, iterable|object|string|null $vars): string
-{
-    if (is_null($vars)) {
-        return preg_replace('/{([^}]+)\s*}/', '', $template);
-    }
-
-    if (is_string($vars) || $vars instanceof \Stringable) {
-        return render_template($template, ["content" => (string) $vars]);
-    }
-
-    if (is_array($vars) && array_is_list($vars)) {
-        return implode("", array_map(fn($v) => render_template($template, $v), $vars));
-    }
-
-    $fn = function (array $match) use ($vars): string {
-        [$key, $modifier] = array_map("trim", explode(":", trim($match[1]), 2) + [1 => ""]);
-        $raw = get_by_list($vars, array_map("trim", explode(".", $key)), "");
-        return match ($modifier) {
-            "unsafe" => $raw,
-            "url" => urlencode($raw),
-            default => htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8"),
-        };
-    };
-
-    return preg_replace_callback("/{\s*([^}]+)\s*}/", $fn, $template);
-}
-
-/* -----------------------
    Miscellaneous
    ------------------------ */
 

@@ -4,9 +4,9 @@ namespace Sapling\Core;
 
 class Router
 {
-    private(set) bool $matched = false;
+    protected(set) bool $matched = false;
 
-    public function __construct(private Request $request) {}
+    public function __construct(protected Request $request) {}
 
     public function route(string $method, string $pattern, callable $handler): void
     {
@@ -39,7 +39,7 @@ class Router
         $this->invoke($handler, $this->request->withParams($params));
     }
 
-    private function invoke(callable $handler, Request $request): void
+    protected function invoke(callable $handler, Request $request): void
     {
         $this->matched = true;
 
