@@ -2,10 +2,9 @@
 
 namespace Sapling\Core;
 
-final class Request
+class Request
 {
-    private bool $bodyParsed = false;
-    private array $normalisedBody = [];
+    private array $normalisedBody;
 
     public function __construct(
         private(set) string $method,
@@ -17,20 +16,20 @@ final class Request
 
     public static function fromGlobals(): self
     {
-        $method = \strtoupper($_SERVER["REQUEST_METHOD"] ?? "GET");
+        $method = strtoupper($_SERVER["REQUEST_METHOD"] ?? "GET");
         $method = $method === "HEAD" ? "GET" : $method;
         if ($method === "POST" && isset($_POST["_method"])) {
-            $override = \strtoupper(\trim((string) $_POST["_method"]));
-            if (\in_array($override, ["PUT", "PATCH", "DELETE"], true)) {
+            $override = strtoupper(trim((string) $_POST["_method"]));
+            if (in_array($override, ["PUT", "PATCH", "DELETE"], true)) {
                 $method = $override;
             }
         }
 
-        $uri = \parse_url($_SERVER["REQUEST_URI"] ?? "/", \PHP_URL_PATH) ?: "/";
+        $uri = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH) ?: "/";
         $uri = normalize_path($uri);
 
-        $headers = \function_exists("getallheaders") ? getallheaders() : [];
-        $headers = \array_change_key_case($headers, \CASE_LOWER);
+        $headers = function_exists("getallheaders") ? getallheaders() : [];
+        $headers = array_change_key_case($headers, CASE_LOWER);
 
         $body = file_get_contents("php://input") ?: "";
 
@@ -52,39 +51,43 @@ final class Request
     public function input(string $key, mixed $default = null): mixed
     {
         $this->parseBody();
-        return $this->normalisedBody[$key] ?? ($_POST[$key] ?? $default);
+        return $this->normalisedBody[$key] ?? $default;
     }
 
     private function parseBody(): void
     {
-        if ($this->bodyParsed) {
+        if (isset($this->normalisedBody)) {
             return;
         }
 
-        $this->bodyParsed = true;
-
-        $raw = \trim($this->body);
-        if ($raw === "") {
+        $data = $_POST ?? [];
+        if ($data !== []) {
+            $this->normalisedBody = $data;
             return;
         }
 
-        $contentType = $this->headers["content-type"] ?? ($_SERVER["CONTENT_TYPE"] ?? "");
-        $mimeType = \strtolower(\trim(\strtok($contentType, ";")));
-
-        if ($mimeType === "application/x-www-form-urlencoded") {
-            \parse_str($raw, $decoded);
-            $this->normalisedBody = \is_array($decoded) ? $decoded : [];
+        if ($this->body === "") {
+            $this->normalisedBody = [];
             return;
         }
 
-        if ($mimeType === "application/json" || \str_ends_with($mimeType, "+json")) {
+        $type = strtolower(trim(explode(";", $this->headers["content-type"] ?? "", 2)[0]));
+        if ($type === "application/json" || str_ends_with($type, "+json")) {
             try {
-                $decoded = \json_decode($raw, true, 512, \JSON_THROW_ON_ERROR);
-                $this->normalisedBody = \is_array($decoded) ? $decoded : [];
-            } catch (\Throwable) {
+                $decoded = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
+                $this->normalisedBody = is_array($decoded) ? $decoded : [];
+            } catch (\JsonException) {
                 $this->normalisedBody = [];
             }
             return;
         }
+
+        if ($type === "application/x-www-form-urlencoded") {
+            parse_str($this->body, $parsed);
+            $this->normalisedBody = is_array($parsed) ? $parsed : [];
+            return;
+        }
+
+        $this->normalisedBody = [];
     }
 }

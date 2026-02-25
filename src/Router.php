@@ -2,7 +2,7 @@
 
 namespace Sapling\Core;
 
-final class Router
+class Router
 {
     private(set) bool $matched = false;
 
@@ -10,32 +10,32 @@ final class Router
 
     public function route(string $method, string $pattern, callable $handler): void
     {
-        if ($this->matched || \strtoupper($method) !== $this->request->method) {
+        if ($this->matched || strtoupper($method) !== $this->request->method) {
             return;
         }
 
         $pattern = normalize_path($pattern);
-        if (!\str_contains($pattern, "{")) {
+        if (!str_contains($pattern, ":")) {
             if ($this->request->uri !== $pattern) {
                 return;
             }
+
             $this->invoke($handler, $this->request);
             return;
         }
 
-        $normalised = \preg_replace("#\{\s*([a-zA-Z_]\w*)\s*\}#", '%%$1%%', $pattern);
-        $regex = \preg_replace("#%%([a-zA-Z_]\w*)%%#", '(?P<$1>[^/]+)', \preg_quote($normalised, "#"));
-        if (!\preg_match("#^{$regex}$#", $this->request->uri, $matches)) {
+        $regex = "#^/" . implode("/", array_map(
+            static fn(string $segment): string => str_starts_with($segment, ":")
+                ? "(?P<" . substr($segment, 1) . ">[^/]+)"
+                : preg_quote($segment, "#"),
+            explode("/", substr($pattern, 1)),
+        )) . "$#";
+
+        if (!preg_match($regex, $this->request->uri, $matches)) {
             return;
         }
 
-        $params = [];
-        foreach ($matches as $k => $v) {
-            if (\is_string($k)) {
-                $params[$k] = \rawurldecode($v);
-            }
-        }
-
+        $params = array_map("rawurldecode", array_filter($matches, "is_string", ARRAY_FILTER_USE_KEY));
         $this->invoke($handler, $this->request->withParams($params));
     }
 

@@ -1,5 +1,7 @@
 <?php
 
+define("DS", DIRECTORY_SEPARATOR);
+
 global $SAPLING_PDO_OBJECTS;
 $SAPLING_PDO_OBJECTS = [];
 
@@ -10,21 +12,19 @@ $SAPLING_PDO_OBJECTS = [];
 if (!function_exists("from_base_dir")) {
     function from_base_dir(string $path = ""): string
     {
-        $ds = DIRECTORY_SEPARATOR;
-
         $dir = realpath(__DIR__) ?: __DIR__;
 
-        $path = str_replace(["\\", "/"], $ds, $path);
-        $path = ltrim($path, $ds);
+        $path = str_replace(["\\", "/"], DS, $path);
+        $path = ltrim($path, DS);
 
-        $vendorSegment = $ds . "vendor" . $ds;
-        if (str_contains($dir, $vendorSegment)) {
-            $parts = explode($vendorSegment, $dir, 2);
-            $baseDir = rtrim($parts[0], $ds);
-            return $baseDir . $ds . $path;
+        $vendor = DS . "vendor" . DS;
+        if (str_contains($dir, $vendor)) {
+            $baseDir = rtrim(explode($vendor, $dir, 2)[0]);
+        } else {
+            $baseDir = dirname($dir);
         }
 
-        return dirname($dir) . $ds . $path;
+        return $baseDir . DS . $path;
     }
 }
 
@@ -39,7 +39,6 @@ if (!function_exists("register_exception_handlers")) {
             if (error_reporting() & $severity) {
                 throw new \ErrorException($message, 0, $severity, $file, $line);
             }
-
             return false;
         });
 
@@ -52,11 +51,9 @@ if (!function_exists("register_exception_handlers")) {
             if (!($err = error_get_last())) {
                 return;
             }
-
             if (!in_array($err["type"], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
                 return;
             }
-
             Sapling\Core\Response::exception(new \ErrorException($err["message"], 0, $err["type"], $err["file"], $err["line"]))->send();
             exit();
         });
@@ -68,7 +65,6 @@ if (!function_exists("load_env")) {
     {
         foreach (@file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
             $line = trim($line);
-
             if ($line === "" || $line[0] === "#" || strpos($line, "=") === false) {
                 continue;
             }
@@ -76,7 +72,6 @@ if (!function_exists("load_env")) {
             [$key, $val] = explode("=", $line, 2);
             $key = trim($key);
             $val = trim($val);
-
             if ($key === "") {
                 continue;
             }
@@ -198,17 +193,10 @@ if (!function_exists("session_init")) {
    Template
    ------------------------ */
 
-if (!function_exists("e")) {
-    function e(mixed $value, ?string $dateFormat = null): string
-    {
-        return Sapling\Core\escape($value, $dateFormat);
-    }
-}
-
 if (!function_exists("render")) {
-    function render(string $template, iterable|object $vars = [], ?string $dateFormat = null): string
+    function render(string|\Stringable $template, iterable|object|string|null $vars = null): string
     {
-        return Sapling\Core\render_template($template, $vars, $dateFormat);
+        return Sapling\Core\render_template($template, $vars);
     }
 }
 
@@ -219,8 +207,8 @@ if (!function_exists("render")) {
 if (!function_exists("abort_if")) {
     function abort_if(mixed $condition, Closure|Sapling\Core\Response $res)
     {
-        if (value($condition)) {
-            value($res)->send();
+        if (Sapling\Core\value($condition)) {
+            Sapling\Core\value($res)->send();
             exit();
         }
     }
