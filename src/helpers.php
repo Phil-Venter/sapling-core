@@ -181,7 +181,7 @@ if (!function_exists("abort_if")) {
     function abort_if(mixed $condition, Closure|Sapling\Core\Response $res)
     {
         if (Sapling\Core\value($condition)) {
-
+            Sapling\Core\value($res)->send(true);
             exit();
         }
     }
