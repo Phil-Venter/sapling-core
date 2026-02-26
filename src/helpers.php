@@ -29,34 +29,6 @@ if (!function_exists("from_base_dir")) {
    Environment
    ------------------------ */
 
-if (!function_exists("register_exception_handlers")) {
-    function register_exception_handlers(): void
-    {
-        set_error_handler(function (int $severity, string $message, string $file, int $line) {
-            if (error_reporting() & $severity) {
-                throw new \ErrorException($message, 0, $severity, $file, $line);
-            }
-            return false;
-        });
-
-        set_exception_handler(function (Throwable $e) {
-            Sapling\Core\Response::exception($e)->send();
-            exit();
-        });
-
-        register_shutdown_function(function () {
-            if (!($err = error_get_last())) {
-                return;
-            }
-            if (!in_array($err["type"], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
-                return;
-            }
-            Sapling\Core\Response::exception(new \ErrorException($err["message"], 0, $err["type"], $err["file"], $err["line"]))->send();
-            exit();
-        });
-    }
-}
-
 if (!function_exists("load_env")) {
     function load_env(string $path, bool $override = false): void
     {
