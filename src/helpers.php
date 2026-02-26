@@ -71,7 +71,7 @@ if (!function_exists("env")) {
     }
 }
 
-if (!function_exists('pdo')) {
+if (!function_exists("pdo")) {
     function pdo(?string $name = null): ?\PDO
     {
         return Sapling\Core\Database::get($name);
@@ -170,6 +170,61 @@ if (!function_exists("redirect")) {
     function redirect(string $to, int $status = 302, array $headers = []): Sapling\Core\Response
     {
         return Sapling\Core\Response::redirect($to, $status, $headers);
+    }
+}
+
+/* -----------------------
+   Fetch
+   ------------------------ */
+
+if (!function_exists("fetch")) {
+    function fetch(string $uri, string $method = "GET", ?string $body = null, array $headers = [], int &$status = 0): string
+    {
+        $method = strtoupper(trim($method));
+        $status = 0;
+
+        $hdr = [];
+        foreach ($headers as $k => $v) {
+            $line = is_int($k) ? (string) $v : (string) $k . ": " . (string) $v;
+            if ($line === "") {
+                continue;
+            }
+            if (preg_match("/[\r\n]/", $line)) {
+                throw new InvalidArgumentException("fetch(): Invalid header (CR/LF injection).");
+            }
+            $hdr[] = $line;
+        }
+
+        $ch = curl_init($uri);
+        if ($ch === false) {
+            throw new RuntimeException("fetch(): Failed to initialize cURL.");
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_HTTPHEADER => $hdr,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        }
+
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            $err = curl_error($ch);
+            curl_close($ch);
+            throw new RuntimeException("fetch(): cURL transport failed: " . $err);
+        }
+
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        return $resp;
     }
 }
 
