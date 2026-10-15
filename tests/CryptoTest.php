@@ -1,0 +1,36 @@
+<?php
+
+use Sapling\Crypto;
+
+beforeEach(function () {
+	$this->crypto = new Crypto(base64_encode(random_bytes(32)));
+});
+
+test('a secret decrypts with the context it was encrypted with, and only that one', function () {
+	$stored = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
+
+	expect($this->crypto->decrypt($stored, 'tenant:7:evernote'))->toBe('evernote-key');
+	expect($this->crypto->decrypt($stored, 'tenant:8:evernote'))->toBeNull();
+});
+
+test('the same secret encrypts differently every time', function () {
+	$first = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
+	$second = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
+
+	expect($first)->not->toBe($second);
+});
+
+test('another key, a changed value or broken base64 decrypts to null', function () {
+	$stored = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
+	$other = new Crypto(base64_encode(random_bytes(32)));
+	$changed = substr($stored, 0, -4) . 'AAA=';
+
+	expect($other->decrypt($stored, 'tenant:7:evernote'))->toBeNull();
+	expect($this->crypto->decrypt($changed, 'tenant:7:evernote'))->toBeNull();
+	expect($this->crypto->decrypt('not base64!', 'tenant:7:evernote'))->toBeNull();
+});
+
+test('a key that is not 32 base64-encoded bytes is refused', function (string $key) {
+	expect(fn() => new Crypto($key))
+		->toThrow(InvalidArgumentException::class, 'app_key must be 32 bytes, base64-encoded');
+})->with(['too short' => base64_encode('short'), 'not base64' => '%%%', 'empty' => '']);

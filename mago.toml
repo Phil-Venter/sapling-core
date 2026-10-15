@@ -1,0 +1,124 @@
+php-version = "8.4.0"
+
+[source]
+workspace = "."
+paths = ["src", "tests"]
+includes = ["vendor"]
+excludes = ["tests/Fixtures/views", "tests/Fixtures/Boot/views"]
+
+[formatter]
+align-parameters = true
+always-break-named-arguments-list = true
+break-promoted-properties-list = false
+empty-line-after-class-like-constant = true
+empty-line-after-control-structure = true
+empty-line-after-property = true
+empty-line-before-return = true
+inline-single-breaking-value-argument = true
+separate-attributes = true
+sort-uses = "alpha-ascending"
+use-tabs = true
+
+[linter]
+minimum-fail-level = "Note"
+
+[linter.rules]
+# Off on purpose: complexity scores, named literals, boolean flags such as send($body), static closures, and
+# strict_types, which only App.php declares.
+cyclomatic-complexity = { enabled = false }
+excessive-parameter-list = { enabled = false }
+function-name = { either = true }
+halstead = { effort-threshold = 7000, difficulty-threshold = 15 }
+kan-defect = { enabled = false }
+literal-named-argument = { enabled = false }
+no-boolean-flag-parameter = { enabled = false }
+no-ini-set = { enabled = false }
+prefer-static-closure = { enabled = false }
+strict-types = { enabled = false }
+too-many-methods = { enabled = false }
+
+# Off by default in mago, on here.
+deprecated-cast = { enabled = true }
+deprecated-shell-execute-string = { enabled = true }
+deprecated-switch-semicolon = { enabled = true }
+method-name = { enabled = true }
+no-assign-in-argument = { enabled = true }
+no-dead-store = { enabled = true }
+no-else-clause = { enabled = true }
+no-is-null = { enabled = true }
+no-isset = { enabled = true }
+no-iterator-to-array-in-foreach = { enabled = true }
+no-negated-ternary = { enabled = true }
+no-null-property-init = { enabled = true }
+no-only = { enabled = true }
+no-parameter-shadowing = { enabled = true }
+no-redundant-else = { enabled = true }
+no-redundant-variable = { enabled = true }
+no-short-bool-cast = { enabled = true }
+no-shorthand-ternary = { enabled = true }
+no-unused-closure-capture = { enabled = true }
+no-unused-global = { enabled = true }
+no-unused-static = { enabled = true }
+prefer-array-spread = { enabled = true }
+prefer-datetimeimmutable-create-from-timestamp = { enabled = true }
+prefer-early-continue = { enabled = true }
+prefer-early-return = { enabled = true }
+prefer-explode-over-preg-split = { enabled = true }
+prefer-self-return-type = { enabled = true }
+property-name = { enabled = true }
+redundant-static = { enabled = true }
+sorted-integer-keys = { enabled = true }
+string-style = { enabled = true }
+switch-continue-to-break = { enabled = true }
+use-dedicated-expectation = { enabled = true }
+use-simpler-expectation = { enabled = true }
+use-specific-expectations = { enabled = true }
+variable-name = { enabled = true }
+
+# Every class and function has a docblock.
+[linter.rules.missing-docs]
+enabled = true
+exclude = ["tests"]
+classes = true
+functions = true
+methods = false
+constants = false
+properties = false
+statics = false
+enum-cases = false
+
+[analyzer]
+excludes = ["tests"]
+baseline = "analyzer-baseline.toml"
+baseline-variant = "loose"
+minimum-fail-level = "Note"
+plugins = []
+find-unused-definitions = true
+find-unused-expressions = true
+analyze-dead-code = true
+memoize-properties = true
+strict-array-index-existence = true
+# Public methods list what they throw with @throws. Exceptions that mean a bug or a broken server aren't listed:
+# LogicException covers duplicate routes, missing settings and a bad app_key or CORS setting, and Error covers
+# TypeError.
+check-throws = true
+unchecked-exceptions = ["LogicException", "Error"]
+unchecked-exception-classes = [
+	"ErrorException",
+	"Random\\RandomException",
+	"ReflectionException",
+	"SodiumException",
+]
+check-missing-override = true
+find-unused-parameters = true
+strict-list-index-checks = true
+no-boolean-literal-comparison = true
+check-missing-type-hints = true
+check-closure-missing-type-hints = true
+check-arrow-function-missing-type-hints = true
+register-super-globals = true
+find-overly-wide-return-types = true
+check-property-initialization = true
+check-use-statements = true
+check-name-casing = true
+enforce-class-finality = true

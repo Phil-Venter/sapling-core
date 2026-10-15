@@ -1,0 +1,88 @@
+<?php
+
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+
+test('withHeader() returns a copy and replaces the header in any case', function () {
+	$original = Response::text('hi');
+
+	$changed = $original->withHeader('content-type', 'text/csv');
+	$cookies = $changed->withHeader('Set-Cookie', ['a=1', 'b=2']);
+
+	expect($original->headers)->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
+	expect($changed->headers)->toBe(['content-type' => 'text/csv']);
+	expect($cookies->headers['Set-Cookie'])->toBe(['a=1', 'b=2']);
+});
+
+test('a discarded withHeader() is a 500', function () {
+	[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/discards-header')));
+
+	expect($response->status)->toBe(500);
+	expect($log[0])->toContain('withHeader() should either be used or intentionally ignored');
+})->skip(version_compare(PHP_VERSION, '8.5', '<'), 'needs #[NoDiscard], new in PHP 8.5');
+
+test('exception() without debug hides everything', function () {
+	expect(Response::exception(new RuntimeException('secret path /etc'), false))
+		->status->toBe(500)
+		->body->toBe('Internal Server Error')
+		->headers->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
+});
+
+test('send() skips the body for 1xx, 204 and 304', function (int $status) {
+	expect(sentBody(new Response('should not appear', $status)))->toBe('');
+})->with([101, 204, 304]);
+
+test('send(body: false) never reads a file, for HEAD requests', function () {
+	ob_start();
+	Response::file(FIXTURES . '/files/hello.txt')->send(body: false);
+
+	expect(ob_get_clean())->toBe('');
+});
+
+test('HEAD on a GET route sends the headers and no body', function () {
+	$response = httpRequest('HEAD', '/notes');
+
+	expect($response['status'])->toBe(200);
+	expect(headerValues($response, 'Content-Type'))->toBe(['text/plain; charset=utf-8']);
+	expect($response['body'])->toBe('');
+});
+
+test('several Set-Cookie values each get their own line', function () {
+	$response = httpRequest('GET', '/cookies');
+
+	expect(headerValues($response, 'Set-Cookie'))->toBe(['a=1; Path=/', 'b=2; Path=/']);
+});
+
+test('file() sends the file as a download, with a name any browser can use', function () {
+	$response = httpRequest('GET', '/download');
+
+	expect($response['status'])->toBe(200);
+	expect($response['body'])->toBe("hello from a file\n");
+	expect(headerValues($response, 'Content-Length'))->toBe(['18']);
+	expect(headerValues($response, 'Content-Disposition'))->toBe([
+		"attachment; filename=\"h_llo _notes_.txt\"; filename*=UTF-8''h%C3%A9llo%20%22notes%22.txt",
+	]);
+});
+
+test('file() refuses a file that does not exist', function () {
+	expect(fn() => Response::file('/no/such/file.txt'))
+		->toThrow(RuntimeException::class, 'File not found: /no/such/file.txt');
+});
+
+test('data() reads the first Content-Type when a reply sent it twice', function () {
+	$reply = new Response('{"saved":true}', 200, ['content-type' => ['application/json', 'text/plain']]);
+
+	expect($reply->data()->array())->toBe(['saved' => true]);
+});
+
+test('data() finds the Content-Type whatever the case of its name', function () {
+	expect(Response::json(['a' => 1])->data()->get('a')->int())->toBe(1);
+});
+
+test('header() finds a header whatever the case of its name', function () {
+	$reply = new Response('', 200, ['content-type' => 'text/plain', 'set-cookie' => ['a=1', 'b=2']]);
+
+	expect($reply->header('Content-Type')->string())->toBe('text/plain');
+	expect($reply->header('Set-Cookie')->array())->toBe(['a=1', 'b=2']);
+	expect($reply->header('X-Missing')->raw)->toBeNull();
+});

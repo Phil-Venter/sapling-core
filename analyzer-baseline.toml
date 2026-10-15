@@ -1,0 +1,259 @@
+variant = "loose"
+
+[[issues]]
+file = "src/App.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Sapling\App::resolve`: expected `(callable(...mixed=): mixed)`, but found `object`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `DateTimeZone::__construct`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Crypto::__construct`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Middleware\Cors::__construct`: expected `list<string>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Session::__construct`: expected `int`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_diff`: expected `array<('K.array_diff() extends array-key), string('*')>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Sapling\App::__construct`: expected `bool`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Sapling\Http\Middleware\Cors::__construct`: expected `bool`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Sapling\Http\Middleware\Cors::__construct`: expected `list<string>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/App.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Sapling\App::add`: expected `class-string`, but possibly received `truthy-string`.'
+count = 1
+
+[[issues]]
+file = "src/Config.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Config::__construct`: expected `array<string, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Config.php"
+code = "unused-parameter"
+message = "Parameter `$env` is never used."
+count = 1
+
+[[issues]]
+file = "src/Container.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Sapling\Container::build`: expected `object`, but found `null|object`.'
+count = 1
+
+[[issues]]
+file = "src/Container.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Sapling\Container::get`: expected `('T.sapling\container::get() extends object)`, but found `object`.'''
+count = 3
+
+[[issues]]
+file = "src/Container.php"
+code = "mixed-property-type-coercion"
+message = 'A value with a less specific type `non-empty-array<string, (closure(sapling\container): object)|Closure>` is being assigned to property `$factories` (array<string, (closure(sapling\container): object)>).'
+count = 1
+
+[[issues]]
+file = "src/Container.php"
+code = "nullable-return-statement"
+message = 'Function `Sapling\Container::build` is declared to return `object` but possibly returns a nullable value (inferred as `null|object`).'
+count = 1
+
+[[issues]]
+file = "src/Container.php"
+code = "possibly-invalid-argument"
+message = '''Possible argument type mismatch for argument #1 of `Sapling\Container::get`: expected `class-string<'T.sapling\container::get() extends object>`, but possibly received `string`.'''
+count = 1
+
+[[issues]]
+file = "src/Data.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Db.php"
+code = "falsable-return-statement"
+message = '''Function `Sapling\Db::query` is declared to return `PDOStatement` but possibly returns 'false' (inferred as `PDOStatement|false`).'''
+count = 1
+
+[[issues]]
+file = "src/Db.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`false`)."
+count = 1
+
+[[issues]]
+file = "src/Db.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Sapling\Db::all`: expected `list<array<string, mixed>>`, but found `array<array-key, mixed>`.'
+count = 1
+
+[[issues]]
+file = "src/Db.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Sapling\Db::query`: expected `PDOStatement`, but found `PDOStatement|false`.'
+count = 1
+
+[[issues]]
+file = "src/Db.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Db.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Sapling\Db::one`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Router::actionName`: expected `object|string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Router::routesBelow`: expected `object`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Router::routesBelow`: expected `object`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Router::walk`: expected `object`, but found `nonnull`.'
+count = 2
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_combine`: expected `array<array-key, ('K.array_combine() extends array-key)>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_keys`: expected `array<('K.array_keys() extends array-key), ('V.array_keys() extends mixed)>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_shift`: expected `array<('K.array_shift() extends array-key), ('V.array_shift() extends mixed)>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `nonnull`."
+count = 3
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-array-assignment"
+message = "Unsafe array assignment on type `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 9
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Http/Router.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Sapling\Http\Router::branch`. Saw type `nonnull`.'
+count = 2
+
+[[issues]]
+file = "src/Http/Session.php"
+code = "mixed-array-assignment"
+message = "Unsafe array assignment on type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Http/Session.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$flash` (array<string, mixed>)."
+count = 1
+
+[[issues]]
+file = "src/Value.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Sapling\Value::filter`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/functions.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but provided type `array<array-key, mixed>` is less specific."
+count = 1
+
+[[issues]]
+file = "src/functions.php"
+code = "mixed-return-statement"
+message = "Could not infer a precise return type for function `value`. Saw type `mixed`."
+count = 1
