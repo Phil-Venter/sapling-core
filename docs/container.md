@@ -11,11 +11,11 @@
 
 ## Introduction
 
-`Sapling\Container` builds your classes from their constructor types and shares one instance of each. An action that asks for `Db` in its constructor gets it. Most classes need no registration.
+`Sapling\Container` builds your classes for you. It reads each constructor's parameter types, builds what they ask for, and hands out one shared instance of each class. An action that asks for `Db` in its constructor simply gets it, and most classes never need to be registered.
 
 ## Asking for what you need
 
-Type-hint what a class needs in its constructor:
+A class lists what it needs as typed constructor parameters, and the container fills them in:
 
 ```php
 final class NoteRepository
@@ -32,23 +32,23 @@ final class ListNotes
 }
 ```
 
-Neither class is registered. Actions, middleware and commands are built the same way.
+Neither class is registered anywhere. The container builds `NoteRepository` because `ListNotes` asks for it, and `Db` because `NoteRepository` does. Actions, middleware and commands are all built this way.
 
-Each class is built once and shared. Actions and middleware are shared too, so don't keep request data in their properties.
+Each class is built once and then shared, so everything that asks for `Db` during a request gets the same connection.
 
 ## Registering services
 
-Register a class the container can't build from types alone, such as a database connection, with `set()` in `bootstrap.php`:
+Some classes can't be built from types alone. A database connection needs to know where the database is, for example. Register those in `bootstrap.php` with `set()`:
 
 ```php
 $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 ```
 
-The closure runs the first time the class is needed. `set()` also takes a built object, and replaces anything set before.
+The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it.
 
 ### Interfaces
 
-Register an implementation under the interface's name. The closure receives the container:
+The container can't guess which class to use for an interface, so register the one you want under the interface's name. The closure receives the container, so it can ask for whatever that class needs:
 
 ```php
 $app->container->set(Mailer::class, function (Container $c): Mailer {
@@ -60,7 +60,7 @@ $app->container->set(Mailer::class, function (Container $c): Mailer {
 
 ## Settings in constructors
 
-`#[Config]` fills a constructor parameter straight from a [setting](config.md):
+Settings aren't classes, so the container can't find them by type. `#[Config]` names the [setting](config.md) a parameter should get instead:
 
 ```php
 use Sapling\Attributes\Config;
@@ -75,38 +75,35 @@ final class Weather
 }
 ```
 
-A missing setting uses the parameter's default, or throws a `LogicException` when there isn't one.
-
-> [!TIP]
-> Mark secrets `#[SensitiveParameter]` to keep them out of stack traces.
+When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`.
 
 ## How a class is built
 
-Each constructor parameter gets, in order of preference:
+Putting that together, each constructor parameter gets the first of these that applies:
 
 1. The setting named by `#[Config]`, or the parameter's default when the setting is missing.
 2. The container's instance of its class or interface type.
 3. Its default value.
 
-Anything else, such as a `string` with no default, throws a `LogicException` naming the parameter and class.
+A parameter none of them covers, such as a `string` with no default, throws a `LogicException` that names the parameter and the class.
 
 > [!NOTE]
 > A class type always comes from the container, even when it's nullable or has a default. `?Mailer $mailer = null` still needs a `Mailer`.
 
 ## Getting a class by hand
 
-`get()` returns the shared instance of a class, for use in `bootstrap.php`, tests and one-file apps:
+Outside your classes, in `bootstrap.php`, tests and one-file apps, `get()` returns the shared instance of a class:
 
 ```php
 $db = $app->container->get(Db::class);
 ```
 
-In your own classes, use the constructor instead.
+Inside your own classes, ask for it in the constructor instead, so the constructor shows everything the class depends on.
 
 ## Method reference
 
 | Method | What it does |
 | --- | --- |
-| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces anything set before |
+| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces an earlier `set()` of the same class |
 | `get($class)` | Returns the shared instance of the class, building it the first time |
 | `#[Config($key)]` | Fills a constructor parameter from a setting |

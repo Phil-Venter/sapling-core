@@ -16,6 +16,6 @@ final class JsonErrors
 		$this->trace->events[] = "{$request->method} {$request->path}";
 		$json = Data::toJson(['error' => $e->getMessage()]);
 
-		return new Response($json, $e->status, ['Content-Type' => 'application/json', ...$e->headers]);
+		return new Response($json, $e->status, ['Content-Type' => 'application/json']);
 	}
 }

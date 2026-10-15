@@ -29,15 +29,23 @@ final class Console
 
 	/**
 	 * Reads argv. The first word is the command, --name=value is an option, --name is a flag and the rest are
-	 * arguments.
+	 * arguments, as is every word after --.
 	 *
 	 * @param list<string> $argv
 	 */
 	public function __construct(array $argv)
 	{
 		$command = '';
+		$words = array_slice($argv, 1);
+		$literal = [];
+		$end = array_search('--', $words, true);
 
-		foreach (array_slice($argv, 1) as $word) {
+		if ($end !== false) {
+			$literal = array_slice($words, $end + 1);
+			$words = array_slice($words, 0, $end);
+		}
+
+		foreach ($words as $word) {
 			if (str_starts_with($word, '--') && str_contains($word, '=')) {
 				$parts = explode('=', substr($word, 2), 2);
 				$this->options[$parts[0]] = $parts[1] ?? '';
@@ -58,6 +66,7 @@ final class Console
 		}
 
 		$this->command = $command;
+		$this->args = [...$this->args, ...$literal];
 	}
 
 	/**

@@ -387,6 +387,22 @@ describe('httpExceptionHandler()', function () {
 		expect([$forbidden->body, $forbidden->headers['X-Stamp']])->toBe(['403 at /forbidden: Forbidden', 'saw 403']);
 	});
 
+	test('adds the exception\'s headers to the handler\'s response, without replacing the handler\'s own', function () {
+		$app = new App(FIXTURES);
+		$app->router->add('GET', '/busy', fn() => throw new HttpException(503, '', [
+			'Retry-After' => '60',
+			'Content-Type' => 'application/json',
+		]));
+		$app->httpExceptionHandler(fn(HttpException $e): Response => Response::html('<h1>Busy</h1>', $e->status));
+
+		$response = $app->handle(new Request('GET', '/busy'));
+
+		expect($response->headers)->toMatchArray([
+			'Content-Type' => 'text/html; charset=utf-8',
+			'Retry-After' => '60',
+		]);
+	});
+
 	test('takes a class name, built by the container when an error happens', function () {
 		$app = scannedApp();
 		$app->httpExceptionHandler(JsonErrors::class);

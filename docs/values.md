@@ -7,20 +7,20 @@
     - [Numbers](#numbers)
     - [Booleans](#booleans)
     - [Arrays](#arrays)
-- [Defaults](#defaults)
 - [Nested data](#nested-data)
-- [Missing values](#missing-values)
-- [Required fields](#required-fields)
+- [Missing and required values](#missing-and-required-values)
 - [Wrapping your own data](#wrapping-your-own-data)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-`Sapling\Value` wraps data from outside the app and reads it as the type you ask for. A missing value, or one of the wrong type, gives a default.
+Data from outside the app is loosely typed. A form field can turn out to be an array, a query parameter is always a string, and JSON can hold anything. Checking each one by hand means a cast or an `is_string()` at every read, and forgetting one means a crafted `body[]=x` reaches a `string` parameter and becomes a 500.
 
-Outside data is loosely typed. A form field can be an array and JSON can hold anything, so a crafted `body[]=x` passed to a `string` parameter would be a 500. `Value` does those checks for you.
+`Sapling\Value` does those checks in one place. It wraps a piece of outside data and reads it as the type you ask for, and a value that's missing or of the wrong type gives a default instead.
 
 ## Where values come from
+
+Everything in Sapling that hands you outside data returns a `Value`:
 
 | Method | What it holds |
 | --- | --- |
@@ -34,28 +34,25 @@ Outside data is loosely typed. A form field can be an array and JSON can hold an
 
 ## Reading a value
 
+Call the method for the type you need, right where you read the value. Each one takes a default, which always has the right type because it goes on the typed method, and nothing throws:
+
 ```php
 $id = $request->param('id')->int();
-$body = $request->input('body')->string();
+$page = $request->query('page')->int(1);
+$theme = $request->cookie('theme')->string('light');
 $days = $console->option('days')->int(30);
-$userId = $session->get('user_id')->int();
 $count = $db->value($sql)->int();
 ```
 
-> [!TIP]
-> Read the type where you read the value, rather than passing `raw` around.
-
-A `Value` isn't a string. `e($request->input('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, so call `string()` first.
+A `Value` itself isn't a string, so `e($request->input('q'))` and `"Hello {$request->param('name')}"` throw an `Error`. Call `string()` first.
 
 ### Strings
 
-`string()` returns strings and casts numbers and `Stringable` objects. Booleans, arrays and other objects give the default.
-
-A backed enum reads as its value, so `$session->get('role')->string()` gives `'admin'` for `Role::Admin`, and an int-backed enum works with `int()`.
+`string()` returns strings as they are and casts numbers and `Stringable` objects. A backed enum reads as its value, so `$session->get('role')->string()` gives `'admin'` for `Role::Admin`. Booleans, arrays and other objects give the default.
 
 ### Numbers
 
-`int()` and `float()` use `filter_var()`. Surrounding spaces are allowed, and trailing text isn't:
+`int()` and `float()` use PHP's `filter_var()`, so spaces around a number are fine but trailing text isn't:
 
 ```php
 new Value('12')->int();      // 12
@@ -65,11 +62,11 @@ new Value('1.5')->int();     // 0
 new Value('1.5')->float();   // 1.5
 ```
 
-`'007'` and `'1e3'` also give the default. Read codes with leading zeros, such as zip codes, with `string()`.
+`filter_var()` doesn't treat `'007'` or `'1e3'` as whole numbers either, so read codes with leading zeros, such as zip codes, with `string()`. An int-backed enum reads as its value.
 
 ### Booleans
 
-`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. An unticked checkbox sends nothing, so it reads as `false`:
+`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. That suits a checkbox, which sends `on` when it's ticked and nothing at all when it isn't:
 
 ```php
 $remember = $request->input('remember')->bool();
@@ -77,43 +74,32 @@ $remember = $request->input('remember')->bool();
 
 ### Arrays
 
-`array()` returns an array, such as `tags[]=php&tags[]=sql`, or the default:
+`array()` returns an array, such as the list `tags[]=php&tags[]=sql` sends, or the default for anything else:
 
 ```php
 $tags = $request->query('tags')->array();
 ```
 
-## Defaults
-
-The default goes on the typed method, so it always has the right type. Nothing throws:
-
-```php
-$page = $request->query('page')->int(1);
-$theme = $request->cookie('theme')->string('light');
-```
-
 ## Nested data
 
-`get()` reads array keys and public properties:
+Decoded JSON and XML are often nested. `get()` reads an array key or a public property as another `Value`, and more keys read deeper:
 
 ```php
 $name = $reply->data()->get('profile', 'name')->string();
 $first = $request->input('items')->get(0, 'sku')->string();
 ```
 
-A missing key gives an empty `Value`. Private and protected properties count as missing.
+A missing key at any level gives an empty `Value`, so the read still ends in a default rather than an error. Private and protected properties count as missing.
 
-## Missing values
+## Missing and required values
 
-`$value->raw` is the value as it arrived, or `null` when it's missing. `string()` gives `''` for both, so use `raw` to tell them apart:
+A default keeps your code safe, but it can't tell you whether a value was sent at all. `string()` gives `''` both for an empty field and a missing one. When the difference matters, `$value->raw` holds the value exactly as it arrived, or `null` when it's missing:
 
 ```php
 $editing = $request->param('id')->raw !== null;
 ```
 
-## Required fields
-
-A default also hides a field that was left out. Sapling has no validation, so check required fields yourself:
+For the same reason, a default can hide a required field that was left out. Sapling has no validation layer, so check required fields yourself after reading them:
 
 ```php
 $body = $request->input('body')->string();
@@ -124,6 +110,8 @@ if (blank($body)) {
 ```
 
 ## Wrapping your own data
+
+`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it, rather than reaching in with `?? ''` at every level:
 
 ```php
 $json = file_get_contents(__DIR__ . '/settings.json');

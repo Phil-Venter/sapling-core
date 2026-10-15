@@ -8,17 +8,16 @@
     - [Options and flags](#options-and-flags)
 - [Output and exit codes](#output-and-exit-codes)
 - [Adding commands in code](#adding-commands-in-code)
-- [Scheduling commands](#scheduling-commands)
 - [Built-in commands](#built-in-commands)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-A command is a class you run from the terminal, such as `php bin/console notes:prune`. It gets its dependencies from the same container as your actions.
+Jobs such as clearing out old rows or creating accounts don't belong behind a URL. A command is a class you run from the terminal instead, such as `php bin/console notes:prune`. It gets its dependencies from the same container as your actions, so it can use the same database and classes.
 
 ## Writing a command
 
-Give a class in `app/` a `#[Command]` and an `__invoke()` that takes a `Console` and returns an exit code:
+A command is written much like an action. It's a class in `app/` with a `#[Command]` attribute, and its `__invoke()` takes a `Console` and returns an exit code:
 
 ```php
 namespace App\Notes;
@@ -55,10 +54,10 @@ final class PruneNotes
 }
 ```
 
-`#[Command]` takes the name and a description for the command list.
+`#[Command]` takes the command's name and a description, which the list of commands shows.
 
 > [!TIP]
-> Name commands `domain:action` with a plural domain, such as `notes:prune`. The list groups them by domain.
+> Name commands `domain:action` with a plural domain, such as `notes:prune` or `users:add`, so the list groups them by domain.
 
 ## Running commands
 
@@ -66,51 +65,57 @@ final class PruneNotes
 php bin/console notes:prune --days=7
 ```
 
-With no name, `bin/console` lists the commands. An unknown name lists them and exits with 1.
+Run without a name, `bin/console` lists every command, and an unknown name prints the same list and exits with 1.
+
+There's no scheduler built in. Commands that should run regularly go in the server's crontab:
+
+```sh
+0 3 * * * php /path/to/app/bin/console notes:prune
+```
 
 ## Input
 
-`--name=value` is an option, `--name` is a flag, and other words are arguments.
+`Console` reads the words after the command name in three ways. `--name=value` is an option, `--name` on its own is a flag, and any other word is an argument. Every word after `--` is an argument, even one that starts with dashes.
 
 ### Arguments
 
-`arg()` reads an argument by position, from 0, as a [`Value`](values.md):
+Arguments are read by their position after the command name, counting from 0. Like request input, `arg()` returns a [`Value`](values.md):
 
 ```php
-// php bin/console users:add ann@example.com admin
-$email = $console->arg(0)->string();
-$role = $console->arg(1)->string('member');
+// php bin/console users:add ann@example.com
+$email = $console->arg(0)->string();        // ann@example.com
+$role = $console->arg(1)->string('member'); // member
 ```
 
 ### Options and flags
 
-`option()` returns a `Value`, and `flag()` a boolean:
+`option()` also returns a `Value`, while `flag()` just says whether the flag was given:
 
 ```php
 // php bin/console notes:prune --days=7 --dry-run
-$days = $console->option('days')->int(30);
-$dryRun = $console->flag('dry-run');
+$days = $console->option('days')->int(30); // 7
+$dryRun = $console->flag('dry-run');       // true
 ```
 
-A missing or invalid option gives the default, so `--days=soon` gives 30.
+An option that's missing or isn't of the type you read gives the default, so `--days=soon` gives 30.
 
 > [!WARNING]
-> Options need `=`. With `--days 7`, `option('days')` throws an `InvalidArgumentException`, and so does `flag('force')` with `--force=yes`.
+> Options need `=`. Written as `--days 7`, the value would be lost, so `option('days')` throws an `InvalidArgumentException` instead. `flag('force')` throws the same way when given `--force=yes`.
 
 ## Output and exit codes
 
-`line()` writes to stdout and `error()` to stderr:
+`line()` prints to standard output and `error()` to standard error:
 
 ```php
 $console->line("Deleted {$deleted} notes.");
 $console->error('No such user.');
 ```
 
-Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws is logged, prints the error and exits with 1.
+The exit code tells cron and scripts whether the command worked, so return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws is logged, prints the error and exits with 1.
 
 ## Adding commands in code
 
-`$app->commands->add()` takes a class name, an object or a closure:
+Like routes, commands can also be added in code, which suits one-file apps. `$app->commands->add()` takes a class name, an object or a closure:
 
 ```php
 $app->commands->add('greet', function (Console $console): int {
@@ -120,15 +125,7 @@ $app->commands->add('greet', function (Console $console): int {
 }, 'Say hello');
 ```
 
-Two commands with the same name throw a `LogicException`.
-
-## Scheduling commands
-
-There's no scheduler. Use cron:
-
-```sh
-0 3 * * * php /path/to/app/bin/console notes:prune
-```
+Two commands with the same name stop the app with a `LogicException` that names both.
 
 ## Built-in commands
 

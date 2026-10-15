@@ -15,11 +15,11 @@
 
 ## Introduction
 
-Middleware runs around your actions. It sees the request on the way in and the response on the way out, and can answer without calling the action. Use it for logins, headers and other checks that cover many routes.
+Some work applies to many routes at once, such as checking a login, adding headers or refusing cross-site requests. Middleware keeps that code out of each action. It runs around your actions, seeing the request on the way in and the response on the way out, and it can answer without calling the action at all.
 
 ## Writing middleware
 
-Middleware is a class whose `__invoke()` takes the request and `$next`. Call `$next` to run the rest of the app:
+Middleware is a class whose `__invoke()` takes the request and `$next`, a closure that runs the rest of the app and returns its response. This one adds a header to every response it sees:
 
 ```php
 use Closure;
@@ -37,11 +37,11 @@ final class NoIndex
 }
 ```
 
-Its constructor arguments come from the [container](container.md).
+Like an action, middleware gets its constructor arguments from the [container](container.md).
 
 ### Answering early
 
-Return a response without calling `$next`, or call `abort()`:
+Middleware doesn't have to call `$next`. Returning a response of its own stops the request there, which is how a login check works:
 
 ```php
 final class RequireLogin
@@ -59,19 +59,15 @@ final class RequireLogin
 }
 ```
 
-An `HttpException` reaches the middleware around it as a response, so middleware doesn't need to catch it.
+Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, so middleware never has to catch one.
 
 ## Registering middleware
 
-Add middleware for every request in `bootstrap.php`, so tests get it too:
+Middleware is added in `bootstrap.php`, so the server and your tests run the same layers. `$app->middleware()` adds it around every request, and takes a class name, an object or a closure:
 
 ```php
 $app->middleware(NoIndex::class);
-```
 
-It also takes an object or a closure:
-
-```php
 $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
 
 $app->middleware(function (Request $request, Closure $next): Response {
@@ -81,13 +77,15 @@ $app->middleware(function (Request $request, Closure $next): Response {
 
 ### For part of the site
 
-`prefix` limits middleware to a path and the paths below it. `/api` covers `/api/notes` but not `/apis`:
+A `prefix` limits middleware to a path and the paths below it, so `/api` covers `/api/notes` but not `/apis`:
 
 ```php
 $app->middleware(Cors::class, prefix: '/api');
 ```
 
 ### For one action
+
+For a single action, [`#[Middleware]`](routing.md#route-middleware) on the class runs middleware around its routes only:
 
 ```php
 #[Route('GET', '/admin/users')]
@@ -96,6 +94,8 @@ final class ListUsers
 ```
 
 ## The order middleware runs in
+
+With middleware coming from two places, the order matters. For each request it is:
 
 1. Middleware from `$app->middleware()`, in the order it was added. The first is outermost.
 2. Routing, so 404s and 405s pass through the middleware above.
@@ -108,18 +108,18 @@ final class ListUsers
 | --- | --- | --- |
 | `SecurityHeaders` | Sets the browser security headers and a content policy | Policy directives, passed to its constructor |
 | `Csrf` | Refuses writes that a browser sent from another site | `cors_origins`, which may write too |
-| `Cors` | Lets sites on other domains call the app from a browser | `cors_origins`, `cors_credentials`, `cors_expose_headers` |
+| `Cors` | Lets sites on other domains call the app from a browser | `cors_origins`, `cors_credentials` |
 
-They're in `Sapling\Http\Middleware`. A new app's `bootstrap.php` adds `SecurityHeaders` and `Csrf`.
+Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.php` already adds `SecurityHeaders` and `Csrf`, while `Cors` is only needed when other sites call your app.
 
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. Scripts may only come from your site. Styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN works.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from your own site, while styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works.
 
 > [!WARNING]
 > Inline code is blocked, and browsers only report it in the console. That includes `<script>` and `<style>` blocks, `style` and `onclick` attributes, and libraries such as Alpine.js that evaluate strings.
 
-Directives you pass replace the default of the same name:
+To loosen the policy, pass the directives you want. Each replaces the default of the same name and leaves the rest:
 
 ```php
 $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
@@ -129,26 +129,25 @@ $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"
 
 ### Cross-site request protection
 
-`Csrf` answers a POST, PUT, PATCH or DELETE from another site with a 403. It reads the browser's `Sec-Fetch-Site` header, or `Origin` in older browsers, so forms need no token.
+`Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
 
-Requests with neither header, such as from scripts, pass unless they carry the session cookie. Sites in `cors_origins` may write too.
+Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too, so a front end on another domain only has to be listed once.
 
 ### CORS
 
-`Cors` lets the sites in `cors_origins` call the app from a browser. It answers preflight requests and adds the CORS headers:
+`Cors` lets the sites in `cors_origins` call your app from a browser. It answers the browser's preflight requests and adds the CORS headers to responses:
 
 ```php
 // config.php
 'cors_origins' => ['https://app.example'],
 'cors_credentials' => true,
-'cors_expose_headers' => ['Location'],
 ```
 
-Write sites in lowercase, without a trailing slash, or use `*` for any site. `cors_credentials` allows cookies and can't be used with `*`. `cors_expose_headers` lists the headers scripts may read.
-
-An invalid setting throws an `InvalidArgumentException` the first time `Cors` runs.
+Write each site as browsers send it, in lowercase and without a trailing slash, or use `*` for any site. `cors_credentials` lets those sites send cookies, which browsers only allow for listed sites, not `*`. A setting that could never work throws an `InvalidArgumentException` the first time `Cors` runs.
 
 ### Recommended order
+
+Used together, the built-in middleware goes first, then your own:
 
 ```php
 $app->middleware(SecurityHeaders::class);       // headers on every response, refusals included
@@ -158,4 +157,4 @@ $app->middleware(RequireLogin::class);          // then your own
 ```
 
 > [!WARNING]
-> Put login checks after `Cors`. A preflight carries no cookie or token, and a refused preflight blocks the real request.
+> Put login checks after `Cors`. A preflight carries no cookie or token, so a login check in front of `Cors` refuses it, and the browser then blocks the real request.

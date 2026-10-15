@@ -7,17 +7,16 @@
     - [Headers](#headers)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
-- [Timeouts](#timeouts)
-- [How it behaves](#how-it-behaves)
+- [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-`Sapling\Http\HttpClient` sends HTTP requests with curl and returns the reply as a `Response`. It's enough for calling a JSON API without a client library.
+Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Http\HttpClient` covers that without a client library. It sends a request with curl, and the reply comes back as a `Response`, the same class your actions return.
 
 ## Making requests
 
-Take `HttpClient` in a constructor and call `request()`:
+Ask for `HttpClient` in a constructor. Every request goes through one method, `request()`, which takes the method and the URL:
 
 ```php
 $reply = $this->http->request('GET', 'https://api.example.com/status');
@@ -25,7 +24,7 @@ $reply = $this->http->request('GET', 'https://api.example.com/status');
 
 ### Sending JSON
 
-A string body is sent as is, so set its `Content-Type`:
+A string body is sent exactly as it is, so it needs its `Content-Type` alongside it. For JSON, encode the data with [`Data`](data.md) and say so in the headers:
 
 ```php
 $body = Data::toJson(['name' => 'Ann']);
@@ -34,11 +33,11 @@ $headers = ['Content-Type' => 'application/json'];
 $reply = $this->http->request('POST', 'https://api.example.com/users', $body, $headers);
 ```
 
-Without one, curl sends it as a form.
+Without a `Content-Type`, curl labels a string body as a form.
 
 ### Sending forms and files
 
-An array body is sent as multipart form data, and can include a `CURLFile`:
+An array body is sent as multipart form data instead, which means it can include a file upload as a `CURLFile`:
 
 ```php
 $body = [
@@ -53,7 +52,7 @@ For a URL-encoded form, send [`Data::toForm()`](data.md) with an `application/x-
 
 ### Headers
 
-Headers are the fourth argument:
+Headers are the fourth argument, so name it when there's no body:
 
 ```php
 $reply = $this->http->request('GET', 'https://api.example.com/me', headers: [
@@ -63,14 +62,14 @@ $reply = $this->http->request('GET', 'https://api.example.com/me', headers: [
 
 ## Reading the reply
 
-The reply is a [`Response`](requests.md#reading-a-response). `data()` decodes its body as a [`Value`](values.md):
+Since the reply is a [`Response`](requests.md#reading-a-response), it's read the same way as any other. `data()` decodes the body by its `Content-Type` and returns a [`Value`](values.md):
 
 ```php
-$me = $reply->data();
-$name = $me->get('profile', 'name')->string();
+$me = $reply->data();                          // ['profile' => ['name' => 'bob', 'age' => 30]]
+$name = $me->get('profile', 'name')->string(); // 'bob'
 ```
 
-Reply header names are lowercase, and a header sent more than once is a list. `header()` is case-insensitive:
+A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` finds one whatever case you write it in:
 
 ```php
 $retryAfter = $reply->header('Retry-After')->int(60);
@@ -78,7 +77,7 @@ $retryAfter = $reply->header('Retry-After')->int(60);
 
 ### Errors
 
-Error statuses are normal responses. Only a failed connection or a timeout throws a `RuntimeException`, so check the status:
+A 404 or a 500 from the other service is still a normal reply. Only a failed connection or a timeout throws a `RuntimeException`, so check the status before using the data:
 
 ```php
 if ($reply->status !== 200) {
@@ -88,21 +87,15 @@ if ($reply->status !== 200) {
 }
 ```
 
-## Timeouts
+## Timeouts, redirects and TLS
 
-Requests time out after 30 seconds. For calls made while a visitor waits, register a shorter timeout:
+A request gives up after 30 seconds. When calls happen while a visitor waits for a page, register a client with a shorter timeout in `bootstrap.php`, so a slow service can't hold them up:
 
 ```php
 $app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
 ```
 
-## How it behaves
-
-- GET and HEAD follow up to 5 redirects. Other methods return the redirect, so a POST is never resent.
-- TLS certificates are always verified, and compressed replies are decompressed.
-
-> [!TIP]
-> Keep API keys in `config.php`, or encrypted with [Crypto](encryption.md) when each tenant has its own.
+GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. TLS certificates are always checked, and compressed replies are unpacked for you.
 
 ## Method reference
 

@@ -22,9 +22,11 @@
 
 ## Introduction
 
-An action receives a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Form, JSON and XML bodies are all read the same way.
+Every action receives the incoming request as a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Both are small, plain objects. Reading input always gives you a typed value with a default, and a form, JSON or XML body is read the same way, so an action doesn't care which one arrived.
 
 ## The request lifecycle
+
+Before looking at the two objects, it helps to know the path a request takes through the app:
 
 1. The web server runs `public/index.php`, which loads [`bootstrap.php`](app.md#booting-the-app).
 2. `$app->run()` builds a `Request` from PHP's globals. It tidies the path and applies a form's [`_method`](#sending-put-patch-and-delete-from-forms).
@@ -35,11 +37,11 @@ An action receives a `Sapling\Http\Request` and returns a `Sapling\Http\Response
 7. The response passes back out through each middleware.
 8. `run()` sends the response, without the body for a HEAD request.
 
-An `HttpException`, such as from `abort()`, becomes a response where it's thrown and passes back out the same way. Any other exception becomes a 500. See [When things go wrong](errors.md).
+Errors take the same route back. An `HttpException`, such as one from `abort()`, becomes a response where it's thrown and passes back out through the middleware, while any other exception becomes a 500. [When things go wrong](errors.md) covers both.
 
 ## Accessing the request
 
-Add a `Request` parameter to `__invoke()`:
+An action gets the request by declaring a `Request` parameter on `__invoke()`:
 
 ```php
 use Sapling\Attributes\Route;
@@ -60,28 +62,28 @@ final class StoreNote
 }
 ```
 
-`$request->method` is the HTTP method, `$request->path` the path without its query string, and `$request->ip` the address that connected. The path is tidied before routing, so `//notes/` becomes `/notes`.
+Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, so `//notes/` arrives as `/notes`.
 
 > [!NOTE]
 > Behind a proxy or load balancer, `$request->ip` is the proxy's address.
 
 ## Retrieving input
 
-Every input method returns a [`Value`](values.md). Read it as the type you need, with a default:
+Whatever part of the request you read, you get a [`Value`](values.md) back, which you then read as the type you need, with a default for when it's missing:
 
 ```php
 $page = $request->query('page')->int(1);
 ```
 
-A crafted `body[]=x` where you expect text gives the default, not an array.
+This also protects you from crafted input. If someone sends `body[]=x` where you expect text, `string()` gives the default rather than an array.
 
 ### Route parameters
+
+Parameters named in the route, such as `:id`, are read with `param()`, and `$request->params` holds them all:
 
 ```php
 $id = $request->param('id')->int();
 ```
-
-`$request->params` holds them all.
 
 ### The query string
 
@@ -92,7 +94,7 @@ $tags = $request->query('tags')->array();   // ?tags[]=php&tags[]=sql
 
 ### Body fields
 
-`input()` reads a field from the body, decoded by its `Content-Type`:
+`input()` reads a field from the request body, whichever format it was sent in:
 
 ```php
 $title = $request->input('title')->string();
@@ -100,34 +102,36 @@ $remember = $request->input('remember')->bool();
 $city = $request->input('address')->get('city')->string();
 ```
 
-The body is decoded on first read, including form-encoded PUT, PATCH and DELETE requests, which PHP leaves alone. `input()` doesn't read the query string.
+The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. Note that `input()` only reads the body, never the query string.
 
 > [!WARNING]
-> A JSON or XML body that doesn't decode is a 400.
+> A JSON or XML body that doesn't decode stops the request with a 400.
 
 ### The whole body
 
-`data()` returns the decoded body. `input('title')` is short for `data()->get('title')`:
+When you need more than one field, such as a JSON list or a SOAP envelope, `data()` returns the whole decoded body. `input('title')` is short for `data()->get('title')`:
 
 ```php
 $items = $request->data()->array();   // a JSON list
 $price = $request->data()->get('soap:Body', 'Price')->string();
 ```
 
-Other content types come back as a string. `$request->body` holds the raw body.
+A body of any other type, such as plain text, comes back as a string, and `$request->body` always holds the body exactly as it arrived.
 
 ### Headers and cookies
 
-Header names are case-insensitive:
+Headers and cookies are read the same way. Header names are case-insensitive:
 
 ```php
 $accept = $request->header('Accept')->string();
 $theme = $request->cookie('theme')->string('light');
 ```
 
+Sapling only writes the session's cookie. To set another, add it with `withHeader('Set-Cookie', '…')`.
+
 ### Uploaded files
 
-`$request->files` is PHP's `$_FILES`:
+Uploads don't come through `Value`. `$request->files` holds them exactly as PHP's `$_FILES` does:
 
 ```php
 $avatar = $request->files['avatar'] ?? null;
@@ -135,7 +139,7 @@ $avatar = $request->files['avatar'] ?? null;
 
 ## Sending PUT, PATCH and DELETE from forms
 
-HTML forms only send GET and POST. A hidden `_method` field turns a POST into PUT, PATCH or DELETE:
+HTML forms can only send GET and POST. To send another method, add a hidden `_method` field to a POST form, and Sapling treats the request as that method:
 
 ```html
 <form method="post" action="/notes/7">
@@ -144,11 +148,11 @@ HTML forms only send GET and POST. A hidden `_method` field turns a POST into PU
 </form>
 ```
 
-Other values are ignored.
+Only PUT, PATCH and DELETE are accepted, and any other value leaves the request as a POST.
 
 ## Creating responses
 
-The static helpers set the `Content-Type`:
+Every action returns a `Response`. The static helpers cover the common cases and set the `Content-Type` for you:
 
 ```php
 return Response::html($html);
@@ -156,60 +160,53 @@ return Response::text('Not found', 404);
 return Response::json(['saved' => true], 201);
 ```
 
-Or build one yourself:
+For anything else, build the response yourself:
 
 ```php
 return new Response($xml, 200, ['Content-Type' => 'application/xml']);
 ```
 
-> [!WARNING]
-> `Response::html()` doesn't escape anything. Use `e()` or a [template](templates.md).
-
 ### Attaching headers
 
-`withHeader()` returns a copy with the header set, replacing any header of the same name:
+Responses can't be changed once they're made. `withHeader()` returns a copy with the header set instead, replacing any header of the same name:
 
 ```php
 return Response::json($note)->withHeader('Cache-Control', 'no-store');
 ```
 
 > [!NOTE]
-> Responses are immutable. On PHP 8.5, ignoring the result of `withHeader()` is an error.
+> On PHP 8.5, ignoring the result of `withHeader()` is an error, so a lost header can't go unnoticed.
 
 ### Redirects
+
+`redirect()` sends a 302 unless you pass another status:
 
 ```php
 return Response::redirect('/notes');
 return Response::redirect('/notes/7', 303);
 ```
 
-> [!TIP]
-> Redirect after a successful POST, so a reload doesn't resend the form.
-
 ### Error responses
 
-`abort()` stops the request with an error status from anywhere, including middleware and templates:
+For an error, you don't build a response at all. `abort()` stops the request with an error status from anywhere, including middleware and templates:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
 ```
 
-See [When things go wrong](errors.md) for rendering your own error page.
+[When things go wrong](errors.md) explains how the error is rendered, and how to show your own error page.
 
 ## File downloads
 
-`Response::file()` streams a file from disk as a download:
+`Response::file()` sends a file as a download. It streams from disk, so even a large file never fills memory:
 
 ```php
 return Response::file($path, 'report.pdf');
 ```
 
-> [!WARNING]
-> Never send uploaded files inline. An uploaded HTML or SVG file would run as part of your site.
-
 ### Serving large files
 
-`file()` holds a PHP worker until the download ends. For large or popular files, hard-link the file into a random folder under `public/` and redirect to it, so the web server sends it:
+Streaming still keeps a PHP worker busy until the download finishes. For large or popular files, it's better to let the web server send them. Hard-link the file into a random folder under `public/` and redirect to it:
 
 ```php
 function publish(string $file, string $public): string
@@ -224,7 +221,7 @@ function publish(string $file, string $public): string
 return Response::redirect(publish($path, $this->app->path('public')));
 ```
 
-Both folders must be on the same disk. Anyone with the link can download the file until it's deleted. Clear old folders from cron:
+A hard link is instant and uses no extra space, but both folders must be on the same disk. Anyone with the link can download the file until it's deleted, so clear old folders from cron:
 
 ```sh
 find public/downloads -mindepth 1 -maxdepth 1 -type d -mmin +60 -exec rm -rf {} +
@@ -232,7 +229,7 @@ find public/downloads -mindepth 1 -maxdepth 1 -type d -mmin +60 -exec rm -rf {} 
 
 ## Reading a response
 
-Middleware and tests can read a response's `status`, `headers` and `body`. `data()` decodes the body like a request's `data()`, and `header()` reads a header case-insensitively:
+Responses aren't only written. Middleware reads what the action returned, and tests read what `handle()` gives back. Both can use `status`, `headers` and `body`, and two methods mirror the request's. `data()` decodes the body by its `Content-Type`, and `header()` reads a header case-insensitively:
 
 ```php
 $response = $app->handle(new Request('GET', '/api/notes/7'));
@@ -241,7 +238,7 @@ $title = $response->data()->get('title')->string();
 $location = $response->header('location')->string();
 ```
 
-An empty body is a missing value. A JSON or XML body that doesn't decode throws, as [`Data`](data.md) does. [`HttpClient`](http-client.md) replies are responses too.
+An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does. Replies from [`HttpClient`](http-client.md) are responses too, so they're read the same way.
 
 ## Method reference
 
@@ -271,7 +268,7 @@ An empty body is a missing value. A JSON or XML body that doesn't decode throws,
 | `Response::json($data, $status = 200)` | Returns JSON. Throws `JsonException` when the data can't be encoded |
 | `Response::redirect($url, $status = 302)` | Returns a redirect |
 | `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent |
-| `Response::fromHttpException($e)` | Returns plain text with the exception's status, message and headers |
+| `Response::fromHttpException($e)` | Returns plain text with the exception's status and message |
 | `new Response($body, $status = 200, $headers = [])` | Returns any other response |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `data()` | Returns the body decoded by its `Content-Type`, as a `Value` |

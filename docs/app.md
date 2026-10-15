@@ -3,8 +3,7 @@
 - [Introduction](#introduction)
 - [Booting the app](#booting-the-app)
     - [What booting sets up](#what-booting-sets-up)
-- [Answering web requests](#answering-web-requests)
-- [Running commands](#running-commands)
+- [Running the app](#running-the-app)
 - [Registering actions and commands](#registering-actions-and-commands)
     - [Scanning a folder](#scanning-a-folder)
     - [Adding one class](#adding-one-class)
@@ -14,13 +13,13 @@
 
 ## Introduction
 
-`Sapling\App` holds the [container](container.md), the [routes](routing.md), the [commands](commands.md) and the [middleware](middleware.md). From a web server it answers the request, and from the terminal it runs a command.
+`Sapling\App` ties an app together. It holds the [container](container.md) that builds your classes, the [routes](routing.md) and [commands](commands.md) they answer, and the [middleware](middleware.md) around them. The same object answers web requests and runs commands, depending on how PHP was started.
 
-The app is one object with no static state, so a test can create as many as it likes.
+An app lives for one request and has no static state, so each test builds its own.
 
 ## Booting the app
 
-`bootstrap.php` builds the app and returns it. `public/index.php`, `bin/console` and your tests all load it:
+Every app is built in one place, `bootstrap.php`. The web server, `bin/console` and your tests all load it, so they all get the same services, routes and middleware:
 
 ```php
 use Sapling\App;
@@ -44,14 +43,11 @@ $app->middleware(Csrf::class);
 return $app;
 ```
 
-`App::boot()` takes the app's folder and its [configuration](config.md). Services and [middleware](middleware.md) are registered here too, so tests run the same middleware as the server.
-
-> [!TIP]
-> Register services as closures, as above. A closure only runs when something asks for the service.
+`App::boot()` takes the app's folder and its [configuration](config.md), and sets up what Sapling itself needs. In the rest of the file, you register services such as the database, scan `app/` for your classes, and add the middleware every request goes through. Services registered as closures are only built when something asks for them, so a request that never touches the database never connects.
 
 ### What booting sets up
 
-`App::boot()` reads these settings from the config:
+`App::boot()` reads a few settings from the config:
 
 - `debug` turns on [debug mode](errors.md#debug-mode).
 - `timezone` sets PHP's default timezone. An unknown name throws a `DateInvalidTimeZoneException`.
@@ -60,21 +56,9 @@ return $app;
 
 It also adds the `migrations:run`, `migrations:new` and `routes:list` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` command.
 
-## Answering web requests
+## Running the app
 
-`public/index.php` loads the app and calls `run()`:
-
-```php
-require __DIR__ . '/../vendor/autoload.php';
-
-(require __DIR__ . '/../bootstrap.php')->run();
-```
-
-`run()` reads the request from PHP's globals and sends the response. The [request lifecycle](requests.md#the-request-lifecycle) covers what happens in between.
-
-## Running commands
-
-`bin/console` does the same:
+Both entry points are two lines. `public/index.php` and `bin/console` each load `bootstrap.php` and call `run()`:
 
 ```php
 require __DIR__ . '/../vendor/autoload.php';
@@ -82,11 +66,11 @@ require __DIR__ . '/../vendor/autoload.php';
 (require __DIR__ . '/../bootstrap.php')->run();
 ```
 
-From the terminal, `run()` runs the named command and exits with its code. See [Commands](commands.md).
+`run()` checks how PHP was started. Behind a web server, it reads the request from PHP's globals, passes it through the [request lifecycle](requests.md#the-request-lifecycle) and sends the response. From the terminal, it runs the named [command](commands.md) and exits with its code.
 
 ## Registering actions and commands
 
-`#[Route]` makes a class an action, `#[Middleware]` wraps its routes, and `#[Command]` makes it a command.
+Sapling finds your classes through their attributes. `#[Route]` makes a class an action, `#[Middleware]` wraps its routes, and `#[Command]` makes it a command.
 
 ### Scanning a folder
 
@@ -96,16 +80,16 @@ From the terminal, `run()` runs the named command and exits with its code. See [
 $app->scan(__DIR__ . '/app', 'App');
 ```
 
-Each file holds a class named after its path, as PSR-4 expects, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped. Classes are registered in name order.
+It expects one class per file, named after its path as PSR-4 does, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order, so a scan gives the same result on every machine.
 
-There's no cache. Every request scans, which takes about 0.2 ms for a dozen classes.
+There's no cache, so every request scans. That takes about 0.2 ms for a dozen classes.
 
 > [!WARNING]
-> A file in `app/` that fails to load breaks every request. Lint the app before deploying, as the starter app's `composer lint` does.
+> A file in `app/` that fails to load breaks every request. Lint the app before deploying, for example with `find app -name '*.php' -exec php -l {} \;`.
 
 ### Adding one class
 
-`add()` registers a single class, such as one outside the scanned folder:
+For a class outside the scanned folder, `add()` registers it on its own:
 
 ```php
 $app->add(HealthCheck::class);
@@ -113,7 +97,7 @@ $app->add(HealthCheck::class);
 
 ## One-file apps
 
-`new App()` builds a bare app with no config. Add routes and commands with closures:
+Small scripts don't need `bootstrap.php`. `new App()` builds a bare app with no config, and routes and commands can be added as closures:
 
 ```php
 $app = new App(__DIR__);
@@ -131,11 +115,11 @@ $app->commands->add('greet', function (Console $console): int {
 $app->run();
 ```
 
-A bare app has none of what [booting sets up](#what-booting-sets-up). Pass `true` as the second argument for debug mode.
+A bare app has none of what [booting sets up](#what-booting-sets-up). Pass `true` as the second argument to turn on debug mode.
 
 ## Testing the whole app
 
-`handle()` returns the response without sending it:
+Because the app is a plain object, a test can load `bootstrap.php` and send requests straight through it. `handle()` returns the response instead of sending it:
 
 ```php
 $app = require __DIR__ . '/../bootstrap.php';
@@ -145,10 +129,10 @@ $response = $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy mi
 expect($response->status)->toBe(302);
 ```
 
-`handle()` never throws. Errors come back as the response a visitor would get.
+`handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get, so a test checks it like any other.
 
 > [!NOTE]
-> Build a new app for each test. The container shares the classes it builds, including actions and the session.
+> Send one request per app, as the server does. A second request through the same app shares the first one's objects.
 
 ## Method reference
 

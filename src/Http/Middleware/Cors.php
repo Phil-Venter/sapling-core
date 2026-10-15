@@ -15,25 +15,28 @@ final readonly class Cors
 	private bool $anyOrigin;
 
 	/**
-	 * Origins are exact, such as https://app.example, or ['*'] for any site. A setting that's unsafe, or could
-	 * never match, throws InvalidArgumentException.
+	 * Origins are exact, such as https://app.example, or ['*'] for any site.
 	 *
 	 * @param list<string> $origins
-	 * @param list<string> $exposeHeaders
 	 */
-	public function __construct(
-		private array $origins,
-		private bool $allowCredentials = false,
-		private array $exposeHeaders = [],
-	) {
+	public function __construct(private array $origins, private bool $allowCredentials = false)
+	{
 		$this->anyOrigin = in_array('*', $origins, true);
 
-		foreach ($origins as $origin) {
-			$this->checkOrigin($origin);
+		if ($this->anyOrigin && $allowCredentials) {
+			throw new InvalidArgumentException('cors_credentials needs cors_origins to list sites, not *');
 		}
 
-		if ($allowCredentials && in_array('*', $exposeHeaders, true)) {
-			throw new InvalidArgumentException('cors_expose_headers cannot be * with cors_credentials');
+		foreach ($origins as $origin) {
+			if ($origin === '*') {
+				continue;
+			}
+
+			if (preg_match('#^https?://([a-z0-9.-]+|\[[0-9a-f:]+\])(:[0-9]{1,5})?$#', $origin) !== 1) {
+				throw new InvalidArgumentException(
+					"cors_origins needs scheme://host[:port] in lowercase, got {$origin}",
+				);
+			}
 		}
 	}
 
@@ -60,35 +63,6 @@ final readonly class Cors
 		}
 
 		return $response;
-	}
-
-	private function checkOrigin(string $origin): void
-	{
-		if ($origin === '*') {
-			if ($this->allowCredentials) {
-				throw new InvalidArgumentException('cors_credentials needs cors_origins to list sites, not *');
-			}
-
-			return;
-		}
-
-		if ($origin === 'null') {
-			throw new InvalidArgumentException('cors_origins cannot list null, any site can send it');
-		}
-
-		$parts = [];
-
-		if (preg_match('#^(https?)://([a-z0-9.-]+|\[[0-9a-f:]+\])(:[0-9]{1,5})?$#', $origin, $parts) !== 1) {
-			throw new InvalidArgumentException("cors_origins needs scheme://host[:port] in lowercase, got {$origin}");
-		}
-
-		$scheme = $parts[1] ?? '';
-		$host = $parts[2] ?? '';
-		$local = in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
-
-		if ($this->allowCredentials && $scheme === 'http' && !$local) {
-			throw new InvalidArgumentException("cors_credentials needs https origins or localhost, got {$origin}");
-		}
 	}
 
 	private function preflight(Request $request, string $origin, string $method): Response
@@ -162,10 +136,6 @@ final readonly class Cors
 
 		if ($this->allowCredentials) {
 			$headers['Access-Control-Allow-Credentials'] = 'true';
-		}
-
-		if ($this->exposeHeaders !== []) {
-			$headers['Access-Control-Expose-Headers'] = implode(', ', $this->exposeHeaders);
 		}
 
 		return $headers;

@@ -49,7 +49,7 @@ test('an error inside a template closes its buffers and leaves no state behind',
 	expect($this->view->render('untitled'))->toContain('<title>Default</title>');
 });
 
-test('section() keeps a string, number or backed enum as text, and names the type it refuses', function () {
+test('section() keeps a string, number or backed enum as text', function () {
 	$this->view->section('text', 'Notes');
 	$this->view->section('number', 2.5);
 	$this->view->section('enum', Priority::High);
@@ -59,8 +59,6 @@ test('section() keeps a string, number or backed enum as text, and names the typ
 		'2.5',
 		'1',
 	]);
-	expect(fn() => $this->view->section('title', null))
-		->toThrow(TypeError::class, 'Section title needs a string, number or backed enum, got null');
 });
 
 test('a section without end(), or an end() without a section, throws instead of garbling the page', function () {
@@ -68,7 +66,20 @@ test('a section without end(), or an end() without a section, throws instead of 
 
 	expect(fn() => $this->view->render('unclosed'))
 		->toThrow(LogicException::class, 'Section aside in unclosed has no end()');
-	expect(fn() => $this->view->render('stray-end'))->toThrow(LogicException::class, 'end() without an open section()');
+	expect(fn() => $this->view->render('stray-end'))
+		->toThrow(LogicException::class, 'end() without an open section() or component()');
+	expect(fn() => $this->view->render('unclosed-component'))
+		->toThrow(LogicException::class, 'Component _card in unclosed-component has no end()');
 	expect(ob_get_level())->toBe($level);
+	expect($this->view->render('plain', ['name' => 'Ann']))->toBe("<p>Ann on Sapling</p>\n");
+});
+
+test('a component gets its data, and what was printed before end() as $slot', function () {
+	expect($this->view->render('card-page'))->toBe("<article><h2>Notes</h2><p>Inside</p>\n</article>\n");
+});
+
+test('render() inside a template throws, since it would wipe the page, and points at include()', function () {
+	expect(fn() => $this->view->render('nested-render'))
+		->toThrow(LogicException::class, "render() inside a template, use include('item')");
 	expect($this->view->render('plain', ['name' => 'Ann']))->toBe("<p>Ann on Sapling</p>\n");
 });

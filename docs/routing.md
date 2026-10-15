@@ -15,13 +15,13 @@
 
 ## Introduction
 
-An action is a class that answers a request, what other frameworks call a controller. `#[Route]` gives its method and path, and `__invoke()` takes a `Request` and returns a `Response`.
+An action is the class that answers a request, what other frameworks call a controller. Its `#[Route]` says which method and path it answers, and its `__invoke()` takes the `Request` and returns a `Response`.
 
-Each action is one class in one file, with its route on the class. Searching for a path finds the code behind it.
+Each action is one class in one file, with its route written on the class itself. That keeps an action's dependencies to itself, and means searching for a path finds the code behind it.
 
 ## Writing an action
 
-Put the class in `app/` and give it a `#[Route]`. The [scan](app.md#scanning-a-folder) registers it:
+An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. Here's one that shows a note:
 
 ```php
 namespace App\Notes;
@@ -52,16 +52,11 @@ final class ShowNote
 }
 ```
 
-The [container](container.md) builds the constructor's arguments. The `Request` parameter is optional.
-
-Slashes at either end of a path are ignored, so `notes/:id/` and `/notes/:id` are the same route.
-
-> [!TIP]
-> Name actions after what they do, such as `ShowNote`, and group them in folders by feature. Move a query two actions share into a class they both take in their constructor.
+The [container](container.md) builds the constructor's arguments, so the action only lists what it uses. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored, so `notes/:id/` and `/notes/:id` are the same route.
 
 ## Route parameters
 
-A path part that starts with a colon is a parameter. Read it with `param()`, which returns a [`Value`](values.md):
+A part of the path that starts with a colon is a parameter. It matches any one part of the URL, and the action reads it with `param()`, which returns a [`Value`](values.md):
 
 ```php
 #[Route('GET', '/users/:user/notes/:note')]
@@ -72,11 +67,11 @@ $userId = $request->param('user')->int();
 $noteId = $request->param('note')->int();
 ```
 
-Parameters are URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash.
+Parameters arrive URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash.
 
 ## More than one route per action
 
-`#[Route]` can be repeated. Routes have no optional parts, so a form for creating and editing takes two paths:
+Routes have no optional parts. When one action should answer two paths, such as a form that both creates and edits, repeat `#[Route]`:
 
 ```php
 #[Route('GET', '/notes/form')]
@@ -84,7 +79,7 @@ Parameters are URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter neve
 final class NoteForm
 ```
 
-`raw` is `null` when the parameter isn't there:
+The action then tells them apart by whether the parameter is there, since `raw` is `null` when it isn't:
 
 ```php
 $editing = $request->param('id')->raw !== null;
@@ -92,7 +87,7 @@ $editing = $request->param('id')->raw !== null;
 
 ## Route middleware
 
-`#[Middleware]` runs [middleware](middleware.md) around one class's routes:
+Most [middleware](middleware.md) is added for every request, but `#[Middleware]` runs it around one class's routes only:
 
 ```php
 #[Route('GET', '/admin/users')]
@@ -101,11 +96,11 @@ $editing = $request->param('id')->raw !== null;
 final class ListUsers
 ```
 
-The first one is outermost. Middleware added with `$app->middleware()` runs before both.
+Like `#[Route]`, it can be repeated, and the first one is outermost, so the login check runs before the admin check. Middleware added with `$app->middleware()` runs before both.
 
 ## Adding routes in code
 
-`$app->router->add()` takes a class name, an object or a closure, which suits one-file apps and tests:
+Routes can also be added in code, which suits one-file apps and tests. `$app->router->add()` takes a class name, an object or a closure:
 
 ```php
 $app->router->add('GET', '/hello/:name', function (Request $request): Response {
@@ -113,27 +108,27 @@ $app->router->add('GET', '/hello/:name', function (Request $request): Response {
 });
 ```
 
-The optional fourth argument is a list of middleware for the route.
+An optional fourth argument lists middleware for the route, as `#[Middleware]` does.
 
 ## How routes match
 
 ### Which route wins
 
-The most specific route wins, so `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. The order routes are added in doesn't matter.
+When more than one route fits a path, the most specific one wins, so `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. The order routes are added in doesn't matter.
 
-Two classes with the same method and path throw a `LogicException` that names both.
+Two classes on the same method and path can't both win, so the app stops with a `LogicException` that names both. That usually means an action was copied without changing its route.
 
 ### HEAD requests
 
-A HEAD request runs the GET route for the same path and sends only the headers. A `HEAD` route of your own takes precedence.
-
-The GET action runs in full, so keep GET actions free of side effects.
+A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own takes precedence. Since the GET action still runs in full, keep GET actions free of side effects.
 
 ### Not found and wrong method
 
-An unknown path is a 404. A known path with the wrong method is a 405, with an `Allow` header. Both pass through your global middleware and your [error handler](errors.md#showing-your-own-error-page).
+A path that no route fits is a 404, and a known path with the wrong method is a 405 with an `Allow` header listing the methods it does take. Both pass through your global middleware and your [error handler](errors.md#showing-your-own-error-page), like any other error.
 
 ## Listing routes
+
+`routes:list` prints every route and the class that answers it:
 
 ```sh
 php bin/console routes:list

@@ -52,10 +52,6 @@ if (!function_exists('attr')) {
 			$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
 		}
 
-		if (!is_scalar($value) && !$value instanceof BackedEnum) {
-			return null;
-		}
-
 		return sprintf('%s="%s"', e($key), e($value));
 	}
 }

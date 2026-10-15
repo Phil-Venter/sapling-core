@@ -2,35 +2,30 @@
 
 - [Introduction](#introduction)
 - [Escaping HTML](#escaping-html)
-- [HTML attributes](#html-attributes)
+    - [Attributes](#attributes)
 - [Stopping with an error](#stopping-with-an-error)
 - [Checking for empty values](#checking-for-empty-values)
 - [Dates and times](#dates-and-times)
-- [Unique ids](#unique-ids)
-- [Values or closures](#values-or-closures)
-- [Debugging](#debugging)
+- [Ids, closures and debugging](#ids-closures-and-debugging)
 - [Replacing a helper](#replacing-a-helper)
 - [Function reference](#function-reference)
 
 ## Introduction
 
-Sapling has a few global functions, such as `e()` and `abort()`. They need no app.
+A few things happen in almost every file, such as escaping a value or stopping with an error. Sapling has short global functions for those, so they don't need an object. They need no app either, so they work the same in actions, templates, commands and scripts.
 
 ## Escaping HTML
 
-`e()` escapes a value for HTML, including quotes. Backed enums print their value:
+`e()` escapes a value for HTML, quotes included, and prints a backed enum as its value:
 
 ```php
 <p><?= e($note['body']) ?></p>
 <span class="status"><?= e($note['status']) ?></span>
 ```
 
-> [!WARNING]
-> Nothing is escaped automatically. Use `e()`, or `attrs()` for attributes.
+### Attributes
 
-## HTML attributes
-
-`attrs()` builds escaped attributes and skips empty ones:
+Attributes are fiddlier, since some should be left out and some have no value at all. `attrs()` builds them from an array and escapes each one:
 
 ```php
 <li <?= attrs(['class' => ['note', 'pinned'], 'data-id' => 7, 'hidden' => true, 'title' => null]) ?>>
@@ -38,22 +33,22 @@ Sapling has a few global functions, such as `e()` and `abort()`. They need no ap
 // <li class="note pinned" data-id="7" hidden>
 ```
 
-`true` gives a bare attribute. `null`, `false` and empty values are skipped. Arrays are joined with spaces. `attr()` builds a single attribute.
+`true` gives a bare attribute such as `hidden`, while `null`, `false` and empty values leave the attribute out, and an array is joined with spaces. `attr()` builds a single attribute the same way.
 
 ## Stopping with an error
 
-`abort()` throws an `HttpException`, and `abort_if()` does when its condition is true:
+When the visitor asks for something that doesn't exist or isn't theirs, `abort()` stops the request with an error status. `abort_if()` does the same when its condition is true:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
 abort(403);
 ```
 
-See [Errors the visitor causes](errors.md#errors-the-visitor-causes).
+Both throw an `HttpException`, which becomes the response. [Errors the visitor causes](errors.md#errors-the-visitor-causes) covers the details.
 
 ## Checking for empty values
 
-`blank()` is true for `null`, whitespace-only strings, and empty arrays and `Countable`s:
+`blank()` answers whether a value is really empty, meaning `null`, a string of only whitespace, or an empty array or `Countable`. Unlike `empty()`, it treats `'0'`, `0` and `false` as real values:
 
 ```php
 blank('  ');     // true
@@ -63,7 +58,7 @@ blank(0);        // false
 blank(false);    // false
 ```
 
-Unlike `empty()`, `'0'`, `0` and `false` aren't blank. Read a [`Value`](values.md) as a type first. Passing one throws a `LogicException`:
+A [`Value`](values.md) has to be read as a type first, since the object itself never looks empty, so `blank()` throws a `LogicException` when it's given one:
 
 ```php
 $email = $console->arg(0)->string();
@@ -77,7 +72,7 @@ if (blank($email)) {
 
 ## Dates and times
 
-`datetime()` returns a `DateTimeImmutable` from a date string, a timestamp or another date:
+`datetime()` returns a `DateTimeImmutable` from a date string, a timestamp or another date, in the timezone you ask for:
 
 ```php
 $now = datetime();
@@ -85,9 +80,9 @@ $meeting = datetime('2026-10-15 09:00', 'Africa/Johannesburg');
 $created = datetime($row['created_at'], 'UTC');
 ```
 
-The result is in the given timezone, or the [`timezone` setting](config.md#settings-sapling-reads). A string without its own zone is read in that timezone.
+Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads), and a date string without its own zone is read in whichever timezone applies.
 
-An unknown timezone throws a `DateInvalidTimeZoneException`, and an unreadable date a `DateMalformedStringException`. Catch them for visitor input:
+Input from visitors can be wrong. An unknown timezone throws a `DateInvalidTimeZoneException`, and a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
 
 ```php
 try {
@@ -97,35 +92,27 @@ try {
 }
 ```
 
-## Unique ids
+## Ids, closures and debugging
 
-`uuid()` returns a version 7 UUID, which sorts by creation time.
-
-## Values or closures
-
-`value()` returns a value, or calls it when it's a closure:
+The last few helpers are small. `uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys. `value()` returns a value as it is, or calls it first when it's a closure:
 
 ```php
-value('Hello');                                   // 'Hello'
+value('Hello');                                      // 'Hello'
 value(fn(string $name) => "Hello {$name}", 'Ann');   // 'Hello Ann'
 ```
 
-## Debugging
-
-`dd()` dumps its values and stops:
+`dd()` dumps its values and stops, which helps while you're working, but shouldn't be committed:
 
 ```php
 dd($request, $note);
 ```
 
-Don't commit it.
-
 ## Replacing a helper
 
-A helper is skipped when a function with that name already exists. Define your own before `vendor/autoload.php` to replace it. Sapling's own code never calls the helpers.
+Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's own code never calls the helpers, so replacing one never changes how Sapling behaves.
 
 > [!WARNING]
-> Packages can define the same names first. Laravel's `illuminate/support` has its own `e()`, `blank()` and `value()`, and Laravel's `abort()` turns a 404 into a 500 here.
+> A package can define the same names first. Laravel's `illuminate/support` has its own `e()`, `blank()` and `value()`, and Laravel's `abort()` turns a 404 into a 500 here.
 
 ## Function reference
 

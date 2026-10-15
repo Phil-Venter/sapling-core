@@ -7,19 +7,20 @@
     - [Answering in JSON](#answering-in-json)
 - [Crashes](#crashes)
     - [Debug mode](#debug-mode)
-- [Warnings and notices](#warnings-and-notices)
-- [Errors in commands](#errors-in-commands)
+    - [Warnings and notices](#warnings-and-notices)
 - [Logging](#logging)
     - [Where the log goes](#where-the-log-goes)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-Sapling turns every error into a response or an exit code. An `HttpException` is an error the visitor caused, such as a missing page. Anything else is a crash, which is logged. Visitors never see a stack trace outside debug mode.
+Sapling sorts errors into two kinds. An `HttpException` is an error the visitor caused, such as asking for a page that doesn't exist, and it becomes a response with that status. Anything else thrown is a crash, a bug in the code, and it's logged and answered with a 500.
+
+Either way, your actions and middleware need no `try` and `catch`, and outside debug mode a visitor never sees a stack trace.
 
 ## Errors the visitor causes
 
-`abort()` stops a request with an error status, from anywhere:
+When an action or middleware finds the visitor asked for something it can't give, `abort()` stops the request with an error status, from anywhere:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
@@ -27,17 +28,14 @@ abort_if($note === null, 404, 'That note does not exist.');
 abort_if($note['user_id'] !== $userId, 403);
 ```
 
-Without a message, the standard phrase is used, such as Forbidden. The error passes back through the middleware as a response, so error pages get the [security headers](middleware.md#security-headers) too.
+Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response, so error pages get the [security headers](middleware.md#security-headers) like any other.
 
 > [!WARNING]
-> The message is shown to the visitor. Don't pass internal details, such as an exception's message.
-
-> [!TIP]
-> Use `abort()` for the visitor's mistakes, and let bugs crash so they're logged.
+> The message is shown to the visitor, so don't pass it internal details, such as another exception's message.
 
 ### Sending headers with an error
 
-The third argument adds headers:
+Some statuses come with a header, such as `Retry-After` for a 503. The third argument adds them:
 
 ```php
 abort(503, 'Down for maintenance.', ['Retry-After' => '600']);
@@ -45,30 +43,27 @@ abort(503, 'Down for maintenance.', ['Retry-After' => '600']);
 
 ## Showing your own error page
 
-By default the error is plain text. `httpExceptionHandler()` replaces that with a class, object or closure that takes the exception and the request:
+By default the error goes back as plain text, which is fine for an API but bare for a website. `httpExceptionHandler()` sets what answers it instead, as a class, an object or a closure that takes the exception and the request:
 
 ```php
 $app->httpExceptionHandler(function (HttpException $e, Request $request) use ($app): Response {
     $view = $app->container->get(Template::class);
     $html = $view->render('error', ['status' => $e->status, 'message' => $e->getMessage()]);
 
-    return new Response($html, $e->status, ['Content-Type' => 'text/html; charset=utf-8', ...$e->headers]);
+    return Response::html($html, $e->status);
 });
 ```
 
-> [!WARNING]
-> Include `$e->headers`, or a 405 loses its `Allow` header.
+The exception's headers, such as `Allow` on a 405, are added to whatever the handler returns, so it doesn't need to copy them. A header the handler sets itself, such as `Content-Type`, stays as it is.
 
 ### Answering in JSON
 
-Use the request to answer differently, such as JSON for `/api/`:
+The handler also gets the request, so one handler can answer in more than one way, such as JSON for paths under `/api/`:
 
 ```php
 $app->httpExceptionHandler(function (HttpException $e, Request $request): Response {
     if (str_starts_with($request->path, '/api/')) {
-        $json = Data::toJson(['error' => $e->getMessage()]);
-
-        return new Response($json, $e->status, ['Content-Type' => 'application/json', ...$e->headers]);
+        return Response::json(['error' => $e->getMessage()], $e->status);
     }
 
     return Response::fromHttpException($e);
@@ -77,30 +72,23 @@ $app->httpExceptionHandler(function (HttpException $e, Request $request): Respon
 
 ## Crashes
 
-Any other exception is logged and answered with a plain-text 500. It skips your error handler and your middleware.
+Any other exception is a crash. It's logged, and the visitor gets a plain-text 500 "Internal Server Error". A crash skips your error handler, and the middleware doesn't add its headers to it.
 
 ### Debug mode
 
-With `debug` on, a crash shows the code around the error and a stack trace instead.
+While you're working, set `debug` in the [config](config.md). A crash then shows the code around the error and a stack trace, with the frames outside your app folded away.
 
-> [!WARNING]
-> Never enable debug mode in production.
+### Warnings and notices
 
-## Warnings and notices
+PHP's warnings and notices are easy to miss, so inside a request or a command they throw an `ErrorException` and crash like any other bug. Reading an undefined array key crashes, for example, rather than carrying on with `null`.
 
-Inside a request or command, PHP warnings and notices throw an `ErrorException`. Reading an undefined array key crashes instead of giving `null`.
+That changes how some PHP functions fail. `file_get_contents()` on a missing file throws, so a `=== false` check after it never runs, and you check with `is_file()` first instead. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
 
-So `file_get_contents()` on a missing file throws, and a `=== false` check after it never runs. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies.
-
-Deprecations are only logged. Fatal errors are left to PHP.
-
-## Errors in commands
-
-A command that throws is logged, prints the error and exits with 1.
+Deprecation notices are only logged, so a PHP upgrade can't take your pages down. Fatal errors, such as running out of memory, are left to PHP. A command that crashes is logged too, prints the error, and exits with 1.
 
 ## Logging
 
-Sapling writes one line per crash or 5xx response with `error_log()`. When the error came from Sapling or a package, the line also names your code that called it:
+Sapling writes one line per crash or 5xx response with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there, which is usually where the fix belongs:
 
 ```text
 GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:68 from /srv/app/app/Notes/Download.php:21
@@ -108,13 +96,13 @@ GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /
 
 ### Where the log goes
 
-Lines go to the web server's log, or the terminal for commands. For a file per day, set `error_log` in `bootstrap.php`:
+By default, PHP sends the lines to the web server's log, or to the terminal for commands. For a file per day instead, set `error_log` in `bootstrap.php`:
 
 ```php
 ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 ```
 
-Clear old files from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels, use Monolog.
+Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels or other destinations, use a logging library such as Monolog.
 
 ## Method reference
 
@@ -123,6 +111,6 @@ Clear old files from cron with `find logs -name 'app-*.log' -mtime +14 -delete`.
 | `abort($status, $message = '', $headers = [])` | Throws an `HttpException` |
 | `abort_if($condition, $status, ...)` | Throws one when the condition is true |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
-| `$e->status`, `$e->headers` | The status and the headers to send with it |
+| `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
 | `$app->httpExceptionHandler($handler)` | Sets what turns an `HttpException` into a response |
-| `Response::fromHttpException($e)` | The default answer, in plain text with the exception's status, message and headers |
+| `Response::fromHttpException($e)` | The default answer, in plain text with the exception's status and message |

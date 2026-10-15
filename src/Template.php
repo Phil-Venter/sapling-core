@@ -6,10 +6,9 @@ use BackedEnum;
 use LogicException;
 use RuntimeException;
 use Throwable;
-use TypeError;
 
 /**
- * Renders plain PHP templates, with layouts and sections.
+ * Renders plain PHP templates, with layouts, sections, partials and components.
  */
 final class Template
 {
@@ -19,52 +18,61 @@ final class Template
 	/** @var array<string, string> */
 	private array $sections = [];
 
-	/** @var list<string> */
-	private array $openSections = [];
+	/** @var list<array{kind: 'section'|'component', name: string, data: array<string, mixed>}> */
+	private array $open = [];
 
 	private ?string $layout = null;
 
-	private int $depth = 0;
+	private bool $rendering = false;
 
 	public function __construct(private string $dir) {}
 
 	/**
-	 * Makes a value available to every template rendered after this.
+	 * Renders the page {$template}.php, inside its layout. Use include() inside a template.
+	 *
+	 * @param array<string, mixed> $data
+	 * @throws RuntimeException When a template file is missing.
+	 * @throws Throwable Whatever a template throws.
 	 */
-	public function share(string $key, mixed $value): void
+	public function render(string $template, array $data = []): string
 	{
-		$this->shared[$key] = $value;
+		// It would reset the page being rendered.
+		if ($this->rendering) {
+			throw new LogicException("render() inside a template, use include('{$template}')");
+		}
+
+		$this->rendering = true;
+		$this->sections = [];
+		$this->open = [];
+		$this->layout = null;
+		$data += $this->shared;
+
+		try {
+			$html = $this->capture($template, $data);
+
+			while ($this->layout !== null) {
+				$layout = $this->layout;
+				$this->layout = null;
+				$this->sections['content'] = $html;
+				$html = $this->capture($layout, $data);
+			}
+
+			return $html;
+		} finally {
+			$this->rendering = false;
+		}
 	}
 
 	/**
-	 * Renders {$template}.php with $data as its variables, inside its layout when it calls layout().
+	 * Renders a partial, as in include('_nav').
 	 *
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException When the template file is missing.
 	 * @throws Throwable Whatever the template throws.
 	 */
-	public function render(string $template, array $data = []): string
+	public function include(string $template, array $data = []): string
 	{
-		$file = "{$this->dir}/{$template}.php";
-
-		if (!is_file($file)) {
-			throw new RuntimeException("Template not found: {$file}");
-		}
-
-		$this->depth++;
-
-		try {
-			return $this->renderFile($file, $template, $data + $this->shared);
-		} finally {
-			$this->depth--;
-
-			// Nothing carries over to the next page.
-			if ($this->depth === 0) {
-				$this->sections = [];
-				$this->openSections = [];
-				$this->layout = null;
-			}
-		}
+		return $this->capture($template, $data + $this->shared);
 	}
 
 	/**
@@ -79,10 +87,10 @@ final class Template
 	 * Sets a section, as in section('title', 'Notes'), or starts one that end() closes, as in section('aside').
 	 * Call it from a template.
 	 */
-	public function section(string $name, mixed $content = null): void
+	public function section(string $name, string|int|float|BackedEnum $content = ''): void
 	{
 		if (func_num_args() === 1) {
-			$this->openSections[] = $name;
+			$this->open[] = ['kind' => 'section', 'name' => $name, 'data' => []];
 			ob_start();
 
 			return;
@@ -92,25 +100,43 @@ final class Template
 			$content = $content->value;
 		}
 
-		if (!is_string($content) && !is_int($content) && !is_float($content)) {
-			$type = get_debug_type($content);
-			throw new TypeError("Section {$name} needs a string, number or backed enum, got {$type}");
-		}
-
 		$this->sections[$name] = (string) $content;
 	}
 
 	/**
-	 * Closes the section that section() started.
+	 * Starts a component, as in component('_card', ['title' => 'Notes']). Its $slot is what's printed until end().
+	 *
+	 * @param array<string, mixed> $data
+	 */
+	public function component(string $template, array $data = []): void
+	{
+		$this->open[] = ['kind' => 'component', 'name' => $template, 'data' => $data];
+		ob_start();
+	}
+
+	/**
+	 * Closes the last section() or component().
+	 *
+	 * @throws RuntimeException When a component's template file is missing.
+	 * @throws Throwable Whatever a component's template throws.
 	 */
 	public function end(): void
 	{
-		if ($this->openSections === []) {
-			throw new LogicException('end() without an open section()');
+		$open = array_pop($this->open);
+
+		if ($open === null) {
+			throw new LogicException('end() without an open section() or component()');
 		}
 
-		$name = array_pop($this->openSections);
-		$this->sections[$name] = (string) ob_get_clean();
+		$content = (string) ob_get_clean();
+
+		if ($open['kind'] === 'section') {
+			$this->sections[$open['name']] = $content;
+
+			return;
+		}
+
+		echo $this->include($open['name'], [...$open['data'], 'slot' => $content]);
 	}
 
 	/**
@@ -122,16 +148,28 @@ final class Template
 	}
 
 	/**
+	 * Makes a value available to every template rendered after this.
+	 */
+	public function share(string $key, mixed $value): void
+	{
+		$this->shared[$key] = $value;
+	}
+
+	/**
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException
 	 * @throws Throwable
 	 */
-	private function renderFile(string $file, string $template, array $data): string
+	private function capture(string $template, array $data): string
 	{
-		$outerLayout = $this->layout;
-		$this->layout = null;
+		$file = "{$this->dir}/{$template}.php";
+
+		if (!is_file($file)) {
+			throw new RuntimeException("Template not found: {$file}");
+		}
+
 		$level = ob_get_level();
-		$opened = count($this->openSections);
+		$opened = count($this->open);
 		$run =
 			/** @param array<string, mixed> $__data */
 			function (string $__file, array $__data): void {
@@ -144,9 +182,12 @@ final class Template
 		try {
 			$run($file, $data);
 
-			if (count($this->openSections) > $opened) {
-				$name = $this->openSections[$opened] ?? '';
-				throw new LogicException("Section {$name} in {$template} has no end()");
+			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
+			$unclosed = $this->open[$opened] ?? null;
+
+			if ($unclosed !== null) {
+				$kind = ucfirst($unclosed['kind']);
+				throw new LogicException("{$kind} {$unclosed['name']} in {$template} has no end()");
 			}
 		} catch (Throwable $e) {
 			while (ob_get_level() > $level) {
@@ -156,18 +197,6 @@ final class Template
 			throw $e;
 		}
 
-		$content = (string) ob_get_clean();
-
-		/** @var string|null $layout */
-		$layout = $this->layout;
-		$this->layout = $outerLayout;
-
-		if ($layout === null) {
-			return $content;
-		}
-
-		$this->sections['content'] = $content;
-
-		return $this->render($layout, $data);
+		return (string) ob_get_clean();
 	}
 }

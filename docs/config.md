@@ -12,11 +12,13 @@
 
 ## Introduction
 
-`Sapling\Config` holds the settings that `config.php` returns. `config.php` is the only file that reads `.env` and the environment.
+An app's settings live in one PHP file, `config.php`, where each one can have a default and a comment. Secrets and anything that differs between servers come from `.env` or the server's environment, and stay out of git.
+
+`config.php` is the only code that reads `.env` and the environment. `Sapling\Config` holds what it returns, so the rest of the app never needs to know where a value came from.
 
 ## The config file
 
-`config.php` returns a flat array. `$env` holds the variables from `.env` and the environment:
+`config.php` returns a flat array of settings. It's plain PHP, so a setting can be worked out, and `$env` holds the variables from `.env` and the environment. Giving every setting a default keeps `.env` down to what differs between servers:
 
 ```php
 return [
@@ -28,21 +30,20 @@ return [
 ];
 ```
 
-> [!TIP]
-> Give every setting a default, so `.env` only holds what differs between servers. A missing `APP_ENV` then means production.
-
 ## The environment file
 
-`.env` holds secrets and per-machine values:
+`.env` holds the secrets and the values that differ between machines:
 
 ```sh
 APP_ENV=dev
 API_KEY="a long secret"
 ```
 
-`vendor/bin/sapling init` writes one with a fresh `APP_KEY` and adds it to `.gitignore`. Keep it out of git.
+`vendor/bin/sapling init` writes one for development, with a fresh `APP_KEY`, and adds it to `.gitignore`, since it should never reach git.
 
 ### How it's read
+
+The format is deliberately simple:
 
 - Lines are `KEY=value`. Lines starting with `#` are comments. Values are always strings.
 - Surrounding quotes are removed. In unquoted values, ` #` starts a comment, so `KEY=abc # note` is `abc`, but `KEY=a#b` is `a#b`.
@@ -52,13 +53,13 @@ API_KEY="a long secret"
 
 ## Reading settings
 
-Use [`#[Config]`](container.md#settings-in-constructors) in a constructor:
+Most classes get their settings straight into the constructor with [`#[Config]`](container.md#settings-in-constructors):
 
 ```php
 public function __construct(#[Config('api_key'), SensitiveParameter] private string $apiKey) {}
 ```
 
-Or call `get()`:
+Elsewhere, such as in `bootstrap.php`, ask the `Config` object with `get()`:
 
 ```php
 $debug = $config->get('debug');
@@ -66,7 +67,7 @@ $debug = $config->get('debug');
 
 ### Missing settings
 
-`get()` throws a `LogicException` for a missing setting, to catch typos. Pass a default when it may be missing:
+A missing setting is usually a typo, so `get()` throws a `LogicException` that names it. When a setting really is optional, pass a default:
 
 ```php
 $lifetime = $config->get('session_lifetime', 0);
@@ -82,11 +83,10 @@ $lifetime = $config->get('session_lifetime', 0);
 | `app_key` | The key [`Crypto`](encryption.md) encrypts with | `Crypto` throws when it's first used |
 | `cors_origins` | Sites that may call the app from a browser, for [`Cors` and `Csrf`](middleware.md) | None |
 | `cors_credentials` | Whether those sites may send cookies | No |
-| `cors_expose_headers` | Response headers their scripts may read | None |
 
 ## Configuration in production
 
-Set real environment variables in production and don't deploy `.env`.
+On a server, set real environment variables instead of deploying `.env`. A `.env` shipped by mistake then can't switch production into debug mode.
 
 > [!NOTE]
 > php-fpm hides environment variables by default (`clear_env = yes`). Pass them with `env[NAME]` in the pool config.

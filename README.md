@@ -32,12 +32,6 @@ php -S localhost:8080 -t public
 
 `init` adds the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`) and an empty `app/` folder for your actions. It writes a `.env` for development, adds it to `.gitignore`, and points `App\` at `app/` in `composer.json`. It never overwrites a file that's already there. Errors are plain text until you [set an error handler](docs/errors.md).
 
-For a worked example, the starter app is a small notes app with user accounts:
-
-```sh
-composer create-project sapling/skeleton my-app
-```
-
 A Sapling app can also fit in one file:
 
 ```php
@@ -69,9 +63,11 @@ Serve it with `php -S localhost:8080 app.php`, and run its commands with `php ap
 
 ## Why Sapling
 
-I've been fiddling with micro frameworks for quite some time. I like Symfony, Laravel and Slim, and I use them, but they never really fit the things I kept building, such as proofs of concept, one-off projects, and internal tools slapped together for a team. So much of them is wrapped in dogma and ceremony those projects don't need.
+I like Symfony, Laravel and Slim, and I use them, but they're too much for the proofs of concept, one-off projects and slapped-together internal tools I keep building. There's a lot of dogma and ceremony in them that those projects don't need.
 
-Sapling is the framework I wanted for that work. It does what small projects need and leaves out the rest, and its whole core can be read in a day.
+So I've been fiddling with my own micro frameworks since early 2023, and Sapling is roughly my tenth. Most of the earlier ones went one of two ways. Some were quick experiments I never came back to. The rest got too clever, with interfaces nobody needed, a template compiler, a pile of global helpers, or packages and a build step just to boot.
+
+Sapling keeps the parts that worked and drops the rest. You can read the whole core in a day.
 
 ## How Sapling thinks
 

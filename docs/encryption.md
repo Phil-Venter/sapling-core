@@ -11,30 +11,27 @@
 
 ## Introduction
 
-`Sapling\Crypto` encrypts secrets the app stores and needs back, such as an API key for another service. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with `app_key`. A copy of the database alone reveals nothing.
+Some secrets can't be hashed, because the app has to send the original somewhere, such as a tenant's API key for another service. `Sapling\Crypto` encrypts those before they're stored, so a copy of the database on its own reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
 
 ## The app key
 
-`app_key` is 32 random bytes in base64. `vendor/bin/sapling init` writes one into `.env`, and `config.php` reads it:
+Everything `Crypto` does depends on one key. `app_key` is 32 random bytes in base64, which `vendor/bin/sapling init` writes into `.env` and `config.php` passes on:
 
 ```php
 'app_key' => $env['APP_KEY'] ?? '',
 ```
 
-To generate another:
+Each server needs a key of its own. To generate one:
 
 ```sh
 php -r 'echo "APP_KEY=" . base64_encode(random_bytes(32)), PHP_EOL;'
 ```
 
-An invalid key throws an `InvalidArgumentException` when `Crypto` is first used.
-
-> [!WARNING]
-> Don't back up `app_key` with the database. Together they reveal every secret. Lose the key, and nobody can decrypt them, including you.
+A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Without the right key, nothing can be decrypted again, so keep it safe, and keep it apart from database backups.
 
 ## Encrypting and decrypting
 
-`encrypt()` returns base64 text for a database column, and `decrypt()` returns the secret:
+Ask for `Crypto` in a constructor. `encrypt()` turns a secret into base64 text that fits in a database column, and `decrypt()` turns it back:
 
 ```php
 $stored = $this->crypto->encrypt($apiKey, "tenant:{$tenantId}:evernote");
@@ -43,15 +40,15 @@ $stored = $this->crypto->encrypt($apiKey, "tenant:{$tenantId}:evernote");
 $apiKey = $this->crypto->decrypt($stored, "tenant:{$tenantId}:evernote");
 ```
 
-Encrypting the same secret twice gives different text.
+Each value gets a fresh random nonce, so encrypting the same secret twice gives different text.
 
 ### Contexts
 
-The second argument ties the value to where it's stored. A value only decrypts with the same context, so one copied into another tenant's row gives `null`.
+The second argument is a context, a string that ties the value to the place it's stored, such as the tenant and the service above. A value only decrypts with the context it was encrypted with, so a value copied into another tenant's row gives `null` rather than the other tenant's secret.
 
 ### When decrypting fails
 
-`decrypt()` returns `null` when the value was changed, the context differs or the key is wrong:
+`decrypt()` never throws. It returns `null` when the value was changed, the context differs or the key is wrong, and the app decides what to do:
 
 ```php
 $apiKey = $this->crypto->decrypt($stored, "tenant:{$tenantId}:evernote");
@@ -62,15 +59,15 @@ if ($apiKey === null) {
 ```
 
 > [!TIP]
-> Treat `null` as "connect again", not as a crash. Changing `app_key` makes every stored secret unreadable.
+> Treat `null` as "connect again" rather than as a crash. Changing `app_key` makes every stored secret unreadable at once.
 
 ## What not to encrypt
 
-Passwords. Hash them with `password_hash()` instead.
+Passwords never need decrypting, only checking, so hash them with `password_hash()` instead.
 
 ## Why XChaCha20-Poly1305
 
-- **It's authenticated.** A tampered value fails to decrypt. The context is authenticated but not stored.
+- **It's authenticated.** A tampered value fails to decrypt, and the context is checked along with it without being stored.
 - **Its nonce is 24 bytes,** so each value can safely get a random one, with no counter to keep.
 - **It's everywhere.** It ships with sodium and runs in constant time without special CPU support.
 

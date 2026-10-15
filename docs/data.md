@@ -11,59 +11,65 @@
 
 ## Introduction
 
-`Sapling\Data` converts PHP arrays to and from JSON, XML and form strings. Its static methods need no app, and broken input always throws.
+PHP's own functions for JSON, XML and form strings each report errors differently and have different defaults. `Sapling\Data` gives every format the same pair of methods, one to encode an array and one to decode it back, and broken input always throws. The methods are static and need no app, so scripts can use them too.
 
 ## JSON
+
+JSON is the format most APIs speak:
 
 ```php
 $json = Data::toJson(['name' => 'Ann', 'city' => 'Cape Town']);
 $user = Data::fromJson($json);
 ```
 
-`toJson()` doesn't escape slashes or Unicode. `fromJson()` decodes objects as arrays. Both throw a `JsonException` on failure.
+`toJson()` leaves slashes and Unicode as they are, so URLs and names like `café` stay readable, and `fromJson()` decodes objects as arrays. Both throw a `JsonException` when they can't do their job.
 
 > [!NOTE]
-> `{}` decodes to `[]`, which encodes as a list. Use `new stdClass()` when you need `{}`.
+> Because objects become arrays, `{}` decodes to `[]`, which encodes as a list. Use `new stdClass()` where another service needs `{}`.
 
 ## Forms and query strings
 
+A URL-encoded form body and a query string are the same format, so one pair of methods covers both:
+
 ```php
-$query = Data::toForm(['q' => 'notes', 'page' => 2]);   // q=notes&page=2
-$fields = Data::fromForm('a=1&b[]=2&b[]=3');
+$query = Data::toForm(['q' => 'notes', 'page' => 2]); // q=notes&page=2
+$fields = Data::fromForm('a=1&b[]=2&b[]=3');          // ['a' => 1, 'b' => [2, 3]]
 ```
 
-Form bodies and query strings use the same format.
-
 ## XML
+
+XML is here for the services that only speak XML, such as older SOAP APIs:
 
 ```php
 $xml = Data::toXml(['id' => 7, 'items' => ['item' => ['Pen', 'Paper']]], root: 'order');
 $order = Data::fromXml($xml);
 ```
 
-Invalid XML throws a `RuntimeException`. External entities are never fetched.
+Invalid XML throws a `RuntimeException`, and nothing external is ever fetched while parsing.
 
 ### How XML maps to arrays
 
+XML doesn't map onto arrays one to one, so `fromXml()` follows a few rules:
+
 - Elements become keys, and repeated elements become lists. One `<item>` is a string and two are a list, so check with `is_array()` when the count varies.
 - `@name` keys are attributes, and `#text` is text beside attributes.
-- Values are strings.
+- Values are strings, because XML has no types.
 - Namespace prefixes stay on the keys, as in `soap:Body`.
 - A root holding only text decodes to a string.
 
 ## Decoding by content type
 
-`decode()` picks the format from a `Content-Type`:
+When a body could be in any of these formats, `decode()` picks the right one from its `Content-Type`:
 
 ```php
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and other types give the body as is. `$request->data()` and `$response->data()` use it.
+Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. This is what `$request->data()` and `$response->data()` use, so requests and replies are decoded the same way.
 
 ## Reading nested data
 
-Wrap decoded data in a [`Value`](values.md) to read nested keys safely:
+Decoded data can hold anything, and a key you expect may be missing. Wrap it in a [`Value`](values.md) to read nested keys safely, with a default at the end:
 
 ```php
 $envelope = new Value(Data::fromXml($xml));

@@ -24,12 +24,7 @@ test('attr() and attrs() escape, join lists, and leave out empty and false attri
 	expect(attr('class', ['col', '0', '', null]))->toBe('class="col 0"');
 	expect(attr('tabindex', 0))->toBe('tabindex="0"');
 	expect(attr('required', true))->toBe('required');
-	expect([attr('hidden', false), attr('id', null), attr('id', ''), attr('data', new stdClass())])->toBe([
-		null,
-		null,
-		null,
-		null,
-	]);
+	expect([attr('hidden', false), attr('id', null), attr('id', '')])->toBe([null, null, null]);
 	expect(attrs(['class' => 'note', 'hidden' => false, 'data-id' => 7, 'open' => true]))
 		->toBe('class="note" data-id="7" open');
 });

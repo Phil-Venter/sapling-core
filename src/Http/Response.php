@@ -88,14 +88,11 @@ final class Response
 	}
 
 	/**
-	 * A plain text response with the exception's status, message and headers.
+	 * A plain text response with the exception's status and message. App adds its headers.
 	 */
 	public static function fromHttpException(HttpException $e): self
 	{
-		return new self($e->getMessage(), $e->status, [
-			'Content-Type' => 'text/plain; charset=utf-8',
-			...$e->headers,
-		]);
+		return self::text($e->getMessage(), $e->status);
 	}
 
 	/**

@@ -17,11 +17,13 @@
 
 ## Introduction
 
-`Sapling\Db` is a thin layer over PDO. Each query is one call with `?` placeholders, and rows come back as arrays keyed by column name. There's no query builder or ORM.
+`Sapling\Db` is a thin layer over PDO. PDO does the real work, but every query takes a prepare, an execute and a fetch, and rows come back twice, by name and by position. `Db` turns each query into one call with `?` placeholders, and returns rows as arrays keyed by column name.
+
+There's no query builder or ORM. You write the SQL, and it stays where you can read it.
 
 ## Connecting
 
-Register the database in `bootstrap.php`. It connects on first use:
+The database is registered once in `bootstrap.php`, and any class can then ask for `Db` in its constructor. Because it's registered as a closure, a request that never uses the database never connects:
 
 ```php
 $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
@@ -29,7 +31,7 @@ $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 
 ### SQLite
 
-`Db::sqlite()` opens or creates a SQLite file with these settings:
+SQLite suits most small apps, since the whole database is one file. `Db::sqlite()` opens that file, creating it if needed, and applies settings that suit a web app:
 
 | Setting | What it does |
 | --- | --- |
@@ -39,14 +41,11 @@ $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 | `busy_timeout = 5000` | A locked database is retried for 5 seconds before "database is locked" |
 | `journal_size_limit = 67108864` | The WAL file shrinks back to 64 MB after a big write |
 
-A file that can't be opened throws a `RuntimeException`.
-
-> [!WARNING]
-> Keep the database file outside `public/`.
+A file that can't be opened throws a `RuntimeException` that names it.
 
 ### Other databases
 
-Wrap any PDO connection in `new Db()`:
+For MySQL, PostgreSQL or anything else PDO supports, create the connection yourself and wrap it in `new Db()`:
 
 ```php
 $app->container->set(Db::class, function () use ($config): Db {
@@ -56,11 +55,11 @@ $app->container->set(Db::class, function () use ($config): Db {
 });
 ```
 
-`Db` sets it to throw on errors, fetch rows by name, and use real prepared statements, so `LIMIT ?` works on MySQL.
+`Db` then sets the connection to throw on errors, to fetch rows by name, and to use real prepared statements, so `LIMIT ?` works on MySQL.
 
 ## Running queries
 
-Every method takes the SQL and the values for its `?` placeholders:
+Every method takes the SQL and a list of values for its `?` placeholders. Writing the SQL as a heredoc, one clause per line, keeps longer queries readable:
 
 ```php
 $sql = <<<SQL
@@ -73,14 +72,11 @@ $sql = <<<SQL
 $notes = $this->db->all($sql, [$userId]);
 ```
 
-> [!WARNING]
-> Always pass values as `?` parameters, never in the SQL string.
-
-A failed query throws a `PDOException`.
+A query that fails throws a `PDOException`, which you can catch for cases such as a duplicate email.
 
 ### Fetching rows
 
-`all()` returns every row, and `one()` the first row or `null`:
+`all()` returns every row as a list, and `one()` returns the first row, or `null` when there isn't one:
 
 ```php
 $sql = <<<SQL
@@ -95,12 +91,9 @@ abort_if($note === null, 404, 'That note does not exist.');
 return Response::text($note['body']);
 ```
 
-> [!TIP]
-> Name the columns you need instead of `SELECT *`.
-
 ### Fetching a single value
 
-`value()` returns the first column of the first row as a [`Value`](values.md):
+For a count or a single field, `value()` returns the first column of the first row as a [`Value`](values.md), so you read it as the type you need:
 
 ```php
 $sql = <<<SQL
@@ -114,7 +107,7 @@ $count = $this->db->value($sql, [$userId])->int();
 
 ### Inserting, updating and deleting
 
-`run()` returns how many rows changed. `lastId()` returns the last inserted id as a string:
+Statements that change data go through `run()`, which returns how many rows changed. After an insert, `lastId()` returns the new row's id as a string:
 
 ```php
 $sql = <<<SQL
@@ -128,7 +121,7 @@ $id = $this->db->lastId();
 
 ## Transactions
 
-`transaction()` commits the closure's writes together, or rolls them back if it throws. It returns the closure's result:
+Writes that belong together should succeed or fail together. `transaction()` runs a closure and commits everything it does, or rolls it all back if it throws, and returns whatever the closure returns:
 
 ```php
 $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
@@ -152,14 +145,14 @@ $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
 });
 ```
 
-On SQLite, transactions start with `BEGIN IMMEDIATE`, so they wait for the write lock instead of failing at the first write.
+On SQLite, a transaction starts with `BEGIN IMMEDIATE`, so it waits for the write lock like any other write, instead of failing at its first write.
 
 > [!WARNING]
-> Transactions don't nest. A `transaction()` inside another throws a `PDOException`, so start it in the outermost code, such as the action.
+> Transactions don't nest. A `transaction()` inside another throws a `PDOException`, so start the transaction in the outermost code, such as the action, and let the classes it calls use plain `run()`.
 
 ## Migrations
 
-Migrations are SQL files in `database/migrations/`.
+The schema changes over time, one step at a time. Each step is a migration, a plain SQL file in `database/migrations/`, and two commands manage them.
 
 ### Creating a migration
 
@@ -167,7 +160,7 @@ Migrations are SQL files in `database/migrations/`.
 php bin/console migrations:new "add notes"
 ```
 
-This creates an empty `database/migrations/20261012093000-add_notes.sql`, named by the UTC time so files sort in order. Zero-padded names such as `001_notes.sql` work too.
+This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort correctly too.
 
 ### Running migrations
 
@@ -175,17 +168,14 @@ This creates an empty `database/migrations/20261012093000-add_notes.sql`, named 
 php bin/console migrations:run
 ```
 
-New files run in name order, each in a transaction, and are recorded in a `migrations` table. Empty files are skipped and run once they have SQL.
-
-> [!WARNING]
-> Don't edit a migration that has already run. Servers that ran it won't run it again.
+This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped without being recorded, so it still runs once it has SQL in it.
 
 > [!NOTE]
-> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, so a failed migration can leave changes behind. Keep one schema change per file.
+> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.
 
 ## Using PDO directly
 
-`$db->pdo` is the PDO connection. Use it for other SQLite pragmas, for example:
+For anything the methods don't cover, `$db->pdo` is the PDO connection itself. A common use is setting more SQLite pragmas when the database is registered:
 
 ```php
 $app->container->set(Db::class, function () use ($config): Db {
@@ -195,7 +185,6 @@ $app->container->set(Db::class, function () use ($config): Db {
     return $db;
 });
 ```
-
 
 ## Method reference
 

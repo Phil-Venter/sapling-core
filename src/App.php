@@ -92,9 +92,8 @@ final class App
 		$app->container->set(Cors::class, function () use ($config): Cors {
 			$trusted = $config->get('cors_origins', []);
 			$creds = $config->get('cors_credentials', false);
-			$expose = $config->get('cors_expose_headers', []);
 
-			return new Cors($trusted, $creds, $expose);
+			return new Cors($trusted, $creds);
 		});
 
 		$app->container->set(Csrf::class, function () use ($config): Csrf {
@@ -336,8 +335,18 @@ final class App
 			} catch (HttpException $e) {
 				/** @var callable(HttpException, Request): Response $handler */
 				$handler = $this->resolve($this->httpExceptionHandler);
+				$response = $handler($e, $request);
 
-				return $handler($e, $request);
+				// So a handler can't lose them, such as Allow on a 405. Its own headers win.
+				foreach ($e->headers as $name => $value) {
+					if ($response->header($name)->raw !== null) {
+						continue;
+					}
+
+					$response = $response->withHeader($name, $value);
+				}
+
+				return $response;
 			}
 		};
 	}

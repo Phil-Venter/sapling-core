@@ -24,8 +24,8 @@ test('Cors refuses credentials with a * origin, which would let any site read si
 		->toThrow(InvalidArgumentException::class, 'cors_credentials needs cors_origins to list sites, not *');
 });
 
-test('Cors sends credentials and exposed headers for a listed origin, and adds to an existing Vary', function () {
-	$cors = new Cors(['https://app.example'], allowCredentials: true, exposeHeaders: ['X-Total', 'X-Page']);
+test('Cors sends credentials for a listed origin, and adds to an existing Vary', function () {
+	$cors = new Cors(['https://app.example'], allowCredentials: true);
 	$next = fn(Request $request) => new Response('ok', 200, ['Vary' => 'Accept-Encoding']);
 
 	$response = $cors(new Request('GET', '/notes', headers: ['Origin' => 'https://app.example']), $next);
@@ -33,19 +33,17 @@ test('Cors sends credentials and exposed headers for a listed origin, and adds t
 	expect($response->headers)->toMatchArray([
 		'Access-Control-Allow-Origin' => 'https://app.example',
 		'Access-Control-Allow-Credentials' => 'true',
-		'Access-Control-Expose-Headers' => 'X-Total, X-Page',
 		'Vary' => 'Accept-Encoding, Origin',
 	]);
 });
 
-test('Cors refuses origins that are unsafe or could never match, when the app starts', function (
+test('Cors refuses origins that could never match, when the app starts', function (
 	array $origins,
 	bool $credentials,
 	string $message,
 ) {
 	expect(fn() => new Cors($origins, $credentials))->toThrow(InvalidArgumentException::class, $message);
 })->with([
-	'null, which any site can send' => [['null'], false, 'cors_origins cannot list null'],
 	'a trailing slash' => [
 		['https://app.example/'],
 		false,
@@ -53,22 +51,7 @@ test('Cors refuses origins that are unsafe or could never match, when the app st
 	],
 	'capitals' => [['https://App.example'], false, 'needs scheme://host[:port] in lowercase'],
 	'no scheme' => [['app.example'], false, 'needs scheme://host[:port] in lowercase'],
-	'plain http with credentials' => [
-		['http://app.example'],
-		true,
-		'cors_credentials needs https origins or localhost',
-	],
 ]);
-
-test('Cors allows http://localhost with credentials, for local development', function () {
-	expect(new Cors(['http://localhost:5173', 'http://127.0.0.1:8080'], allowCredentials: true))
-		->toBeInstanceOf(Cors::class);
-});
-
-test('Cors refuses * as an exposed header with credentials, where browsers read it as a header name', function () {
-	expect(fn() => new Cors(['https://app.example'], allowCredentials: true, exposeHeaders: ['*']))
-		->toThrow(InvalidArgumentException::class, 'cors_expose_headers cannot be * with cors_credentials');
-});
 
 test('Cors adds Vary: Origin to every response when the answer depends on the origin', function (array $headers) {
 	$app = scannedApp();

@@ -25,3 +25,12 @@ test('an option without =value, or a flag with one, throws rather than giving th
 	expect(fn() => $console->option('days'))->toThrow(InvalidArgumentException::class, '--days needs a value');
 	expect(fn() => $console->flag('force'))->toThrow(InvalidArgumentException::class, '--force is a flag');
 });
+
+test('every word after -- is an argument, even one that starts with dashes', function () {
+	$console = new Console(['bin/console', 'notes:add', 'first', '--', '--not-a-flag', '--x=1']);
+
+	expect($console->arg(0)->string())->toBe('first');
+	expect($console->arg(1)->string())->toBe('--not-a-flag');
+	expect($console->arg(2)->string())->toBe('--x=1');
+	expect($console->flag('not-a-flag'))->toBeFalse();
+});
