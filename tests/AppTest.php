@@ -128,6 +128,14 @@ describe('registering in code', function () {
 		expect($app->handle(new Request('GET', '/notes'))->status)->toBe(200);
 	})->with(['without' => 'Sapling\Tests\Fixtures\Scan', 'with' => 'Sapling\Tests\Fixtures\Scan\\']);
 
+	test('scan() skips files that start with a lowercase letter, such as helpers.php', function () {
+		$app = new App(FIXTURES);
+		$app->scan(FIXTURES . '/Scan', 'Sapling\\Tests\\Fixtures\\Scan');
+
+		expect($app->handle(new Request('GET', '/notes'))->status)->toBe(200);
+		expect(function_exists('scan_fixture_helper'))->toBeFalse();
+	});
+
 	test('scan() takes its folder with or without a trailing slash', function () {
 		$app = new App(FIXTURES);
 		$app->scan(FIXTURES . '/Scan/', 'Sapling\\Tests\\Fixtures\\Scan\\');

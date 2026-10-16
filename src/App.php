@@ -133,7 +133,8 @@ final class App
 
 		/** @var SplFileInfo $file */
 		foreach (new RecursiveIteratorIterator($directory) as $file) {
-			if ($file->getExtension() !== 'php') {
+			// Class files start with a capital, so helpers.php can hold functions instead.
+			if ($file->getExtension() !== 'php' || ctype_lower($file->getFilename()[0])) {
 				continue;
 			}
 

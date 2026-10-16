@@ -82,6 +82,15 @@ $app->scan(__DIR__ . '/app', 'App');
 
 It expects one class per file, named after its path as PSR-4 does, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order, so a scan gives the same result on every machine.
 
+Files that start with a lowercase letter, such as `helpers.php`, are skipped, so `app/` can hold plain functions too. Load them through Composer, as Sapling's own helpers are:
+
+```json
+"autoload": {
+    "psr-4": { "App\\": "app/" },
+    "files": ["app/helpers.php"]
+}
+```
+
 There's no cache, so every request scans. That takes about 0.2 ms for a dozen classes.
 
 > [!WARNING]
