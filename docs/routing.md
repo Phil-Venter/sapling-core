@@ -52,7 +52,7 @@ final class ShowNote
 }
 ```
 
-The [container](container.md) builds the constructor's arguments, so the action only lists what it uses. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored, so `notes/:id/` and `/notes/:id` are the same route.
+The [container](container.md) builds the constructor's arguments. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored, so `notes/:id/` and `/notes/:id` are the same route.
 
 ## Route parameters
 

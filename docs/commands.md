@@ -13,7 +13,7 @@
 
 ## Introduction
 
-Jobs such as clearing out old rows or creating accounts don't belong behind a URL. A command is a class you run from the terminal instead, such as `php bin/console notes:prune`. It gets its dependencies from the same container as your actions, so it can use the same database and classes.
+Jobs such as clearing out old rows or creating accounts don't belong behind a URL. A command is a class you run from the terminal instead, such as `php bin/console notes:prune`. It gets its dependencies from the same container as your actions.
 
 ## Writing a command
 
@@ -111,7 +111,7 @@ $console->line("Deleted {$deleted} notes.");
 $console->error('No such user.');
 ```
 
-The exit code tells cron and scripts whether the command worked, so return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws is logged, prints the error and exits with 1.
+Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws is logged, prints the error and exits with 1.
 
 ## Adding commands in code
 

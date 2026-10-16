@@ -133,8 +133,11 @@ final class App
 
 		/** @var SplFileInfo $file */
 		foreach (new RecursiveIteratorIterator($directory) as $file) {
-			// Class files start with a capital, so helpers.php can hold functions instead.
-			if ($file->getExtension() !== 'php' || ctype_lower($file->getFilename()[0])) {
+			$name = $file->getBasename('.php');
+			$first = substr($name, 0, 1);
+
+			// Only a capital and no dot make a class file, so helpers.php and _nav.tmpl.php are skipped.
+			if ($file->getExtension() !== 'php' || !ctype_upper($first) || str_contains($name, '.')) {
 				continue;
 			}
 

@@ -31,7 +31,7 @@ abort_if($note['user_id'] !== $userId, 403);
 Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response, so error pages get the [security headers](middleware.md#security-headers) like any other.
 
 > [!WARNING]
-> The message is shown to the visitor, so don't pass it internal details, such as another exception's message.
+> The message is shown to the visitor, so keep internal details, like another exception's message, out of it.
 
 ### Sending headers with an error
 
@@ -54,7 +54,7 @@ $app->httpExceptionHandler(function (HttpException $e, Request $request) use ($a
 });
 ```
 
-The exception's headers, such as `Allow` on a 405, are added to whatever the handler returns, so it doesn't need to copy them. A header the handler sets itself, such as `Content-Type`, stays as it is.
+The exception's headers, like `Allow` on a 405, are added to whatever the handler returns. Any header the handler sets itself wins.
 
 ### Answering in JSON
 
@@ -102,7 +102,7 @@ By default, PHP sends the lines to the web server's log, or to the terminal for 
 ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 ```
 
-Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels or other destinations, use a logging library such as Monolog.
+Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels or other destinations, use Monolog.
 
 ## Method reference
 

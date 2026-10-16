@@ -18,7 +18,7 @@ An app's settings live in one PHP file, `config.php`, where each one can have a 
 
 ## The config file
 
-`config.php` returns a flat array of settings. It's plain PHP, so a setting can be worked out, and `$env` holds the variables from `.env` and the environment. Giving every setting a default keeps `.env` down to what differs between servers:
+`config.php` returns a flat array of settings. It's plain PHP, and `$env` holds the variables from `.env` and the environment. Giving every setting a default keeps `.env` down to what differs between servers:
 
 ```php
 return [
@@ -39,11 +39,9 @@ APP_ENV=dev
 API_KEY="a long secret"
 ```
 
-`vendor/bin/sapling init` writes one for development, with a fresh `APP_KEY`, and adds it to `.gitignore`, since it should never reach git.
+A new app from `composer create-project sapling/skeleton` gets one for development, with a fresh `APP_KEY`, and ignores it in git.
 
 ### How it's read
-
-The format is deliberately simple:
 
 - Lines are `KEY=value`. Lines starting with `#` are comments. Values are always strings.
 - Surrounding quotes are removed. In unquoted values, ` #` starts a comment, so `KEY=abc # note` is `abc`, but `KEY=a#b` is `a#b`.
@@ -53,7 +51,7 @@ The format is deliberately simple:
 
 ## Reading settings
 
-Most classes get their settings straight into the constructor with [`#[Config]`](container.md#settings-in-constructors):
+Most classes get their settings in the constructor with [`#[Config]`](container.md#settings-in-constructors):
 
 ```php
 public function __construct(#[Config('api_key'), SensitiveParameter] private string $apiKey) {}
@@ -67,7 +65,7 @@ $debug = $config->get('debug');
 
 ### Missing settings
 
-A missing setting is usually a typo, so `get()` throws a `LogicException` that names it. When a setting really is optional, pass a default:
+A missing setting is usually a typo, so `get()` throws a `LogicException` that names it. When a setting is optional, pass a default:
 
 ```php
 $lifetime = $config->get('session_lifetime', 0);

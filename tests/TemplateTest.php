@@ -83,3 +83,22 @@ test('render() inside a template throws, since it would wipe the page, and point
 		->toThrow(LogicException::class, "render() inside a template, use include('item')");
 	expect($this->view->render('plain', ['name' => 'Ann']))->toBe("<p>Ann on Sapling</p>\n");
 });
+
+test('prefix::name finds a template in the folder registered with prefix()', function () {
+	$this->view->prefix('mine', FIXTURES . '/views/colocated/');
+
+	expect($this->view->render('mine::card', ['name' => 'Ann']))->toBe("<p>colocated Ann</p>\n");
+	expect(fn() => $this->view->render('other::card'))
+		->toThrow(LogicException::class, 'Unknown template prefix other in other::card');
+});
+
+test('templates end in .tmpl.php unless another suffix is given', function () {
+	$view = new Template(FIXTURES . '/views', suffix: 'php');
+
+	expect($view->render('legacy'))->toBe("<p>plain suffix</p>\n");
+	expect(fn() => $this->view->render('legacy'))->toThrow(RuntimeException::class, 'views/legacy.tmpl.php');
+});
+
+test('a partial that calls layout() leaves the page without one', function () {
+	expect($this->view->render('includes-layout'))->toBe("plain page\n");
+});

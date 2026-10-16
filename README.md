@@ -21,16 +21,15 @@ Sapling was built with AI assistance. All of the code was reviewed by its author
 
 ## Getting started
 
-Start a new app in any folder:
+Start a new app from the skeleton:
 
 ```sh
-composer require sapling/core:dev-main
-vendor/bin/sapling init
-composer dump-autoload
-php -S localhost:8080 -t public
+composer create-project sapling/skeleton my-app
+cd my-app
+composer serve
 ```
 
-`init` adds the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`) and an empty `app/` folder for your actions. It writes a `.env` for development, adds it to `.gitignore`, and points `App\` at `app/` in `composer.json`. It never overwrites a file that's already there. Errors are plain text until you [set an error handler](docs/errors.md).
+It has the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`), an `app/` folder for your actions, and a `.env` for development with a fresh `APP_KEY`. Errors are plain text until you [set an error handler](docs/errors.md).
 
 A Sapling app can also fit in one file:
 

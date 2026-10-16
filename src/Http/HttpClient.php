@@ -2,7 +2,9 @@
 
 namespace Sapling\Http;
 
+use JsonException;
 use RuntimeException;
+use Sapling\Data;
 
 /**
  * Calls other HTTP services through curl.
@@ -15,8 +17,28 @@ final readonly class HttpClient
 	public function __construct(private int $timeout = 30) {}
 
 	/**
+	 * Sends $data as JSON, as in json('POST', 'https://api.example.com/users', ['name' => 'Ann']). With no data,
+	 * there's no body.
+	 *
+	 * @param array<array-key, mixed> $data
+	 * @param array<string, string> $headers
+	 * @throws JsonException When $data can't be encoded.
+	 * @throws RuntimeException When the connection fails or times out. An error status is a normal response.
+	 */
+	public function json(string $method, string $url, array $data = [], array $headers = []): Response
+	{
+		$headers = ['content-type' => 'application/json', ...$headers];
+
+		if ($data === []) {
+			return $this->request($method, $url, headers: $headers);
+		}
+
+		return $this->request($method, $url, Data::toJson($data), $headers);
+	}
+
+	/**
 	 * Sends a request and returns the response, following redirects for GET and HEAD. A string body goes as it is,
-	 * so pass its Content-Type, such as application/json.
+	 * so pass its Content-Type, and an array goes as multipart form data.
 	 *
 	 * @param string|array<string, mixed> $body
 	 * @param array<string, string> $headers
@@ -26,7 +48,8 @@ final readonly class HttpClient
 	{
 		$lines = [];
 
-		foreach ($headers as $name => $value) {
+		// So Content-Type and content-type are one header, and the last one wins.
+		foreach (array_change_key_case($headers) as $name => $value) {
 			$lines[] = "{$name}: {$value}";
 		}
 

@@ -15,7 +15,7 @@ Some secrets can't be hashed, because the app has to send the original somewhere
 
 ## The app key
 
-Everything `Crypto` does depends on one key. `app_key` is 32 random bytes in base64, which `vendor/bin/sapling init` writes into `.env` and `config.php` passes on:
+Everything `Crypto` does depends on one key. `app_key` is 32 random bytes in base64, which a new app from the skeleton gets in `.env` and `config.php` passes on:
 
 ```php
 'app_key' => $env['APP_KEY'] ?? '',

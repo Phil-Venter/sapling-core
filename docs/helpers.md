@@ -12,7 +12,7 @@
 
 ## Introduction
 
-A few things happen in almost every file, such as escaping a value or stopping with an error. Sapling has short global functions for those, so they don't need an object. They need no app either, so they work the same in actions, templates, commands and scripts.
+A few things happen in almost every file, such as escaping a value or stopping with an error. Sapling has short global functions for those. They need no app, so they work in templates and scripts too.
 
 ## Escaping HTML
 
@@ -48,7 +48,7 @@ Both throw an `HttpException`, which becomes the response. [Errors the visitor c
 
 ## Checking for empty values
 
-`blank()` answers whether a value is really empty, meaning `null`, a string of only whitespace, or an empty array or `Countable`. Unlike `empty()`, it treats `'0'`, `0` and `false` as real values:
+`blank()` answers whether a value is empty, meaning `null`, a string of only whitespace, or an empty array or `Countable`. Unlike `empty()`, it treats `'0'`, `0` and `false` as real values:
 
 ```php
 blank('  ');     // true
@@ -94,7 +94,9 @@ try {
 
 ## Ids, closures and debugging
 
-The last few helpers are small. `uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys. `value()` returns a value as it is, or calls it first when it's a closure:
+`uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys.
+
+`value()` returns a value as it is, or calls it first when it's a closure:
 
 ```php
 value('Hello');                                      // 'Hello'

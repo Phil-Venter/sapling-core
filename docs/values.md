@@ -66,7 +66,7 @@ new Value('1.5')->float();   // 1.5
 
 ### Booleans
 
-`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. That suits a checkbox, which sends `on` when it's ticked and nothing at all when it isn't:
+`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. An unticked checkbox sends nothing, so it reads as `false`:
 
 ```php
 $remember = $request->input('remember')->bool();
@@ -89,11 +89,11 @@ $name = $reply->data()->get('profile', 'name')->string();
 $first = $request->input('items')->get(0, 'sku')->string();
 ```
 
-A missing key at any level gives an empty `Value`, so the read still ends in a default rather than an error. Private and protected properties count as missing.
+A missing key at any level gives an empty `Value`. Private and protected properties count as missing.
 
 ## Missing and required values
 
-A default keeps your code safe, but it can't tell you whether a value was sent at all. `string()` gives `''` both for an empty field and a missing one. When the difference matters, `$value->raw` holds the value exactly as it arrived, or `null` when it's missing:
+A default keeps your code safe, but it can't tell you whether a value was sent at all. `string()` gives `''` both for an empty field and a missing one. When the difference matters, `$value->raw` holds the value as it arrived, or `null` when it's missing:
 
 ```php
 $editing = $request->param('id')->raw !== null;

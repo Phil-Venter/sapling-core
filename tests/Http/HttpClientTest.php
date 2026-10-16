@@ -70,3 +70,18 @@ test('a 404 is a response, but a failed connection throws', function () {
 	expect(fn() => new HttpClient(timeout: 2)->request('GET', 'http://127.0.0.1:1/'))
 		->toThrow(RuntimeException::class, 'GET http://127.0.0.1:1/ failed:');
 });
+
+test('json() sends its data as JSON, alongside the headers you pass', function () {
+	$echo = $this->client->json('PUT', serverUrl('/echo/7'), ['name' => 'Ann'], ['X-Test' => 'header value'])->data();
+
+	expect($echo->get('name')->string())->toBe('Ann');
+	expect($echo->get('content_type')->string())->toBe('application/json');
+	expect($echo->get('header')->string())->toBe('header value');
+});
+
+test('json() keeps a Content-Type you pass, whatever its case', function () {
+	$headers = ['content-TYPE' => 'application/merge-patch+json'];
+	$echo = $this->client->json('PUT', serverUrl('/echo/7'), ['name' => 'Ann'], $headers)->data();
+
+	expect($echo->get('content_type')->string())->toBe('application/merge-patch+json');
+});

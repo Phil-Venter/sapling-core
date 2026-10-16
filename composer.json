@@ -32,9 +32,6 @@
             "Sapling\\Tests\\": "tests/"
         }
     },
-    "bin": [
-        "bin/sapling"
-    ],
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true

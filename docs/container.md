@@ -11,7 +11,7 @@
 
 ## Introduction
 
-`Sapling\Container` builds your classes for you. It reads each constructor's parameter types, builds what they ask for, and hands out one shared instance of each class. An action that asks for `Db` in its constructor simply gets it, and most classes never need to be registered.
+`Sapling\Container` builds your classes. It reads each constructor's parameter types, builds what they ask for, and hands out one shared instance of each class. An action that asks for `Db` in its constructor gets it, and most classes never need to be registered.
 
 ## Asking for what you need
 
@@ -48,7 +48,7 @@ The closure runs once, the first time the class is needed. `set()` also takes a 
 
 ### Interfaces
 
-The container can't guess which class to use for an interface, so register the one you want under the interface's name. The closure receives the container, so it can ask for whatever that class needs:
+The container can't guess which class to use for an interface, so register the one you want under the interface's name. The closure receives the container:
 
 ```php
 $app->container->set(Mailer::class, function (Container $c): Mailer {

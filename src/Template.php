@@ -25,10 +25,41 @@ final class Template
 
 	private bool $rendering = false;
 
-	public function __construct(private string $dir) {}
+	/** @var array<string, string> */
+	private array $prefixes = [];
 
 	/**
-	 * Renders the page {$template}.php, inside its layout. Use include() inside a template.
+	 * Templates are $dir/{name}.{$suffix}, such as views/notes.tmpl.php.
+	 */
+	public function __construct(private string $dir, private string $suffix = 'tmpl.php') {}
+
+	/**
+	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for
+	 * include('notes::list').
+	 */
+	public function prefix(string $prefix, string $dir): void
+	{
+		$this->prefixes[$prefix] = rtrim($dir, '/\\');
+	}
+
+	/**
+	 * Makes a value available to every template rendered after this.
+	 */
+	public function share(string $key, mixed $value): void
+	{
+		$this->shared[$key] = $value;
+	}
+
+	/**
+	 * Wraps this template in another, which prints it with yield('content'). Call it from a template.
+	 */
+	public function layout(string $template): void
+	{
+		$this->layout = $template;
+	}
+
+	/**
+	 * Renders the page {$template}.{$suffix}, inside its layout. Use include() inside a template.
 	 *
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException When a template file is missing.
@@ -45,7 +76,6 @@ final class Template
 		$this->sections = [];
 		$this->open = [];
 		$this->layout = null;
-		$data += $this->shared;
 
 		try {
 			$html = $this->capture($template, $data);
@@ -72,15 +102,12 @@ final class Template
 	 */
 	public function include(string $template, array $data = []): string
 	{
-		return $this->capture($template, $data + $this->shared);
-	}
+		// A partial's layout() would otherwise become the page's.
+		$layout = $this->layout;
+		$html = $this->capture($template, $data);
+		$this->layout = $layout;
 
-	/**
-	 * Wraps this template in another, which prints it with yield('content'). Call it from a template.
-	 */
-	public function layout(string $template): void
-	{
-		$this->layout = $template;
+		return $html;
 	}
 
 	/**
@@ -148,26 +175,13 @@ final class Template
 	}
 
 	/**
-	 * Makes a value available to every template rendered after this.
-	 */
-	public function share(string $key, mixed $value): void
-	{
-		$this->shared[$key] = $value;
-	}
-
-	/**
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException
 	 * @throws Throwable
 	 */
 	private function capture(string $template, array $data): string
 	{
-		$file = "{$this->dir}/{$template}.php";
-
-		if (!is_file($file)) {
-			throw new RuntimeException("Template not found: {$file}");
-		}
-
+		$file = $this->file($template);
 		$level = ob_get_level();
 		$opened = count($this->open);
 		$run =
@@ -180,7 +194,7 @@ final class Template
 		ob_start();
 
 		try {
-			$run($file, $data);
+			$run($file, $data + $this->shared);
 
 			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
 			$unclosed = $this->open[$opened] ?? null;
@@ -198,5 +212,32 @@ final class Template
 		}
 
 		return (string) ob_get_clean();
+	}
+
+	/** @throws RuntimeException */
+	private function file(string $template): string
+	{
+		$dir = $this->dir;
+		$name = $template;
+
+		if (str_contains($template, '::')) {
+			$parts = explode('::', $template, 2);
+			$prefix = $parts[0];
+			$name = $parts[1] ?? '';
+
+			if (!array_key_exists($prefix, $this->prefixes)) {
+				throw new LogicException("Unknown template prefix {$prefix} in {$template}");
+			}
+
+			$dir = $this->prefixes[$prefix];
+		}
+
+		$file = "{$dir}/{$name}.{$this->suffix}";
+
+		if (!is_file($file)) {
+			throw new RuntimeException("Template not found: {$file}");
+		}
+
+		return $file;
 	}
 }

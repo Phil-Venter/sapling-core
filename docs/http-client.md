@@ -2,9 +2,8 @@
 
 - [Introduction](#introduction)
 - [Making requests](#making-requests)
-    - [Sending JSON](#sending-json)
-    - [Sending forms and files](#sending-forms-and-files)
     - [Headers](#headers)
+    - [Other bodies](#other-bodies)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
@@ -16,28 +15,36 @@ Most apps call an API or two, such as a payment provider or a weather service. `
 
 ## Making requests
 
-Ask for `HttpClient` in a constructor. Every request goes through one method, `request()`, which takes the method and the URL:
+Ask for `HttpClient` in a constructor. `request()` sends a request, and `json()` sends one with data as JSON:
 
 ```php
-$reply = $this->http->request('GET', 'https://api.example.com/status');
+$status = $this->http->request('GET', 'https://api.example.com/status');
+
+$user = $this->http->json('POST', 'https://api.example.com/users', ['name' => 'Ann']);
 ```
 
-### Sending JSON
+`json()` encodes the array with [`Data`](data.md) and sets `Content-Type: application/json`. With no data, it sends no body.
 
-A string body is sent exactly as it is, so it needs its `Content-Type` alongside it. For JSON, encode the data with [`Data`](data.md) and say so in the headers:
+### Headers
+
+Headers are the last argument of both:
 
 ```php
-$body = Data::toJson(['name' => 'Ann']);
-$headers = ['Content-Type' => 'application/json'];
-
-$reply = $this->http->request('POST', 'https://api.example.com/users', $body, $headers);
+$me = $this->http->request('GET', 'https://api.example.com/me', headers: ['Authorization' => "Bearer {$token}"]);
+$this->http->json('PUT', 'https://api.example.com/users/7', ['name' => 'Ann'], ['Authorization' => "Bearer {$token}"]);
 ```
 
-Without a `Content-Type`, curl labels a string body as a form.
+### Other bodies
 
-### Sending forms and files
+Other bodies go through `request()`. A string body is sent as it is, so it needs its `Content-Type`:
 
-An array body is sent as multipart form data instead, which means it can include a file upload as a `CURLFile`:
+```php
+$xml = Data::toXml($order, root: 'order');
+
+$reply = $this->http->request('POST', 'https://api.example.com/orders', $xml, ['Content-Type' => 'application/xml']);
+```
+
+An array body is sent as multipart form data, with files as `CURLFile`:
 
 ```php
 $body = [
@@ -49,16 +56,6 @@ $reply = $this->http->request('POST', 'https://api.example.com/uploads', $body);
 ```
 
 For a URL-encoded form, send [`Data::toForm()`](data.md) with an `application/x-www-form-urlencoded` content type.
-
-### Headers
-
-Headers are the fourth argument, so name it when there's no body:
-
-```php
-$reply = $this->http->request('GET', 'https://api.example.com/me', headers: [
-    'Authorization' => "Bearer {$token}",
-]);
-```
 
 ## Reading the reply
 
@@ -89,19 +86,20 @@ if ($reply->status !== 200) {
 
 ## Timeouts, redirects and TLS
 
-A request gives up after 30 seconds. When calls happen while a visitor waits for a page, register a client with a shorter timeout in `bootstrap.php`, so a slow service can't hold them up:
+A request gives up after 30 seconds. When a visitor waits on the call, register a client with a shorter timeout in `bootstrap.php`:
 
 ```php
 $app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. TLS certificates are always checked, and compressed replies are unpacked for you.
+GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. TLS certificates are always checked, and compressed replies are unpacked.
 
 ## Method reference
 
 | Method | What it does |
 | --- | --- |
-| `request($method, $url, $body = '', $headers = [])` | Sends a request and returns the reply as a `Response` |
+| `request($method, $url, $body = '', $headers = [])` | Sends a request and returns the reply as a `Response`. A string body goes as it is, and an array as multipart form data |
+| `json($method, $url, $data = [], $headers = [])` | Sends `$data` as JSON and returns the reply |
 | `new HttpClient($timeout = 30)` | A client that gives up after `$timeout` seconds |
 | `$reply->data()` | Returns the reply's body decoded as JSON, XML or a form, as a [`Value`](values.md). See [Reading a response](requests.md#reading-a-response) |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |

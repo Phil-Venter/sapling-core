@@ -22,7 +22,7 @@
 
 ## Introduction
 
-Every action receives the incoming request as a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Both are small, plain objects. Reading input always gives you a typed value with a default, and a form, JSON or XML body is read the same way, so an action doesn't care which one arrived.
+Every action receives the incoming request as a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Reading input always gives you a typed value with a default, and a form, JSON or XML body is read the same way.
 
 ## The request lifecycle
 
@@ -102,7 +102,7 @@ $remember = $request->input('remember')->bool();
 $city = $request->input('address')->get('city')->string();
 ```
 
-The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. Note that `input()` only reads the body, never the query string.
+The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. `input()` only reads the body, never the query string.
 
 > [!WARNING]
 > A JSON or XML body that doesn't decode stops the request with a 400.
@@ -116,7 +116,7 @@ $items = $request->data()->array();   // a JSON list
 $price = $request->data()->get('soap:Body', 'Price')->string();
 ```
 
-A body of any other type, such as plain text, comes back as a string, and `$request->body` always holds the body exactly as it arrived.
+A body of any other type, such as plain text, comes back as a string, and `$request->body` holds the raw body.
 
 ### Headers and cookies
 
@@ -175,7 +175,7 @@ return Response::json($note)->withHeader('Cache-Control', 'no-store');
 ```
 
 > [!NOTE]
-> On PHP 8.5, ignoring the result of `withHeader()` is an error, so a lost header can't go unnoticed.
+> On PHP 8.5, ignoring the result of `withHeader()` is an error.
 
 ### Redirects
 
@@ -198,7 +198,7 @@ abort_if($note === null, 404, 'That note does not exist.');
 
 ## File downloads
 
-`Response::file()` sends a file as a download. It streams from disk, so even a large file never fills memory:
+`Response::file()` sends a file as a download. It streams from disk, so large files don't fill memory:
 
 ```php
 return Response::file($path, 'report.pdf');
@@ -238,7 +238,7 @@ $title = $response->data()->get('title')->string();
 $location = $response->header('location')->string();
 ```
 
-An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does. Replies from [`HttpClient`](http-client.md) are responses too, so they're read the same way.
+An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does. Replies from [`HttpClient`](http-client.md) are responses too.
 
 ## Method reference
 

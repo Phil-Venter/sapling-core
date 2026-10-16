@@ -93,7 +93,7 @@ return Response::text($note['body']);
 
 ### Fetching a single value
 
-For a count or a single field, `value()` returns the first column of the first row as a [`Value`](values.md), so you read it as the type you need:
+For a count or a single field, `value()` returns the first column of the first row as a [`Value`](values.md):
 
 ```php
 $sql = <<<SQL

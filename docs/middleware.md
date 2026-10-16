@@ -131,7 +131,7 @@ $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"
 
 `Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
 
-Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too, so a front end on another domain only has to be listed once.
+Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too.
 
 ### CORS
 

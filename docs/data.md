@@ -22,7 +22,7 @@ $json = Data::toJson(['name' => 'Ann', 'city' => 'Cape Town']);
 $user = Data::fromJson($json);
 ```
 
-`toJson()` leaves slashes and Unicode as they are, so URLs and names like `café` stay readable, and `fromJson()` decodes objects as arrays. Both throw a `JsonException` when they can't do their job.
+`toJson()` leaves slashes and Unicode as they are, and `fromJson()` decodes objects as arrays. Both throw a `JsonException` when they can't do their job.
 
 > [!NOTE]
 > Because objects become arrays, `{}` decodes to `[]`, which encodes as a list. Use `new stdClass()` where another service needs `{}`.
@@ -65,7 +65,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. This is what `$request->data()` and `$response->data()` use, so requests and replies are decoded the same way.
+Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `$request->data()` and `$response->data()` both use it.
 
 ## Reading nested data
 

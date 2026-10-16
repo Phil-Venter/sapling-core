@@ -19,7 +19,7 @@ An app lives for one request and has no static state, so each test builds its ow
 
 ## Booting the app
 
-Every app is built in one place, `bootstrap.php`. The web server, `bin/console` and your tests all load it, so they all get the same services, routes and middleware:
+Every app is built in one place, `bootstrap.php`. The web server, `bin/console` and your tests all load it:
 
 ```php
 use Sapling\App;
@@ -80,9 +80,9 @@ Sapling finds your classes through their attributes. `#[Route]` makes a class an
 $app->scan(__DIR__ . '/app', 'App');
 ```
 
-It expects one class per file, named after its path as PSR-4 does, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order, so a scan gives the same result on every machine.
+It expects one class per file, named after its path as PSR-4 does, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order.
 
-Files that start with a lowercase letter, such as `helpers.php`, are skipped, so `app/` can hold plain functions too. Load them through Composer, as Sapling's own helpers are:
+Only files that start with a capital letter and have no other dot are read as classes. Anything else, such as `helpers.php` or `list.tmpl.php`, is skipped, so `app/` can hold plain functions and [templates](templates.md#templates-next-to-their-classes) too. Load function files through Composer, as Sapling's own helpers are:
 
 ```json
 "autoload": {
@@ -138,7 +138,7 @@ $response = $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy mi
 expect($response->status)->toBe(302);
 ```
 
-`handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get, so a test checks it like any other.
+`handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
 
 > [!NOTE]
 > Send one request per app, as the server does. A second request through the same app shares the first one's objects.

@@ -28,7 +28,7 @@ final class ShowSettings
 }
 ```
 
-`set()` stores a value, `forget()` removes it, and `get()` reads it back as a [`Value`](values.md), so a key that was never set simply gives the default:
+`set()` stores a value, `forget()` removes it, and `get()` reads it back as a [`Value`](values.md), so a key that was never set gives the default:
 
 ```php
 $this->session->set('theme', 'dark');
@@ -41,7 +41,7 @@ $this->session->forget('theme');
 
 ## Flash values
 
-A flash value is kept for the next request only. That suits a message such as "Saved.", which the action sets before redirecting and the next page shows once:
+A flash value is kept for the next request only, for a message such as "Saved." that the action sets before redirecting:
 
 ```php
 #[Route('POST', '/notes')]
@@ -75,14 +75,14 @@ $notice = $this->session->getFlash('notice')->string();
 
 ## Logging in and out
 
-Logging in is the moment a session becomes valuable, so give it a new id right then. An id someone learned before the login is then useless after it:
+Give the session a new id on login, so an id someone learned before the login is useless after it:
 
 ```php
 $this->session->regenerate();
 $this->session->set('user_id', $user['id']);
 ```
 
-On logout, `destroy()` clears the data and the cookie at once, rather than forgetting keys one at a time:
+On logout, `destroy()` clears the data and the cookie:
 
 ```php
 $this->session->destroy();
@@ -90,7 +90,7 @@ $this->session->destroy();
 
 ## The session cookie
 
-The session cookie is HttpOnly, so scripts can't read it, and SameSite=Lax, so other sites can't send it along with their forms. It's also Secure over HTTPS, or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created itself.
+The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created itself.
 
 ### How long a session lasts
 
