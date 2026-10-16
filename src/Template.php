@@ -2,28 +2,27 @@
 
 namespace Sapling;
 
-use BackedEnum;
 use LogicException;
 use RuntimeException;
 use Throwable;
 
 /**
- * Renders plain PHP templates, with layouts, sections, partials and components.
+ * Renders plain PHP templates, with partials and components.
  */
 final class Template
 {
 	/** @var array<string, mixed> */
 	private array $shared = [];
 
-	/** @var array<string, string> */
-	private array $sections = [];
-
-	/** @var list<array{kind: 'section'|'component', name: string, data: array<string, mixed>}> */
+	/** @var list<array{kind: 'slot'|'component', name: string, data: array<string, mixed>, slots: array<string, mixed>}> */
 	private array $open = [];
 
-	private ?string $layout = null;
-
-	private bool $rendering = false;
+	/**
+	 * The slots of the component being rendered. The default slot is ''.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $slots = [];
 
 	/** @var array<string, string> */
 	private array $prefixes = [];
@@ -35,7 +34,7 @@ final class Template
 
 	/**
 	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for
-	 * include('notes::list').
+	 * render('notes::list').
 	 */
 	public function prefix(string $prefix, string $dir): void
 	{
@@ -51,135 +50,13 @@ final class Template
 	}
 
 	/**
-	 * Wraps this template in another, which prints it with yield('content'). Call it from a template.
-	 */
-	public function layout(string $template): void
-	{
-		$this->layout = $template;
-	}
-
-	/**
-	 * Renders the page {$template}.{$suffix}, inside its layout. Use include() inside a template.
-	 *
-	 * @param array<string, mixed> $data
-	 * @throws RuntimeException When a template file is missing.
-	 * @throws Throwable Whatever a template throws.
-	 */
-	public function render(string $template, array $data = []): string
-	{
-		// It would reset the page being rendered.
-		if ($this->rendering) {
-			throw new LogicException("render() inside a template, use include('{$template}')");
-		}
-
-		$this->rendering = true;
-		$this->sections = [];
-		$this->open = [];
-		$this->layout = null;
-
-		try {
-			$html = $this->capture($template, $data);
-
-			while ($this->layout !== null) {
-				$layout = $this->layout;
-				$this->layout = null;
-				$this->sections['content'] = $html;
-				$html = $this->capture($layout, $data);
-			}
-
-			return $html;
-		} finally {
-			$this->rendering = false;
-		}
-	}
-
-	/**
-	 * Renders a partial, as in include('_nav').
+	 * Renders {$template}.{$suffix}. Inside a template, it prints a partial, as in render('_nav').
 	 *
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException When the template file is missing.
 	 * @throws Throwable Whatever the template throws.
 	 */
-	public function include(string $template, array $data = []): string
-	{
-		// A partial's layout() would otherwise become the page's.
-		$layout = $this->layout;
-		$html = $this->capture($template, $data);
-		$this->layout = $layout;
-
-		return $html;
-	}
-
-	/**
-	 * Sets a section, as in section('title', 'Notes'), or starts one that end() closes, as in section('aside').
-	 * Call it from a template.
-	 */
-	public function section(string $name, string|int|float|BackedEnum $content = ''): void
-	{
-		if (func_num_args() === 1) {
-			$this->open[] = ['kind' => 'section', 'name' => $name, 'data' => []];
-			ob_start();
-
-			return;
-		}
-
-		if ($content instanceof BackedEnum) {
-			$content = $content->value;
-		}
-
-		$this->sections[$name] = (string) $content;
-	}
-
-	/**
-	 * Starts a component, as in component('_card', ['title' => 'Notes']). Its $slot is what's printed until end().
-	 *
-	 * @param array<string, mixed> $data
-	 */
-	public function component(string $template, array $data = []): void
-	{
-		$this->open[] = ['kind' => 'component', 'name' => $template, 'data' => $data];
-		ob_start();
-	}
-
-	/**
-	 * Closes the last section() or component().
-	 *
-	 * @throws RuntimeException When a component's template file is missing.
-	 * @throws Throwable Whatever a component's template throws.
-	 */
-	public function end(): void
-	{
-		$open = array_pop($this->open);
-
-		if ($open === null) {
-			throw new LogicException('end() without an open section() or component()');
-		}
-
-		$content = (string) ob_get_clean();
-
-		if ($open['kind'] === 'section') {
-			$this->sections[$open['name']] = $content;
-
-			return;
-		}
-
-		echo $this->include($open['name'], [...$open['data'], 'slot' => $content]);
-	}
-
-	/**
-	 * A section's content, or $default when it wasn't set. A layout prints it with <?= $this->yield('title') ?>.
-	 */
-	public function yield(string $name, string $default = ''): string
-	{
-		return $this->sections[$name] ?? $default;
-	}
-
-	/**
-	 * @param array<string, mixed> $data
-	 * @throws RuntimeException
-	 * @throws Throwable
-	 */
-	private function capture(string $template, array $data): string
+	public function render(string $template, array $data = []): string
 	{
 		$file = $this->file($template);
 		$level = ob_get_level();
@@ -208,10 +85,97 @@ final class Template
 				ob_end_clean();
 			}
 
+			// So the next render() doesn't find them still open.
+			array_splice($this->open, $opened);
+
 			throw $e;
 		}
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Starts a component, as in component('_card', ['title' => 'Notes']). What's printed until end() is its default
+	 * slot.
+	 *
+	 * @param array<string, mixed> $data
+	 */
+	public function component(string $template, array $data = []): void
+	{
+		$this->open[] = ['kind' => 'component', 'name' => $template, 'data' => $data, 'slots' => []];
+		ob_start();
+	}
+
+	/**
+	 * Sets a named slot of the component it's in, as in slot('title', 'Notes'), or starts one that end() closes, as
+	 * in slot('footer').
+	 */
+	public function slot(string $name, mixed $content = null): void
+	{
+		$component = $this->openComponent();
+
+		if (func_num_args() === 1) {
+			$this->open[] = ['kind' => 'slot', 'name' => $name, 'data' => [], 'slots' => []];
+			ob_start();
+
+			return;
+		}
+
+		$this->open[$component]['slots'][$name] = $content;
+	}
+
+	/**
+	 * Closes the last slot() or component(). Closing a component prints it.
+	 *
+	 * @throws RuntimeException When a component's template file is missing.
+	 * @throws Throwable Whatever a component's template throws.
+	 */
+	public function end(): void
+	{
+		$open = array_pop($this->open);
+
+		if ($open === null) {
+			throw new LogicException('end() without an open slot() or component()');
+		}
+
+		$content = (string) ob_get_clean();
+
+		if ($open['kind'] === 'slot') {
+			$component = $this->openComponent();
+			$this->open[$component]['slots'][$open['name']] = $content;
+
+			return;
+		}
+
+		// yield() reads this component's slots while it renders.
+		$outer = $this->slots;
+		$this->slots = ['' => $content, ...$open['slots']];
+
+		try {
+			echo $this->render($open['name'], $open['data']);
+		} finally {
+			$this->slots = $outer;
+		}
+	}
+
+	/**
+	 * A slot of the component being rendered, or $default when it wasn't set. yield() is the default slot, and
+	 * yield('title') a named one.
+	 */
+	public function yield(string $name = '', mixed $default = null): mixed
+	{
+		return $this->slots[$name] ?? $default;
+	}
+
+	private function openComponent(): int
+	{
+		foreach (array_reverse($this->open, true) as $index => $open) {
+			if ($open['kind'] === 'component') {
+				return $index;
+			}
+		}
+
+		throw new LogicException('slot() outside a component()');
 	}
 
 	/** @throws RuntimeException */

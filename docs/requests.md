@@ -175,7 +175,7 @@ return Response::json($note)->withHeader('Cache-Control', 'no-store');
 ```
 
 > [!NOTE]
-> On PHP 8.5, ignoring the result of `withHeader()` is an error.
+> On PHP 8.5, ignoring the result of `withHeader()` raises a warning, which Sapling turns into a crash.
 
 ### Redirects
 
@@ -274,4 +274,4 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `data()` | Returns the body decoded by its `Content-Type`, as a `Value` |
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. A header sent more than once is a list |
 | `send($body = true)` | Sends the response. `App::run()` does this for you |
-| `$response->status`, `headers`, `body` | Readable. They change only through `withHeader()` |
+| `$response->status`, `headers`, `body` | Read-only. `withHeader()` returns a copy with a new header |

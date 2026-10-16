@@ -1,4 +1,5 @@
-<?php $this->layout('layout') ?>
-<?php $this->section('title') ?>Page <?= e($name);
+<?php $this->component('layout') ?>
+<?php $this->slot('title') ?>Page <?= e($name);
 $this->end() ?>
 <p>Hello <?= e($name) ?></p>
+<?php $this->end() ?>

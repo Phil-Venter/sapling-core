@@ -20,7 +20,7 @@ test('the same secret encrypts differently every time', function () {
 	expect($first)->not->toBe($second);
 });
 
-test('another key, a changed value or broken base64 decrypts to null', function () {
+test('another key, a changed or cut-off value or broken base64 decrypts to null', function () {
 	$stored = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
 	$other = new Crypto(base64_encode(random_bytes(32)));
 	$changed = substr($stored, 0, -4) . 'AAA=';
@@ -28,6 +28,7 @@ test('another key, a changed value or broken base64 decrypts to null', function 
 	expect($other->decrypt($stored, 'tenant:7:evernote'))->toBeNull();
 	expect($this->crypto->decrypt($changed, 'tenant:7:evernote'))->toBeNull();
 	expect($this->crypto->decrypt('not base64!', 'tenant:7:evernote'))->toBeNull();
+	expect($this->crypto->decrypt(substr($stored, 0, 8), 'tenant:7:evernote'))->toBeNull();
 });
 
 test('a key that is not 32 base64-encoded bytes is refused', function (string $key) {

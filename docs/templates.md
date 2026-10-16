@@ -4,10 +4,9 @@
 - [Rendering a template](#rendering-a-template)
 - [Printing values](#printing-values)
 - [Partials](#partials)
-- [Layouts](#layouts)
-- [Sections](#sections)
-    - [Longer sections](#longer-sections)
 - [Components](#components)
+    - [Named slots](#named-slots)
+- [Layouts](#layouts)
 - [Sharing data with every template](#sharing-data-with-every-template)
 - [Templates next to their classes](#templates-next-to-their-classes)
 - [When something is wrong](#when-something-is-wrong)
@@ -15,7 +14,7 @@
 
 ## Introduction
 
-PHP is already a template language, so Sapling's templates are plain PHP files in `views/`, with no compiler, cache or new syntax to learn. `Sapling\Template` adds layouts, sections, partials and components. Inside a template, `$this` is the `Template`.
+PHP is already a template language, so Sapling's templates are plain PHP files in `views/`, with no compiler, cache or new syntax to learn. `Sapling\Template` adds partials, components and layouts. Inside a template, `$this` is the `Template`.
 
 ## Rendering a template
 
@@ -59,60 +58,20 @@ For attributes, `attrs()` builds the escaped list and leaves out the ones that a
 
 ## Partials
 
-Pieces that several pages share, such as a navigation bar, go in their own file. `include()` prints one inside the current template:
+Pieces that several pages share, such as a navigation bar, go in their own file. Inside a template, `render()` prints one:
 
 ```php
-<?= $this->include('_nav', ['active' => 'notes']) ?>
+<?= $this->render('_nav', ['active' => 'notes']) ?>
 ```
 
-A partial sees the variables you pass it and the [shared](#sharing-data-with-every-template) ones, but not the page's. It can't have a layout of its own, so `layout()` inside a partial is ignored. Use `include()` rather than `render()` here, since `render()` starts a whole new page and throws inside a template.
+A partial sees the variables you pass it and the [shared](#sharing-data-with-every-template) ones, but not the page's.
 
 > [!TIP]
 > Prefix partials with `_`, such as `_nav.tmpl.php`.
 
-## Layouts
-
-Most pages share the same outer HTML, which belongs in a layout. A template picks its layout with `layout()`, usually on its first line:
-
-```php
-<?php $this->layout('layout') ?>
-<?php $this->section('title', 'Notes') ?>
-
-<?php foreach ($notes as $note): ?>
-    <p><?= e($note['body']) ?></p>
-<?php endforeach ?>
-```
-
-Everything the template prints becomes the layout's `content` section, which the layout prints where the page should go:
-
-```php
-<!doctype html>
-<title><?= $this->yield('title', 'My app') ?></title>
-<main><?= $this->yield('content') ?></main>
-```
-
-## Sections
-
-The `title` above is a section, a named piece of the page that the template sets and the layout prints with `yield()`. `yield()` also takes a default for when the template doesn't set one. `section()` with two arguments sets a section to a string, number or backed enum, printed as given, so escape it first:
-
-```php
-<?php $this->section('title', e($note['title'])) ?>
-```
-
-### Longer sections
-
-For more than a line, `section()` with only a name captures everything printed until `end()`:
-
-```php
-<?php $this->section('aside') ?>
-    <h2>Tags</h2>
-    <p><?= e(implode(', ', $tags)) ?></p>
-<?php $this->end() ?>
-```
-
 ## Components
 
-A component is a partial that wraps content, such as a card or a dialog. It opens like a section, and everything printed before `end()` becomes the component's `$slot`. `end()` then prints the component in its place:
+A component is a partial that wraps content, such as a card or a dialog. Everything printed between `component()` and `end()` becomes the component's default slot, and `end()` then prints the component in its place:
 
 ```php
 <?php $this->component('_card', ['title' => 'Notes']) ?>
@@ -120,14 +79,71 @@ A component is a partial that wraps content, such as a card or a dialog. It open
 <?php $this->end() ?>
 ```
 
+The component template prints the default slot with `yield()`:
+
 ```php
 <article class="card">
     <h2><?= e($title) ?></h2>
-    <?= $slot ?>
+    <?= $this->yield() ?>
 </article>
 ```
 
-The component template prints `$slot` where the content goes. It's HTML the page has already printed, so don't escape it again.
+A slot is HTML the page has already printed, so don't escape it again.
+
+### Named slots
+
+A component can take more than one piece of content. `slot()` with only a name captures everything printed until its `end()`, and the component prints it with `yield()` and the name:
+
+```php
+<?php $this->component('_card', ['title' => 'Notes']) ?>
+    <p>The body.</p>
+
+    <?php $this->slot('footer') ?>
+        <a href="/notes">All notes</a>
+    <?php $this->end() ?>
+<?php $this->end() ?>
+```
+
+```php
+<footer><?= $this->yield('footer') ?></footer>
+```
+
+`slot()` with a value sets the slot to it, such as a title or a list of scripts. `yield()` takes a default for a slot that wasn't set:
+
+```php
+<?php $this->slot('scripts', ['/notes.js']) ?>
+```
+
+```php
+<?php foreach ($this->yield('scripts', []) as $src): ?>
+    <script src="<?= e($src) ?>"></script>
+<?php endforeach ?>
+```
+
+A slot belongs to the component it's set in, so another component never sees it.
+
+## Layouts
+
+Most pages share the same outer HTML. A layout is a component that wraps the whole page, opened on its first line and closed on its last:
+
+```php
+<?php $this->component('layout') ?>
+<?php $this->slot('title', 'Notes') ?>
+
+<?php foreach ($notes as $note): ?>
+    <p><?= e($note['body']) ?></p>
+<?php endforeach ?>
+
+<?php $this->end() ?>
+```
+
+```php
+<!doctype html>
+<title><?= e($this->yield('title', 'My app')) ?></title>
+<main><?= $this->yield() ?></main>
+```
+
+A layout can wrap itself in another the same way, such as an admin layout inside the main one. It passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
 
 ## Sharing data with every template
 
@@ -167,7 +183,7 @@ $view = $app->container->get(Template::class);
 $view->prefix('notes', __DIR__ . '/app/Notes');
 ```
 
-`notes::list` then finds `app/Notes/list.tmpl.php`, in `render()`, `include()`, `layout()` and `component()`:
+`notes::list` then finds `app/Notes/list.tmpl.php`, in `render()` and `component()`:
 
 ```php
 return Response::html($this->view->render('notes::list', ['notes' => $notes]));
@@ -178,7 +194,7 @@ An unknown prefix throws a `LogicException`. To use another suffix, such as plai
 ## When something is wrong
 
 - A missing template throws a `RuntimeException`.
-- An unclosed section or component, or `end()` with nothing open, throws a `LogicException`.
+- An unclosed component or slot, `end()` with nothing open, or `slot()` outside a component throws a `LogicException`.
 
 ## Method reference
 
@@ -186,11 +202,10 @@ An unknown prefix throws a `LogicException`. To use another suffix, such as plai
 | --- | --- |
 | `prefix($prefix, $dir)` | Makes `prefix::name` find templates in `$dir` |
 | `share($key, $value)` | Makes a value available to every template rendered after this |
-| `render($template, $data = [])` | Renders the page `views/{$template}.tmpl.php` with `$data` as its variables, inside its layout if defined |
-| `include($template, $data = [])` | Renders a partial inside a template |
-| `layout($template)` | Wraps the current template in another, which prints it with `yield('content')` |
-| `section($name, $content)` | Sets a section to a string, number or backed enum |
-| `section($name)` and `end()` | Capture everything printed between them as a section |
-| `component($template, $data = [])` and `end()` | Print a partial with everything printed between them as `$slot` |
-| `yield($name, $default = '')` | Returns a section, or `$default` when it wasn't set |
+| `render($template, $data = [])` | Renders `views/{$template}.tmpl.php` with `$data` as its variables. Inside a template, it renders a partial |
+| `component($template, $data = [])` and `end()` | Print a partial, such as a layout, with everything printed between them as its default slot |
+| `slot($name, $content)` | Sets a named slot of the component it's in |
+| `slot($name)` and `end()` | Capture everything printed between them as a named slot |
+| `yield()` | Inside a component, returns its default slot |
+| `yield($name, $default = null)` | Inside a component, returns a named slot, or `$default` when it wasn't set |
 | `new Template($dir, $suffix = 'tmpl.php')` | Finds templates in `$dir` ending in `.{$suffix}`. `App` registers one for `views/` |

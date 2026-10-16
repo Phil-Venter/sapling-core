@@ -84,14 +84,14 @@ PHP's warnings and notices are easy to miss, so inside a request or a command th
 
 That changes how some PHP functions fail. `file_get_contents()` on a missing file throws, so a `=== false` check after it never runs, and you check with `is_file()` first instead. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
 
-Deprecation notices are only logged, so a PHP upgrade can't take your pages down. Fatal errors, such as running out of memory, are left to PHP. A command that crashes is logged too, prints the error, and exits with 1.
+Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP. A command that crashes is logged too, prints the error, and exits with 1.
 
 ## Logging
 
 Sapling writes one line per crash or 5xx response with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there, which is usually where the fix belongs:
 
 ```text
-GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:68 from /srv/app/app/Notes/Download.php:21
+GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:72 from /srv/app/app/Notes/Download.php:21
 ```
 
 ### Where the log goes

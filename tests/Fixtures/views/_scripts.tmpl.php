@@ -1,0 +1,1 @@
+<?php foreach ($this->yield('scripts', []) as $src): ?><script src="<?= e($src) ?>"></script><?php endforeach ?>

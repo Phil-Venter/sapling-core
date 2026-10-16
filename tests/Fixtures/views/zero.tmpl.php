@@ -1,1 +1,1 @@
-<?php $this->section('count') ?>0<?php $this->end() ?><?= $this->yield('count') ?>
+<?php $this->component('_count') ?><?php $this->slot('count') ?>0<?php $this->end() ?><?php $this->end() ?>

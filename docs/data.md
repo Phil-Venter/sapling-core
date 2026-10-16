@@ -33,7 +33,7 @@ A URL-encoded form body and a query string are the same format, so one pair of m
 
 ```php
 $query = Data::toForm(['q' => 'notes', 'page' => 2]); // q=notes&page=2
-$fields = Data::fromForm('a=1&b[]=2&b[]=3');          // ['a' => 1, 'b' => [2, 3]]
+$fields = Data::fromForm('a=1&b[]=2&b[]=3');          // ['a' => '1', 'b' => ['2', '3']]
 ```
 
 ## XML

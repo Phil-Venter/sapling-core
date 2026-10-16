@@ -1,3 +1,3 @@
-<?php $this->layout('layout') ?>
-<?php $this->section('title') ?>Broken<?php $this->end() ?>
-<?php $this->section('aside') ?>half a section<?php throw new RuntimeException('template failed') ?>
+<?php $this->component('layout') ?>
+<?php $this->slot('title') ?>Broken<?php $this->end() ?>
+<?php $this->slot('aside') ?>half a slot<?php throw new RuntimeException('template failed') ?>

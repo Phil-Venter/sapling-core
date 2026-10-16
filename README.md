@@ -85,7 +85,7 @@ Sapling keeps the parts that worked and drops the rest. You can read the whole c
 | [Requests and responses](docs/requests.md) | The request lifecycle, `Request`, `Response` and downloads |
 | [Values](docs/values.md) | Reading outside data safely with `Value`, from requests, commands, sessions and replies |
 | [Middleware](docs/middleware.md) | Writing middleware, and the built-in `SecurityHeaders`, `Csrf` and `Cors` |
-| [Templates](docs/templates.md) | Layouts, sections and escaping |
+| [Templates](docs/templates.md) | Partials, components, layouts and escaping |
 | [Sessions](docs/sessions.md) | Session values, flash values and the cookie |
 | [Database](docs/database.md) | `Db`, SQLite and migrations |
 | [Configuration](docs/config.md) | `config.php`, `.env` and the settings Sapling reads |

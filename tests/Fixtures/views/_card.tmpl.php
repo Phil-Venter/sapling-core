@@ -1,1 +1,1 @@
-<article><h2><?= e($title) ?></h2><?= $slot ?></article>
+<article><h2><?= e($title) ?></h2><?= $this->yield() ?></article>

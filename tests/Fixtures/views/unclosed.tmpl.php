@@ -1,1 +1,2 @@
-<?php $this->section('aside') ?>never closed
+<?php $this->component('_card', ['title' => 'x']) ?>
+<?php $this->slot('aside') ?>never closed

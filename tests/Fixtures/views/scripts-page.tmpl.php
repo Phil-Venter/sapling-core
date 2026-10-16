@@ -1,0 +1,1 @@
+<?php $this->component('_scripts') ?><?php $this->slot('scripts', ['/a.js', '/b.js']) ?><?php $this->end() ?>

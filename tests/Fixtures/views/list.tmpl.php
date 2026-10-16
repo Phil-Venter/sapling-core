@@ -1,5 +1,5 @@
 <ul>
 <?php foreach ($items as $item): ?>
-<?= $this->include('item', ['item' => $item]) ?>
+<?= $this->render('item', ['item' => $item]) ?>
 <?php endforeach ?>
 </ul>
