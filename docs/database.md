@@ -105,6 +105,8 @@ $sql = <<<SQL
 $count = $this->db->value($sql, [$userId])->int();
 ```
 
+Rows come back as plain arrays, since their shape is your own schema. A lone value is wrapped because drivers differ in its type, such as MySQL returning a `DECIMAL` as a string.
+
 ### Inserting, updating and deleting
 
 Statements that change data go through `run()`, which returns how many rows changed. After an insert, `lastId()` returns the new row's id as a string:
@@ -168,7 +170,7 @@ This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starti
 php bin/console migrations:run
 ```
 
-This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped without being recorded, so it still runs once it has SQL in it.
+This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped without being recorded, so it still runs once it has SQL in it. There are no down migrations. To undo one, write another that reverses it.
 
 > [!NOTE]
 > MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.

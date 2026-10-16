@@ -2,6 +2,7 @@
 
 namespace Sapling;
 
+use InvalidArgumentException;
 use JsonException;
 use RuntimeException;
 use SimpleXMLElement;
@@ -60,6 +61,10 @@ final class Data
 	 */
 	public static function toXml(array $data, string $root = 'root'): string
 	{
+		if ($data !== [] && array_is_list($data)) {
+			throw new InvalidArgumentException('An XML document has one root element, so toXml() needs keys, not a list');
+		}
+
 		$writer = new XMLWriter();
 		$writer->openMemory();
 		$writer->startDocument('1.0', 'UTF-8');
@@ -123,7 +128,8 @@ final class Data
 
 	private static function writeElement(XMLWriter $writer, string $name, mixed $value): void
 	{
-		if (is_array($value) && array_is_list($value)) {
+		// So an empty list becomes an empty element instead of vanishing.
+		if (is_array($value) && $value !== [] && array_is_list($value)) {
 			foreach ($value as $item) {
 				self::writeElement($writer, $name, $item);
 			}

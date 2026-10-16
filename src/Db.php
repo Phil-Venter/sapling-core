@@ -89,13 +89,14 @@ final readonly class Db
 	 */
 	public function value(string $sql, array $params = []): Value
 	{
-		$value = $this->query($sql, $params)->fetchColumn();
+		// Not fetchColumn(), which also returns false for a real false, such as a PostgreSQL boolean.
+		$row = $this->query($sql, $params)->fetch(PDO::FETCH_NUM);
 
-		if ($value === false) {
+		if (!is_array($row)) {
 			return new Value(null);
 		}
 
-		return new Value($value);
+		return new Value($row[0] ?? null);
 	}
 
 	/**

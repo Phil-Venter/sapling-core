@@ -21,8 +21,8 @@ test('a discarded withHeader() is a 500', function () {
 	expect($log[0])->toContain('withHeader() should either be used or intentionally ignored');
 })->skip(version_compare(PHP_VERSION, '8.5', '<'), 'needs #[NoDiscard], new in PHP 8.5');
 
-test('exception() without debug hides everything', function () {
-	expect(Response::exception(new RuntimeException('secret path /etc'), false))
+test('fromException() without debug hides everything', function () {
+	expect(Response::fromException(new RuntimeException('secret path /etc'), false))
 		->status->toBe(500)
 		->body->toBe('Internal Server Error')
 		->headers->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
@@ -47,6 +47,13 @@ test('HEAD on a GET route sends the headers and no body', function () {
 	expect($response['body'])->toBe('');
 });
 
+test('a Location header keeps the status it came with', function () {
+	$response = httpRequest('POST', '/jobs');
+
+	expect($response['status'])->toBe(202);
+	expect(headerValues($response, 'Location'))->toBe(['/jobs/1']);
+});
+
 test('several Set-Cookie values each get their own line', function () {
 	$response = httpRequest('GET', '/cookies');
 
@@ -67,6 +74,13 @@ test('file() sends the file as a download, with a name any browser can use', fun
 test('file() refuses a file that does not exist', function () {
 	expect(fn() => Response::file('/no/such/file.txt'))
 		->toThrow(RuntimeException::class, 'File not found: /no/such/file.txt');
+});
+
+test('data() with a name reads one field, and without one the whole body', function () {
+	$response = Response::json(['title' => 'Notes', 'count' => 2]);
+
+	expect($response->data('title')->string())->toBe('Notes');
+	expect($response->data()->array())->toBe(['title' => 'Notes', 'count' => 2]);
 });
 
 test('data() reads the first Content-Type when a reply sent it twice', function () {

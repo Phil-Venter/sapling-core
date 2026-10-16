@@ -75,7 +75,7 @@ final class Weather
 }
 ```
 
-When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`.
+When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so convert `.env` strings in `config.php`, as in `'retries' => (int) ($env['RETRIES'] ?? 3)`. For a boolean, compare instead, as in `'cache' => ($env['CACHE'] ?? '') === 'true'`, since `(bool) 'false'` is `true`.
 
 ## How a class is built
 

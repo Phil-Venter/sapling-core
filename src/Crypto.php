@@ -18,8 +18,6 @@ final readonly class Crypto
 
 	/**
 	 * Takes app_key, which is 32 random bytes, base64-encoded.
-	 *
-	 * @throws InvalidArgumentException When the key isn't 32 bytes in base64.
 	 */
 	public function __construct(#[SensitiveParameter] string $key)
 	{

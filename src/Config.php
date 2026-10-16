@@ -33,22 +33,6 @@ final readonly class Config
 	}
 
 	/**
-	 * A setting. Without a default, a missing key throws.
-	 */
-	public function get(string $key, mixed $default = null): mixed
-	{
-		if (array_key_exists($key, $this->values)) {
-			return $this->values[$key];
-		}
-
-		if (func_num_args() > 1) {
-			return $default;
-		}
-
-		throw new LogicException("Missing config key: {$key}");
-	}
-
-	/**
 	 * @return array<string, string>
 	 * @throws RuntimeException
 	 */
@@ -97,5 +81,21 @@ final readonly class Config
 
 		// x # note becomes x, but a#b stays a#b.
 		return trim((string) preg_replace('/(^|\s)#.*$/', '', $value));
+	}
+
+	/**
+	 * A setting. Without a default, a missing key throws.
+	 */
+	public function get(string $key, mixed $default = null): mixed
+	{
+		if (array_key_exists($key, $this->values)) {
+			return $this->values[$key];
+		}
+
+		if (func_num_args() > 1) {
+			return $default;
+		}
+
+		throw new LogicException("Missing config key: {$key}");
 	}
 }

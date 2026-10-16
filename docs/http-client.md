@@ -2,8 +2,10 @@
 
 - [Introduction](#introduction)
 - [Making requests](#making-requests)
+    - [Sending data](#sending-data)
     - [Headers](#headers)
-    - [Other bodies](#other-bodies)
+    - [Uploading files](#uploading-files)
+- [Sending requests at once](#sending-requests-at-once)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
@@ -11,38 +13,40 @@
 
 ## Introduction
 
-Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Http\HttpClient` covers that without a client library. It sends a request with curl, and the reply comes back as a `Response`, the same class your actions return.
+Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Client\HttpClient` covers that without a client library. It sends requests with curl, and each reply is a `Response`, the same class your actions return.
 
 ## Making requests
 
-Ask for `HttpClient` in a constructor. `request()` sends a request, and `json()` sends one with data as JSON:
+Ask for `HttpClient` in a constructor. A `Sapling\Client\ClientRequest` describes one request, and `send()` sends it and returns the reply:
 
 ```php
-$status = $this->http->request('GET', 'https://api.example.com/status');
-
-$user = $this->http->json('POST', 'https://api.example.com/users', ['name' => 'Ann']);
+$status = $this->http->send(new ClientRequest('GET', 'https://api.example.com/status'));
 ```
 
-`json()` encodes the array with [`Data`](data.md) and sets `Content-Type: application/json`. With no data, it sends no body.
+### Sending data
+
+`ClientRequest` has a constructor for each body format, which encodes the data and sets its `Content-Type`:
+
+```php
+ClientRequest::json('POST', 'https://api.example.com/users', ['name' => 'Ann']);
+ClientRequest::form('POST', 'https://api.example.com/login', ['user' => 'ann', 'password' => $password]);
+ClientRequest::xml('POST', 'https://api.example.com/orders', $order, root: 'order');
+ClientRequest::text('PUT', 'https://api.example.com/notes/7/body', 'Buy milk');
+```
+
+`json()` without data sends no body and no `Content-Type`, while `[]` sends `[]` and `new stdClass()` sends `{}`. For another format, pass the body and its `Content-Type` to the constructor.
 
 ### Headers
 
-Headers are the last argument of both:
+Headers are the last argument of every constructor. One you pass replaces the default of the same name, whatever its case:
 
 ```php
-$me = $this->http->request('GET', 'https://api.example.com/me', headers: ['Authorization' => "Bearer {$token}"]);
-$this->http->json('PUT', 'https://api.example.com/users/7', ['name' => 'Ann'], ['Authorization' => "Bearer {$token}"]);
+$me = $this->http->send(new ClientRequest('GET', 'https://api.example.com/me', headers: ['Authorization' => "Bearer {$token}"]));
+
+ClientRequest::json('PATCH', 'https://api.example.com/users/7', $changes, ['Content-Type' => 'application/merge-patch+json']);
 ```
 
-### Other bodies
-
-Other bodies go through `request()`. A string body is sent as it is, so it needs its `Content-Type`:
-
-```php
-$xml = Data::toXml($order, root: 'order');
-
-$reply = $this->http->request('POST', 'https://api.example.com/orders', $xml, ['Content-Type' => 'application/xml']);
-```
+### Uploading files
 
 An array body is sent as multipart form data, with files as `CURLFile`:
 
@@ -52,10 +56,21 @@ $body = [
     'file' => new CURLFile($path, 'application/pdf'),
 ];
 
-$reply = $this->http->request('POST', 'https://api.example.com/uploads', $body);
+$reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/uploads', $body));
 ```
 
-For a URL-encoded form, send [`Data::toForm()`](data.md) with an `application/x-www-form-urlencoded` content type.
+## Sending requests at once
+
+`sendAll()` sends several requests at once and returns the replies in order. A page that needs several services then waits only for the slowest:
+
+```php
+[$weather, $news] = $this->http->sendAll([
+    new ClientRequest('GET', 'https://weather.example.com/today'),
+    new ClientRequest('GET', 'https://news.example.com/top'),
+]);
+```
+
+A failed connection throws after the other requests finish, and names the request.
 
 ## Reading the reply
 
@@ -86,20 +101,28 @@ if ($reply->status !== 200) {
 
 ## Timeouts, redirects and TLS
 
-A request gives up after 30 seconds. When a visitor waits on the call, register a client with a shorter timeout in `bootstrap.php`:
+A request gives up after 30 seconds. When a visitor waits on it, register a client with a shorter timeout in `bootstrap.php`:
 
 ```php
 $app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. TLS certificates are always checked, and compressed replies are unpacked.
+GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. Only `http` and `https` URLs are allowed, redirects included, so a URL from a visitor can't read local files. TLS certificates are always checked, and compressed replies are unpacked.
+
+> [!WARNING]
+> A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.
 
 ## Method reference
 
 | Method | What it does |
 | --- | --- |
-| `request($method, $url, $body = '', $headers = [])` | Sends a request and returns the reply as a `Response`. A string body goes as it is, and an array as multipart form data |
-| `json($method, $url, $data = [], $headers = [])` | Sends `$data` as JSON and returns the reply |
-| `new HttpClient($timeout = 30)` | A client that gives up after `$timeout` seconds |
+| `send($request)` | Sends a `ClientRequest` and returns the reply as a `Response` |
+| `sendAll($requests)` | Sends a list of `ClientRequest`s at once and returns their replies in the same order |
+| `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
+| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data |
+| `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
+| `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
+| `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
+| `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
 | `$reply->data()` | Returns the reply's body decoded as JSON, XML or a form, as a [`Value`](values.md). See [Reading a response](requests.md#reading-a-response) |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |

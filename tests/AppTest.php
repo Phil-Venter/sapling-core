@@ -165,7 +165,7 @@ describe('registering in code', function () {
 
 		expect([$response->body, $response->headers['X-Route']])->toBe(['Hello Ann', 'yes']);
 		expect(runInApp($app, 'greet'))->toBe([0, "Hello\n"]);
-		expect(runInApp($app, 'routes:list'))->toBe([0, "GET     /hello/:name  Closure\n"]);
+		expect(runInApp($app, 'routes:list'))->toBe([0, "GET  /hello/:name  Closure\n"]);
 	});
 
 	test('a closure can still clash with a route or command name', function () {
@@ -293,6 +293,7 @@ describe('middleware', function () {
 	})->with([
 		'the path itself' => ['/notes', '/notes', true],
 		'below it, trailing slash in the prefix' => ['/notes/', '/notes/7', true],
+		'no leading slash in the prefix' => ['notes', '/notes/7', true],
 		'a longer name' => ['/note', '/notes', false],
 		'elsewhere' => ['/notes', '/guarded', false],
 	]);
@@ -432,25 +433,60 @@ describe('httpExceptionHandler()', function () {
 });
 
 describe('debug page', function () {
-	test('an app closure is shown by its relative file', function () {
-		$app = new App(FIXTURES, debug: true);
+	test('an app closure is shown by its relative file, whatever the base path ends in', function (string $base) {
+		$app = new App($base, debug: true);
 		$app->router->add('GET', '/closure', require FIXTURES . '/closure-route.php');
 
 		[$response] = captureErrorLog(fn() => $app->handle(new Request('GET', '/closure')));
 
 		expect(explode('<details', $response->body)[0])->toContain('{closure:closure-route.php:3}()');
-	});
+	})->with(['without' => FIXTURES, 'with' => FIXTURES . '/']);
 });
 
 describe('commands', function () {
-	test('a warning in a command is logged with the full trace and exits 1', function () {
-		$result = runConsole('crash');
+	test('a warning in a command prints the error once, with the full trace, and exits 1', function () {
+		$result = runConsole(['crash']);
 
 		expect($result['code'])->toBe(1);
 		expect($result['stdout'])->toBe('');
-		expect($result['stderr'])
-			->toContain('command crash failed: ErrorException: Undefined array key 0')
-			->toContain('Stack trace:');
+		expect(substr_count($result['stderr'], 'Undefined array key 0'))->toBe(1);
+		expect($result['stderr'])->toContain('Stack trace:');
+	});
+
+	test('a crashed command is also logged when error_log is set', function () {
+		$log = (string) tempnam(sys_get_temp_dir(), 'sapling-log');
+
+		try {
+			$result = runConsole(['crash'], ['error_log' => $log]);
+
+			expect((string) file_get_contents($log))
+				->toContain('command crash failed: ErrorException: Undefined array key 0');
+			expect($result['stderr'])->toContain('Stack trace:');
+		} finally {
+			unlink($log);
+		}
+	});
+
+	test('a usage mistake, such as an option without =, prints only its message', function () {
+		$result = runConsole(['greet', '--times', '2']);
+
+		expect($result['code'])->toBe(1);
+		expect($result['stderr'])->toBe("--times needs a value, written --times=value\n");
+	});
+
+	test('an InvalidArgumentException from a bug is still a crash, with its trace and a log line', function () {
+		$log = (string) tempnam(sys_get_temp_dir(), 'sapling-log');
+
+		try {
+			$result = runConsole(['misconfigured'], ['error_log' => $log]);
+
+			expect($result['code'])->toBe(1);
+			expect($result['stderr'])->toContain('Stack trace:');
+			expect((string) file_get_contents($log))
+				->toContain('command misconfigured failed: InvalidArgumentException: app_key must be 32 bytes');
+		} finally {
+			unlink($log);
+		}
 	});
 
 	test('the same command name on two classes throws and names both', function () {
@@ -464,20 +500,20 @@ describe('commands', function () {
 	});
 
 	test('run() from the CLI runs the command and exits with its code', function () {
-		$greet = runConsole('greet', 'Ann', '--shout');
-		$fail = runConsole('fail');
+		$greet = runConsole(['greet', 'Ann', '--shout']);
+		$fail = runConsole(['fail']);
 
 		expect($greet)->toBe(['stdout' => "Hello Ann!\n", 'stderr' => '', 'code' => 0]);
 		expect($fail)->toBe(['stdout' => '', 'stderr' => "failing on purpose\n", 'code' => 3]);
 	});
 
 	test('an unknown command lists every command and exits 1', function () {
-		$result = runConsole('nope');
+		$result = runConsole(['nope']);
 
 		expect($result['code'])->toBe(1);
 		expect($result['stderr'])->toBe("Unknown command: nope\n");
 		expect($result['stdout'])
-			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n");
+			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n");
 	});
 
 	test('no command at all runs commands:list and exits 0', function () {

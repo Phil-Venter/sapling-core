@@ -79,6 +79,18 @@ test('array() takes arrays only, and $raw holds the value as it arrived', functi
 	expect(new Value(null)->raw)->toBeNull();
 });
 
+test('items() wraps each item in a Value under its key, and gives [] for anything else', function () {
+	$items = new Value(['a' => ['sku' => 'pen'], 'b' => ['sku' => 'ink']])->items();
+
+	expect(array_keys($items))->toBe(['a', 'b']);
+	expect($items['b']->get('sku')->string())->toBe('ink');
+	expect(new Value('pen')->items())->toBe([]);
+});
+
+test('get() without a key gives the same value', function () {
+	expect(new Value(['a' => 1])->get()->array())->toBe(['a' => 1]);
+});
+
 test('get() reads a key inside an array, and anything else gives an empty Value', function () {
 	$address = new Value(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 

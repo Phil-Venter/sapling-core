@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sapling;
 
 use Closure;
@@ -72,7 +74,9 @@ final class Container
 			$arguments[] = $this->argument($parameter, $id);
 		}
 
-		return $reflection->newInstanceArgs($arguments);
+		// Not newInstanceArgs(), which converts loosely, so a setting of 'false' would fill a bool with true.
+		// @mago-expect analysis:unknown-class-instantiation
+		return new $id(...$arguments);
 	}
 
 	private function argument(ReflectionParameter $parameter, string $id): mixed

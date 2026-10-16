@@ -126,3 +126,12 @@ test('all() reads every route back from the tree, with each route\'s own :param 
 		['method' => 'GET', 'path' => '/notes/:id/files/:name', 'action' => 'ShowFile'],
 	]);
 });
+
+test('a parameter name used twice, or one that is not a plain name, throws', function (string $path, string $message) {
+	$router = new Router();
+
+	expect(fn() => $router->add('GET', $path, 'Handler'))->toThrow(LogicException::class, $message);
+})->with([
+	'used twice' => ['/a/:id/b/:id', 'Route GET /a/:id/b/:id uses :id twice'],
+	'not a plain name' => ['/files/:name.:ext', "Route GET /files/:name.:ext: :name.:ext isn't a parameter name"],
+]);

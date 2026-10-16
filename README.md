@@ -1,6 +1,6 @@
 # Sapling
 
-Sapling is a small PHP framework. Each action or command is one class in one file, and an attribute on the class says where it lives. It has no runtime dependencies and about 2,000 lines of code.
+Sapling is a small PHP framework. Each action or command is one class in one file, and an attribute on the class says where it lives. It has no runtime dependencies and about 2,200 lines of code.
 
 ```php
 #[Route('GET', '/ping')]
@@ -24,7 +24,7 @@ Sapling was built with AI assistance. All of the code was reviewed by its author
 Start a new app from the skeleton:
 
 ```sh
-composer create-project sapling/skeleton my-app
+composer create-project sapling/skeleton:dev-main my-app
 cd my-app
 composer serve
 ```
@@ -91,7 +91,7 @@ Sapling keeps the parts that worked and drops the rest. You can read the whole c
 | [Configuration](docs/config.md) | `config.php`, `.env` and the settings Sapling reads |
 | [Encrypting secrets](docs/encryption.md) | `Crypto` and `app_key` |
 | [Commands](docs/commands.md) | `#[Command]`, `Console` and the built-in commands |
-| [Talking to other services](docs/http-client.md) | `HttpClient` |
+| [Talking to other services](docs/http-client.md) | `HttpClient` and `ClientRequest`, one at a time or at once |
 | [Converting data](docs/data.md) | JSON, XML and form data with `Data` |
 | [Helpers](docs/helpers.md) | `abort()`, `e()`, `attrs()` and the other global functions |
 | [When things go wrong](docs/errors.md) | `HttpException`, crashes, the error handler and logging |

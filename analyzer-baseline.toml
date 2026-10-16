@@ -50,15 +50,9 @@ count = 1
 
 [[issues]]
 file = "src/App.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Sapling\Http\Middleware\Cors::__construct`: expected `list<string>`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/App.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 4
+count = 3
 
 [[issues]]
 file = "src/App.php"
@@ -81,12 +75,6 @@ count = 1
 [[issues]]
 file = "src/Container.php"
 code = "invalid-return-statement"
-message = 'Invalid return type for function `Sapling\Container::build`: expected `object`, but found `null|object`.'
-count = 1
-
-[[issues]]
-file = "src/Container.php"
-code = "invalid-return-statement"
 message = '''Invalid return type for function `Sapling\Container::get`: expected `('T.sapling\container::get() extends object)`, but found `object`.'''
 count = 3
 
@@ -94,12 +82,6 @@ count = 3
 file = "src/Container.php"
 code = "mixed-property-type-coercion"
 message = 'A value with a less specific type `non-empty-array<string, (closure(sapling\container): object)|Closure>` is being assigned to property `$factories` (array<string, (closure(sapling\container): object)>).'
-count = 1
-
-[[issues]]
-file = "src/Container.php"
-code = "nullable-return-statement"
-message = 'Function `Sapling\Container::build` is declared to return `object` but possibly returns a nullable value (inferred as `null|object`).'
 count = 1
 
 [[issues]]
@@ -239,6 +221,12 @@ file = "src/Http/Session.php"
 code = "mixed-property-type-coercion"
 message = "A value with a less specific type `nonnull` is being assigned to property `$flash` (array<string, mixed>)."
 count = 1
+
+[[issues]]
+file = "src/Value.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
 
 [[issues]]
 file = "src/Value.php"

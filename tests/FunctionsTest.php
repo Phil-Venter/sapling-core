@@ -71,6 +71,10 @@ test('datetime()', function (
 	],
 ]);
 
+test('datetime() refuses a blank string rather than giving the current time', function (string $blank) {
+	expect(fn() => datetime($blank))->toThrow(DateMalformedStringException::class, 'A blank string is not a date');
+})->with(['empty' => '', 'spaces' => '  ']);
+
 test('datetime() without a timezone uses the default', function () {
 	$default = date_default_timezone_get();
 	date_default_timezone_set('Africa/Johannesburg');

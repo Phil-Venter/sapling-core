@@ -11,35 +11,28 @@ use Stringable;
  */
 final readonly class Value
 {
-	private mixed $plain;
-
 	/**
 	 * Takes the data as it arrived, with null for a value that's missing. $raw holds it unchanged.
 	 */
-	public function __construct(public mixed $raw)
-	{
-		if ($raw instanceof BackedEnum) {
-			$raw = $raw->value;
-		}
-
-		$this->plain = $raw;
-	}
+	public function __construct(public mixed $raw) {}
 
 	/**
 	 * The value as a string. Numbers, Stringable objects and backed enums are cast, and a boolean gives the default.
 	 */
 	public function string(string $default = ''): string
 	{
-		if (is_string($this->plain)) {
-			return $this->plain;
+		$value = $this->plain();
+
+		if (is_string($value)) {
+			return $value;
 		}
 
-		if (is_int($this->plain) || is_float($this->plain)) {
-			return (string) $this->plain;
+		if (is_int($value) || is_float($value)) {
+			return (string) $value;
 		}
 
-		if ($this->plain instanceof Stringable) {
-			return (string) $this->plain;
+		if ($value instanceof Stringable) {
+			return (string) $value;
 		}
 
 		return $default;
@@ -79,8 +72,10 @@ final readonly class Value
 	 */
 	public function bool(bool $default = false): bool
 	{
-		if (is_bool($this->plain)) {
-			return $this->plain;
+		$value = $this->plain();
+
+		if (is_bool($value)) {
+			return $value;
 		}
 
 		$bool = $this->filter(FILTER_VALIDATE_BOOL);
@@ -108,15 +103,26 @@ final readonly class Value
 	}
 
 	/**
-	 * A key of an array or a public property of an object, as in get('address', 'city')->string(). A missing key gives
-	 * an empty Value.
+	 * Each item of an array as a Value of its own, under its key, as in foreach ($value->items() as $item). Anything
+	 * that isn't an array gives [].
+	 *
+	 * @return array<array-key, self>
 	 */
-	public function get(string|int $key, string|int ...$more): self
+	public function items(): array
 	{
-		$value = $this->child($key);
+		return array_map(fn(mixed $item): self => new self($item), $this->array());
+	}
 
-		foreach ($more as $next) {
-			$value = $value->child($next);
+	/**
+	 * A key of an array or a public property of an object, and more keys read deeper, as in
+	 * get('address', 'city')->string(). A missing key gives an empty Value, and no key gives this Value.
+	 */
+	public function get(string|int ...$keys): self
+	{
+		$value = $this;
+
+		foreach ($keys as $key) {
+			$value = $value->child($key);
 		}
 
 		return $value;
@@ -138,10 +144,22 @@ final readonly class Value
 	// An array or null is never a valid number or boolean, and filter_var() would turn true into 1.
 	private function filter(int $filter): int|float|bool|null
 	{
-		if (!is_string($this->plain) && !is_int($this->plain) && !is_float($this->plain)) {
+		$value = $this->plain();
+
+		if (!is_string($value) && !is_int($value) && !is_float($value)) {
 			return null;
 		}
 
-		return filter_var($this->plain, $filter, FILTER_NULL_ON_FAILURE);
+		return filter_var($value, $filter, FILTER_NULL_ON_FAILURE);
+	}
+
+	// A backed enum reads as its value.
+	private function plain(): mixed
+	{
+		if ($this->raw instanceof BackedEnum) {
+			return $this->raw->value;
+		}
+
+		return $this->raw;
 	}
 }

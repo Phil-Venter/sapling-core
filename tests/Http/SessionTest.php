@@ -53,6 +53,17 @@ test('the cookie is not Secure over plain HTTP', function (?string $https) {
 	expect(session_get_cookie_params()['secure'])->toBeFalse();
 })->with(['off' => 'off', 'empty' => '', 'missing' => null]);
 
+test('get() and getFlash() take a path of keys, as Value::get() does', function () {
+	$session = new Session();
+	$session->set('user', ['id' => 7]);
+	$session->setFlash('errors', ['email' => 'Required']);
+
+	$next = nextRequest();
+
+	expect($next->get('user', 'id')->int())->toBe(7);
+	expect($next->getFlash('errors', 'email')->string())->toBe('Required');
+});
+
 test('flash data is readable during the next request only', function () {
 	$first = new Session();
 	$first->setFlash('notice', 'Saved.');
@@ -87,4 +98,21 @@ test('destroy() forgets everything and the next use starts a fresh session', fun
 	expect(session_status())->toBe(PHP_SESSION_NONE);
 	expect($session->get('user')->raw)->toBeNull();
 	expect(session_id())->not->toBe($before);
+});
+
+test('with a lifetime, every visit renews the cookie, so an active visitor stays signed in', function () {
+	$first = httpRequest('GET', '/visit');
+	$cookie = explode(';', headerValues($first, 'Set-Cookie')[0])[0];
+
+	$second = httpRequest('GET', '/visit', ['Cookie' => $cookie]);
+
+	expect($second['body'])->toBe('2');
+	expect(headerValues($second, 'Set-Cookie')[0] ?? '')->toStartWith("{$cookie}; expires=");
+});
+
+test('a stale session id gets one new cookie, not a second renewal of it', function () {
+	$response = httpRequest('GET', '/visit', ['Cookie' => 'PHPSESSID=stale0000000000000000000000000000']);
+
+	expect($response['body'])->toBe('1');
+	expect(headerValues($response, 'Set-Cookie'))->toHaveCount(1);
 });

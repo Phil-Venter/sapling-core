@@ -7,8 +7,8 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 /**
- * Sets the browser security headers and a content policy. Directives you pass replace the defaults, as in new
- * SecurityHeaders(['script-src' => "'self' https://unpkg.com"]).
+ * Sets the browser security headers and a content policy, unless the response already has them. Directives you pass
+ * replace the defaults, as in new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]).
  */
 final readonly class SecurityHeaders
 {
@@ -38,10 +38,23 @@ final readonly class SecurityHeaders
 			$policy[] = trim("{$name} {$sources}");
 		}
 
-		return $next($request)
-			->withHeader('X-Frame-Options', 'DENY')
-			->withHeader('X-Content-Type-Options', 'nosniff')
-			->withHeader('Referrer-Policy', 'same-origin')
-			->withHeader('Content-Security-Policy', implode('; ', $policy));
+		$response = $next($request);
+		$headers = [
+			'X-Frame-Options' => 'DENY',
+			'X-Content-Type-Options' => 'nosniff',
+			'Referrer-Policy' => 'same-origin',
+			'Content-Security-Policy' => implode('; ', $policy),
+		];
+
+		// A header the action set itself wins, so one page can have its own policy.
+		foreach ($headers as $name => $value) {
+			if ($response->header($name)->raw !== null) {
+				continue;
+			}
+
+			$response = $response->withHeader($name, $value);
+		}
+
+		return $response;
 	}
 }

@@ -11,7 +11,7 @@
         "pestphp/pest": "^5.3"
     },
     "suggest": {
-        "ext-curl": "for Sapling\\Http\\HttpClient",
+        "ext-curl": "for Sapling\\Client\\HttpClient",
         "ext-pdo": "for Sapling\\Db and the migrations commands, with your database's driver",
         "ext-pdo_sqlite": "for Sapling\\Db::sqlite()",
         "ext-session": "for Sapling\\Http\\Session and the Csrf middleware",

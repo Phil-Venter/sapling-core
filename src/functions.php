@@ -103,6 +103,11 @@ if (!function_exists('datetime')) {
 		DateTimeInterface|int|float|string|null $value = null,
 		DateTimeZone|string|null $timezone = null,
 	): DateTimeImmutable {
+		// new DateTimeImmutable('') is now, which would turn a blank form field into the current time.
+		if (is_string($value) && trim($value) === '') {
+			throw new DateMalformedStringException('A blank string is not a date');
+		}
+
 		$zone = $timezone ?? date_default_timezone_get();
 		if (is_string($zone)) {
 			$zone = new DateTimeZone($zone);

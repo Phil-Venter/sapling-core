@@ -53,7 +53,7 @@ final class StoreNote
 {
     public function __invoke(Request $request): Response
     {
-        $body = $request->input('body')->string();
+        $body = $request->data('body')->string();
 
         // ...
 
@@ -65,7 +65,7 @@ final class StoreNote
 Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, so `//notes/` arrives as `/notes`.
 
 > [!NOTE]
-> Behind a proxy or load balancer, `$request->ip` is the proxy's address.
+> Behind a proxy or load balancer, `$request->ip` is the proxy's address. Sapling doesn't read `X-Forwarded-For`, since any visitor can send one and pick their own address. It only trusts `X-Forwarded-Proto`, to mark the session cookie Secure, because faking that only makes the visitor's own cookie stricter.
 
 ## Retrieving input
 
@@ -75,7 +75,7 @@ Whatever part of the request you read, you get a [`Value`](values.md) back, whic
 $page = $request->query('page')->int(1);
 ```
 
-This also protects you from crafted input. If someone sends `body[]=x` where you expect text, `string()` gives the default rather than an array.
+This also protects you from crafted input. If someone sends `body[]=x` where you expect text, `string()` gives the default rather than an array. Every reader takes more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
 
 ### Route parameters
 
@@ -92,24 +92,30 @@ $search = $request->query('q')->string();
 $tags = $request->query('tags')->array();   // ?tags[]=php&tags[]=sql
 ```
 
-### Body fields
-
-`input()` reads a field from the request body, whichever format it was sent in:
+Without a name, `query()` gives the whole query string. A link to the next page can then keep the filters:
 
 ```php
-$title = $request->input('title')->string();
-$remember = $request->input('remember')->bool();
-$city = $request->input('address')->get('city')->string();
+$next = '/notes?' . Data::toForm([...$request->query()->array(), 'page' => $page + 1]);
 ```
 
-The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. `input()` only reads the body, never the query string.
+### Body fields
+
+`data()` reads a field from the request body, whichever format it was sent in:
+
+```php
+$title = $request->data('title')->string();
+$remember = $request->data('remember')->bool();
+$city = $request->data('address', 'city')->string();
+```
+
+The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. `data()` only reads the body, never the query string.
 
 > [!WARNING]
 > A JSON or XML body that doesn't decode stops the request with a 400.
 
 ### The whole body
 
-When you need more than one field, such as a JSON list or a SOAP envelope, `data()` returns the whole decoded body. `input('title')` is short for `data()->get('title')`:
+Without a name, `data()` returns the whole decoded body, for when you need more than one field, such as a JSON list or a SOAP envelope:
 
 ```php
 $items = $request->data()->array();   // a JSON list
@@ -234,7 +240,7 @@ Responses aren't only written. Middleware reads what the action returned, and te
 ```php
 $response = $app->handle(new Request('GET', '/api/notes/7'));
 
-$title = $response->data()->get('title')->string();
+$title = $response->data('title')->string();
 $location = $response->header('location')->string();
 ```
 
@@ -246,12 +252,11 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 
 | Method | What it returns |
 | --- | --- |
-| `param($name)` | A `:name` parameter from the route path, as a `Value` |
-| `query($name)` | A query string value, as a `Value` |
-| `input($name)` | A field from the body, as a `Value`. Short for `data()->get($name)` |
-| `data()` | The whole body, decoded by its `Content-Type` as JSON, XML or a form, as a `Value` |
+| `param(...$keys)` | A `:name` parameter from the route path, as a `Value` |
+| `query(...$keys)` | A query string value, as a `Value` |
+| `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON, XML or a form, as a `Value` |
 | `header($name)` | A header, case-insensitive, as a `Value` |
-| `cookie($name)` | A cookie, as a `Value` |
+| `cookie(...$keys)` | A cookie, as a `Value`. Like the readers above, more keys read deeper and no key gives all of them |
 | `$request->method`, `$request->path` | The method, and the path without its query string |
 | `$request->params` | Every route parameter, by name |
 | `$request->body` | The raw body |
@@ -271,7 +276,7 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `Response::fromHttpException($e)` | Returns plain text with the exception's status and message |
 | `new Response($body, $status = 200, $headers = [])` | Returns any other response |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
-| `data()` | Returns the body decoded by its `Content-Type`, as a `Value` |
+| `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. A header sent more than once is a list |
 | `send($body = true)` | Sends the response. `App::run()` does this for you |
 | `$response->status`, `headers`, `body` | Read-only. `withHeader()` returns a copy with a new header |

@@ -100,7 +100,7 @@ $dryRun = $console->flag('dry-run');       // true
 An option that's missing or isn't of the type you read gives the default, so `--days=soon` gives 30.
 
 > [!WARNING]
-> Options need `=`. Written as `--days 7`, the value would be lost, so `option('days')` throws an `InvalidArgumentException` instead. `flag('force')` throws the same way when given `--force=yes`.
+> Options need `=`. Written as `--days 7`, the value would be lost, so `option('days')` throws a `UsageException` instead. `flag('force')` throws the same way when given `--force=yes`.
 
 ## Output and exit codes
 
@@ -111,7 +111,17 @@ $console->line("Deleted {$deleted} notes.");
 $console->error('No such user.');
 ```
 
-Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws is logged, prints the error and exits with 1.
+Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws prints the error and exits with 1. It's also logged when `error_log` is set, such as to a file or `syslog`. Without it, PHP's log is the terminal.
+
+A `Sapling\Cli\UsageException`, such as the one `--days 7` causes, prints only its message and exits with 1, without a trace or a log line. Throw one for a usage mistake of your own:
+
+```php
+if (blank($email)) {
+    throw new UsageException('Usage: php bin/console users:add <email>');
+}
+```
+
+Every other exception is a crash, so a bug that throws an `InvalidArgumentException` still shows its trace.
 
 ## Adding commands in code
 
@@ -147,4 +157,5 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `error($text)` | Prints a line to standard error |
 | `$console->command` | The command name |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
+| `throw new UsageException($message)` | Stops the command with a usage mistake. Only the message is printed, and the exit code is 1 |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |

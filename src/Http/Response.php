@@ -98,30 +98,31 @@ final class Response
 	/**
 	 * A 500 for a crash. In debug mode it's the debug page, otherwise a plain Internal Server Error.
 	 */
-	public static function exception(Throwable $e, bool $debug, string $root = ''): self
+	public static function fromException(Throwable $e, bool $debug, string $basePath = ''): self
 	{
 		if (!$debug) {
 			return self::text('Internal Server Error', 500);
 		}
 
-		return self::html(DebugPage::render($e, $root), 500);
+		return self::html(DebugPage::render($e, $basePath), 500);
 	}
 
 	/**
-	 * The body decoded by its Content-Type, as JSON, XML or a form, as in data()->get('name')->string(). An empty body
-	 * gives an empty Value, and any other type gives the body as it is.
+	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('name')->string(). More
+	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
+	 * the body as it is.
 	 *
 	 * @throws JsonException When a JSON body is invalid.
 	 * @throws RuntimeException When an XML body is invalid.
 	 */
-	public function data(): Value
+	public function data(string|int ...$keys): Value
 	{
 		$type = $this->header('content-type');
 
 		$firstOfList = $type->get(0)->string();
 		$contentType = $type->string($firstOfList);
 
-		return new Value(Data::decode($this->body, $contentType));
+		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 	}
 
 	/**
@@ -167,8 +168,6 @@ final class Response
 	 */
 	public function send(bool $body = true): void
 	{
-		http_response_code($this->status);
-
 		foreach ($this->headers as $name => $values) {
 			$replace = strcasecmp($name, 'Set-Cookie') !== 0;
 
@@ -177,6 +176,9 @@ final class Response
 				$replace = false;
 			}
 		}
+
+		// After the headers, since header('Location: ...') turns any status but 201 and 3xx into a 302.
+		http_response_code($this->status);
 
 		$bodiless = $this->status < 200 || $this->status === 204 || $this->status === 304;
 

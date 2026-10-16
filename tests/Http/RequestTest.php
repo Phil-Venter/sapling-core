@@ -15,6 +15,7 @@ test('fromGlobals() reads method, normalized path, query, headers, cookies and f
 	$_SERVER['REQUEST_URI'] = '//notes//7/?page=2';
 	$_SERVER['HTTP_X_REQUEST_ID'] = 'abc';
 	$_SERVER['CONTENT_TYPE'] = 'text/plain';
+	$_SERVER['CONTENT_LENGTH'] = '0';
 	$_SERVER['REMOTE_ADDR'] = '203.0.113.7';
 	$_GET = ['page' => '2'];
 	$_COOKIE = ['theme' => 'dark'];
@@ -27,10 +28,33 @@ test('fromGlobals() reads method, normalized path, query, headers, cookies and f
 	expect($request->query('page')->int())->toBe(2);
 	expect($request->header('X-Request-Id')->string())->toBe('abc');
 	expect($request->header('content-type')->string())->toBe('text/plain');
+	expect($request->header('content-length')->string())->toBe('0');
 	expect($request->cookie('theme')->string())->toBe('dark');
 	expect($request->files)->toBe(['upload' => ['name' => 'a.txt']]);
 	expect($request->body)->toBe('');
 	expect($request->ip)->toBe('203.0.113.7');
+});
+
+test('the readers take a path of keys, as Value::get() does', function () {
+	$request = new Request(
+		'GET',
+		'/notes',
+		query: ['filter' => ['status' => 'open']],
+		input: ['address' => ['city' => 'Cape Town']],
+		cookies: ['prefs' => ['theme' => 'dark']],
+	);
+	$request->params = ['id' => '7'];
+
+	expect($request->query('filter', 'status')->string())->toBe('open');
+	expect($request->data('address', 'city')->string())->toBe('Cape Town');
+	expect($request->cookie('prefs', 'theme')->string())->toBe('dark');
+	expect($request->param()->array())->toBe(['id' => '7']);
+});
+
+test('query() without a name gives the whole query string', function () {
+	$request = new Request('GET', '/notes', query: ['page' => '2', 'tag' => 'php']);
+
+	expect($request->query()->array())->toBe(['page' => '2', 'tag' => 'php']);
 });
 
 test('POST _method may switch only to PUT, PATCH or DELETE', function (
@@ -45,7 +69,7 @@ test('POST _method may switch only to PUT, PATCH or DELETE', function (
 	$request = Request::fromGlobals();
 
 	expect($request->method)->toBe($expected);
-	expect($request->input('body')->string())->toBe('kept');
+	expect($request->data('body')->string())->toBe('kept');
 })->with([
 	['POST', 'delete',  'DELETE'],
 	['POST', 'PUT',     'PUT'],
@@ -55,13 +79,13 @@ test('POST _method may switch only to PUT, PATCH or DELETE', function (
 	['GET',  'DELETE',  'GET'],
 ]);
 
-test('input() reads a field as the type asked for, and a crafted array never reaches a string', function () {
+test('data() reads a field as the type asked for, and a crafted array never reaches a string', function () {
 	$request = new Request('POST', '/notes', input: ['body' => ['x'], 'tags' => ['a'], 'count' => '3']);
 
-	expect($request->input('body')->string('fallback'))->toBe('fallback');
-	expect($request->input('tags')->array())->toBe(['a']);
-	expect($request->input('count')->int())->toBe(3);
-	expect($request->input('missing')->raw)->toBeNull();
+	expect($request->data('body')->string('fallback'))->toBe('fallback');
+	expect($request->data('tags')->array())->toBe(['a']);
+	expect($request->data('count')->int())->toBe(3);
+	expect($request->data('missing')->raw)->toBeNull();
 });
 
 test('an array _method is ignored instead of raising a warning', function () {
@@ -140,5 +164,5 @@ test('a body is never decoded by a request that reads no field', function () {
 	$request = new Request('PUT', '/echo/1', headers: ['Content-Type' => 'application/json'], body: '{not json');
 
 	expect($request->header('content-type')->string())->toBe('application/json');
-	expect(fn() => $request->input('name'))->toThrow(Sapling\Http\HttpException::class, 'The request body is invalid');
+	expect(fn() => $request->data('name'))->toThrow(Sapling\Http\HttpException::class, 'The request body is invalid');
 });

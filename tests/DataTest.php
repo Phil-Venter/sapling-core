@@ -68,3 +68,9 @@ test('decode() picks the format by Content-Type; an empty body is null and any o
 	'text' => ['text/plain', 'hello', 'hello'],
 	'no type' => ['', 'raw', 'raw'],
 ]);
+
+test('toXml() keeps one root element, writing an empty list as an empty element', function () {
+	expect(Data::toXml([]))->toContain('<root/>');
+	expect(Data::toXml(['tags' => []]))->toContain('<root><tags/></root>');
+	expect(fn() => Data::toXml(['a', 'b']))->toThrow(InvalidArgumentException::class, 'needs keys, not a list');
+});

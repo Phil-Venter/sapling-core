@@ -1,5 +1,6 @@
 <?php
 
+// So a config value of the wrong type fails at boot, instead of being converted.
 declare(strict_types=1);
 
 namespace Sapling;
@@ -21,6 +22,7 @@ use Sapling\Cli\Commands\ListRoutes;
 use Sapling\Cli\Commands\NewMigration;
 use Sapling\Cli\Commands\RunMigrations;
 use Sapling\Cli\Console;
+use Sapling\Cli\UsageException;
 use Sapling\Http\HttpException;
 use Sapling\Http\Middleware\Cors;
 use Sapling\Http\Middleware\Csrf;
@@ -185,7 +187,14 @@ final class App
 	 */
 	public function middleware(string|object $middleware, string $prefix = ''): void
 	{
-		$this->middleware[] = ['middleware' => $middleware, 'prefix' => rtrim($prefix, '/')];
+		// So admin, /admin and /admin/ all mean the same prefix.
+		$prefix = trim($prefix, '/');
+
+		if ($prefix !== '') {
+			$prefix = "/{$prefix}";
+		}
+
+		$this->middleware[] = ['middleware' => $middleware, 'prefix' => $prefix];
 	}
 
 	/**
@@ -227,7 +236,7 @@ final class App
 		} catch (Throwable $e) {
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
 
-			return Response::exception($e, $this->debug, $this->basePath);
+			return Response::fromException($e, $this->debug, $this->basePath);
 		} finally {
 			restore_error_handler();
 		}
@@ -267,8 +276,17 @@ final class App
 			$command = $this->resolve($action);
 
 			return $command($console);
+		} catch (UsageException $e) {
+			// A usage mistake, such as --days 7, needs its message, not a trace.
+			$console->error($e->getMessage());
+
+			return Console::FAILURE;
 		} catch (Throwable $e) {
-			new CrashLog($this->basePath)->write("command {$name}", $e);
+			// Without an error_log file, the log is this terminal, which gets the full error below.
+			if (ini_get('error_log') !== '') {
+				new CrashLog($this->basePath)->write("command {$name}", $e);
+			}
+
 			$console->error((string) $e);
 
 			return Console::FAILURE;

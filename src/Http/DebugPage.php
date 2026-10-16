@@ -7,6 +7,8 @@ use Throwable;
 
 /**
  * The page shown for a crash in debug mode.
+ *
+ * @internal
  */
 final class DebugPage
 {
@@ -15,6 +17,7 @@ final class DebugPage
 	 */
 	public static function render(Throwable $e, string $root): string
 	{
+		$root = rtrim($root, '/\\');
 		$title = self::e($e::class);
 		$sections = self::exceptionHtml($e, $root, '');
 		$previous = $e->getPrevious();

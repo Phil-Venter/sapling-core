@@ -21,13 +21,15 @@ final readonly class ListRoutes
 	public function __invoke(Console $console): int
 	{
 		$routes = $this->router->all();
-		$width = 0;
+		$methodWidth = 0;
+		$pathWidth = 0;
 
 		foreach ($routes as $route) {
-			$width = max($width, strlen($route['path']));
+			$methodWidth = max($methodWidth, strlen($route['method']));
+			$pathWidth = max($pathWidth, strlen($route['path']));
 		}
 
-		usort($routes, self::byPathThenMethod(...));
+		usort($routes, $this->byPathThenMethod(...));
 
 		foreach ($routes as $route) {
 			$action = $route['action'];
@@ -36,7 +38,12 @@ final readonly class ListRoutes
 				$action = $action::class;
 			}
 
-			$console->line(sprintf("%-6s  %-{$width}s  %s", $route['method'], $route['path'], $action));
+			$console->line(sprintf(
+				"%-{$methodWidth}s  %-{$pathWidth}s  %s",
+				$route['method'],
+				$route['path'],
+				$action,
+			));
 		}
 
 		return Console::SUCCESS;
@@ -46,7 +53,7 @@ final readonly class ListRoutes
 	 * @param array{method: string, path: string, action: class-string|object} $a
 	 * @param array{method: string, path: string, action: class-string|object} $b
 	 */
-	private static function byPathThenMethod(array $a, array $b): int
+	private function byPathThenMethod(array $a, array $b): int
 	{
 		$byPath = strnatcmp($a['path'], $b['path']);
 

@@ -64,81 +64,6 @@ final class Request
 		);
 	}
 
-	/**
-	 * A :name parameter from the route path, as in param('id')->int().
-	 */
-	public function param(string $name): Value
-	{
-		return new Value($this->params[$name] ?? null);
-	}
-
-	/**
-	 * A query string value, read as the type you need, as in query('page')->int(1).
-	 */
-	public function query(string $name): Value
-	{
-		return new Value($this->query[$name] ?? null);
-	}
-
-	/**
-	 * A field from the body, read as the type you need, as in input('body')->string(). Short for data()->get($name).
-	 *
-	 * @throws HttpException 400 when the body doesn't decode.
-	 */
-	public function input(string $name): Value
-	{
-		return $this->data()->get($name);
-	}
-
-	/**
-	 * The body decoded by its Content-Type, as JSON, XML or a form, as Response::data() does. It's decoded the first
-	 * time it's read.
-	 *
-	 * @throws HttpException 400 when the body doesn't decode.
-	 */
-	public function data(): Value
-	{
-		if (!$this->decoded) {
-			$this->data = $this->decode();
-			$this->decoded = true;
-		}
-
-		return new Value($this->data);
-	}
-
-	/**
-	 * A request header, whatever the case of its name, as in header('accept')->string().
-	 */
-	public function header(string $name): Value
-	{
-		return new Value($this->headers[strtolower($name)] ?? null);
-	}
-
-	/**
-	 * A cookie, read as the type you need, as in cookie('theme')->string('light').
-	 */
-	public function cookie(string $name): Value
-	{
-		return new Value($this->cookies[$name] ?? null);
-	}
-
-	/** @throws HttpException */
-	private function decode(): mixed
-	{
-		// PHP keeps no copy of a multipart body, only $_POST.
-		if ($this->input !== []) {
-			return $this->input;
-		}
-
-		$type = $this->headers['content-type'] ?? '';
-
-		try {
-			return Data::decode($this->body, $type);
-		} catch (JsonException|RuntimeException $e) {
-			throw new HttpException(400, 'The request body is invalid', previous: $e);
-		}
-	}
-
 	private static function readMethod(): string
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -180,12 +105,82 @@ final class Request
 			$headers[$name] = $value;
 		}
 
-		$type = $_SERVER['CONTENT_TYPE'] ?? null;
+		// PHP leaves these two out of the HTTP_ keys.
+		foreach (['CONTENT_TYPE' => 'content-type', 'CONTENT_LENGTH' => 'content-length'] as $key => $name) {
+			$value = $_SERVER[$key] ?? null;
 
-		if (is_string($type)) {
-			$headers['content-type'] = $type;
+			if (is_string($value)) {
+				$headers[$name] = $value;
+			}
 		}
 
 		return $headers;
+	}
+
+	/**
+	 * A :name parameter from the route path, as in param('id')->int(). Without a name, every parameter.
+	 */
+	public function param(string|int ...$keys): Value
+	{
+		return new Value($this->params)->get(...$keys);
+	}
+
+	/**
+	 * A query string value, read as the type you need, as in query('page')->int(1). More keys read deeper, as in
+	 * query('filter', 'status') for ?filter[status]=open, and no key gives the whole query string.
+	 */
+	public function query(string|int ...$keys): Value
+	{
+		return new Value($this->query)->get(...$keys);
+	}
+
+	/**
+	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('title')->string(). More
+	 * keys read deeper, and no key gives the whole body. It's decoded the first time it's read.
+	 *
+	 * @throws HttpException 400 when the body doesn't decode.
+	 */
+	public function data(string|int ...$keys): Value
+	{
+		if (!$this->decoded) {
+			$this->data = $this->decode();
+			$this->decoded = true;
+		}
+
+		return new Value($this->data)->get(...$keys);
+	}
+
+	/**
+	 * A request header, whatever the case of its name, as in header('accept')->string().
+	 */
+	public function header(string $name): Value
+	{
+		return new Value($this->headers[strtolower($name)] ?? null);
+	}
+
+	/**
+	 * A cookie, read as the type you need, as in cookie('theme')->string('light'). More keys read deeper, as in
+	 * cookie('prefs', 'theme') for prefs[theme]=dark.
+	 */
+	public function cookie(string|int ...$keys): Value
+	{
+		return new Value($this->cookies)->get(...$keys);
+	}
+
+	/** @throws HttpException */
+	private function decode(): mixed
+	{
+		// PHP keeps no copy of a multipart body, only $_POST.
+		if ($this->input !== []) {
+			return $this->input;
+		}
+
+		$type = $this->headers['content-type'] ?? '';
+
+		try {
+			return Data::decode($this->body, $type);
+		} catch (JsonException|RuntimeException $e) {
+			throw new HttpException(400, 'The request body is invalid', previous: $e);
+		}
 	}
 }

@@ -67,7 +67,7 @@ $userId = $request->param('user')->int();
 $noteId = $request->param('note')->int();
 ```
 
-Parameters arrive URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash.
+Parameters arrive URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash. Fixed parts are matched as browsers send them, so write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
 
 ## More than one route per action
 

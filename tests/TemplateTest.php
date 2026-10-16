@@ -48,7 +48,7 @@ test('an error inside a template closes its buffers and leaves no state behind',
 	expect($this->view->render('untitled'))->toContain('<title>Default</title>');
 });
 
-test('an unclosed component, a stray end() or a slot outside a component throws instead of garbling the page', function () {
+test('an unclosed component, a stray end() or a stray slot() throws instead of garbling the page', function () {
 	$level = ob_get_level();
 
 	expect(fn() => $this->view->render('unclosed'))
@@ -58,6 +58,11 @@ test('an unclosed component, a stray end() or a slot outside a component throws 
 	expect(fn() => $this->view->render('stray-slot'))->toThrow(LogicException::class, 'slot() outside a component()');
 	expect(ob_get_level())->toBe($level);
 	expect($this->view->render('plain', ['name' => 'Ann']))->toBe("<p>Ann on Sapling</p>\n");
+});
+
+test('a partial that closes what its page opened throws instead of garbling the page', function () {
+	expect(fn() => $this->view->render('closes-parent'))
+		->toThrow(LogicException::class, "end() in _closes closes a component or slot it didn't open");
 });
 
 test('slot() with a value passes it as it is, such as a list', function () {

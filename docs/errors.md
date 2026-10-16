@@ -84,7 +84,7 @@ PHP's warnings and notices are easy to miss, so inside a request or a command th
 
 That changes how some PHP functions fail. `file_get_contents()` on a missing file throws, so a `=== false` check after it never runs, and you check with `is_file()` first instead. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
 
-Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP. A command that crashes is logged too, prints the error, and exits with 1.
+Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP. A command that crashes prints the error and exits with 1.
 
 ## Logging
 

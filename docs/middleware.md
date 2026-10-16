@@ -125,13 +125,16 @@ To loosen the policy, pass the directives you want. Each replaces the default of
 $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
 ```
 
-`SecurityHeaders::POLICY` holds the defaults.
+`SecurityHeaders::POLICY` holds the defaults. A header the action sets itself is kept, so one page can have its own policy.
 
 ### Cross-site request protection
 
 `Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
 
 Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too.
+
+> [!NOTE]
+> There are no CSRF tokens to add to forms. Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. A form on a subdomain counts as another site, so list it in `cors_origins`.
 
 ### CORS
 

@@ -45,7 +45,7 @@ $xml = Data::toXml(['id' => 7, 'items' => ['item' => ['Pen', 'Paper']]], root: '
 $order = Data::fromXml($xml);
 ```
 
-Invalid XML throws a `RuntimeException`, and nothing external is ever fetched while parsing.
+`toXml()` needs keys at the top, since a document has one root element. An empty list becomes an empty element. Invalid XML throws a `RuntimeException`, and nothing external is ever fetched while parsing.
 
 ### How XML maps to arrays
 

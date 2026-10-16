@@ -56,7 +56,7 @@ final class StoreNote
             VALUES (?)
             SQL;
 
-        $this->db->run($sql, [$request->input('body')->string()]);
+        $this->db->run($sql, [$request->data('body')->string()]);
         $this->session->setFlash('notice', 'Saved.');
 
         return Response::redirect('/notes');
@@ -94,7 +94,7 @@ The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind
 
 ### How long a session lasts
 
-`session_lifetime` in `config.php` sets, in seconds, how long the cookie lasts and how long an idle session is kept. Without it, php.ini decides both:
+`session_lifetime` in `config.php` sets, in seconds, how long a visitor stays signed in between requests, since every request that uses the session renews the cookie. Without it, php.ini decides:
 
 ```php
 'session_lifetime' => 60 * 60 * 24 * 14,   // two weeks
@@ -107,10 +107,10 @@ The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind
 
 | Method | What it does |
 | --- | --- |
-| `get($key)` | Returns a value as a [`Value`](values.md), as in `get('user_id')->int()` |
+| `get(...$keys)` | Returns a value as a [`Value`](values.md), as in `get('user_id')->int()`. More keys read deeper |
 | `set($key, $value)` | Stores a value |
 | `forget($key)` | Removes a value |
 | `setFlash($key, $value)` | Stores a value that only the next request can read |
-| `getFlash($key)` | Returns a value the previous request stored with `setFlash()`, as a `Value` |
+| `getFlash(...$keys)` | Returns a value the previous request stored with `setFlash()`, as a `Value`. More keys read deeper |
 | `regenerate()` | Gives the session a new id and keeps its data |
 | `destroy()` | Clears the data and the cookie. The next call starts a new session |

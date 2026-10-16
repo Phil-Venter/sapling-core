@@ -44,9 +44,23 @@ function sentBody(Response $response): string
 	return ob_get_clean();
 }
 
-function runConsole(string ...$args): array
+/**
+ * Runs bin/console for the fixture app in a subprocess, with $ini as extra php.ini settings.
+ *
+ * @param list<string> $args
+ * @param array<string, string> $ini
+ * @return array{stdout: string, stderr: string, code: int}
+ */
+function runConsole(array $args = [], array $ini = []): array
 {
-	$command = [PHP_BINARY, '-d', 'xdebug.mode=off', FIXTURES . '/app.php', ...$args];
+	$settings = [];
+
+	foreach (['xdebug.mode' => 'off', ...$ini] as $name => $value) {
+		$settings[] = '-d';
+		$settings[] = "{$name}={$value}";
+	}
+
+	$command = [PHP_BINARY, ...$settings, FIXTURES . '/app.php', ...$args];
 	$process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
 	$stdout = stream_get_contents($pipes[1]);
 	$stderr = stream_get_contents($pipes[2]);

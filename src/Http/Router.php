@@ -11,11 +11,14 @@ use LogicException;
  */
 final class Router
 {
+	// A level of the tree, cast to an object so branches can be filled in where they are.
+	private const array NODE = ['fixed' => [], 'param' => null, 'routes' => []];
+
 	private object $tree;
 
 	public function __construct()
 	{
-		$this->tree = self::node();
+		$this->tree = (object) self::NODE;
 	}
 
 	/**
@@ -28,24 +31,37 @@ final class Router
 	public function add(string $method, string $path, string|object $action, array $middleware = []): void
 	{
 		$method = strtoupper($method);
-		$segments = self::segments($path);
+		$segments = explode('/', trim($path, '/'));
 		$path = '/' . implode('/', $segments);
 		$node = $this->tree;
 		$params = [];
 
 		foreach ($segments as $segment) {
-			$node = self::branch($node, $segment);
+			$node = $this->branch($node, $segment);
 
-			if (str_starts_with($segment, ':')) {
-				$params[] = substr($segment, 1);
+			if (!str_starts_with($segment, ':')) {
+				continue;
 			}
+
+			$param = substr($segment, 1);
+
+			// Either mistake would otherwise pass silently, with a lost value or an unreachable name.
+			if (in_array($param, $params, true)) {
+				throw new LogicException("Route {$method} {$path} uses :{$param} twice");
+			}
+
+			if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $param) !== 1) {
+				throw new LogicException("Route {$method} {$path}: {$segment} isn't a parameter name");
+			}
+
+			$params[] = $param;
 		}
 
 		$taken = $node->routes[$method]['action'] ?? null;
 
 		if ($taken !== null) {
-			$first = self::actionName($taken);
-			$second = self::actionName($action);
+			$first = $this->actionName($taken);
+			$second = $this->actionName($action);
 
 			throw new LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
 		}
@@ -64,7 +80,9 @@ final class Router
 	{
 		$allowed = [];
 
-		foreach ($this->walk($this->tree, self::segments($path)) as [$node, $values]) {
+		$segments = explode('/', trim($path, '/'));
+
+		foreach ($this->walk($this->tree, $segments) as [$node, $values]) {
 			$route = $node->routes[$method] ?? null;
 
 			if ($route === null && $method === 'HEAD') {
@@ -168,34 +186,24 @@ final class Router
 		}
 	}
 
-	private static function node(): object
-	{
-		return (object) ['fixed' => [], 'param' => null, 'routes' => []];
-	}
-
-	private static function branch(object $node, string $segment): object
-	{
-		if (str_starts_with($segment, ':')) {
-			// @mago-expect analysis:ambiguous-object-property-access
-			return $node->param ??= self::node();
-		}
-
-		// @mago-expect analysis:ambiguous-object-property-access
-		return $node->fixed[$segment] ??= self::node();
-	}
-
-	/** @return list<string> */
-	private static function segments(string $path): array
-	{
-		return explode('/', trim($path, '/'));
-	}
-
-	private static function actionName(string|object $action): string
+	private function actionName(string|object $action): string
 	{
 		if (is_object($action)) {
 			$action = $action::class;
 		}
 
 		return $action;
+	}
+
+	// Typed as object, so the analyzer can follow a node down the tree.
+	private function branch(object $node, string $segment): object
+	{
+		if (str_starts_with($segment, ':')) {
+			// @mago-expect analysis:ambiguous-object-property-access
+			return $node->param ??= (object) self::NODE;
+		}
+
+		// @mago-expect analysis:ambiguous-object-property-access
+		return $node->fixed[$segment] ??= (object) self::NODE;
 	}
 }

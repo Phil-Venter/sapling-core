@@ -22,13 +22,13 @@ final class Session
 	public function __construct(private int $lifetime = 0) {}
 
 	/**
-	 * A value from the session, as in get('user_id')->int().
+	 * A value from the session, as in get('user_id')->int(). More keys read deeper, as Value::get() does.
 	 */
-	public function get(string $key): Value
+	public function get(string|int ...$keys): Value
 	{
 		$this->start();
 
-		return new Value($_SESSION[$key] ?? null);
+		return new Value($_SESSION)->get(...$keys);
 	}
 
 	/**
@@ -59,13 +59,14 @@ final class Session
 	}
 
 	/**
-	 * A value stored with setFlash() during the previous request, as in getFlash('notice')->string().
+	 * A value stored with setFlash() during the previous request, as in getFlash('notice')->string(). More keys read
+	 * deeper, as Value::get() does.
 	 */
-	public function getFlash(string $key): Value
+	public function getFlash(string|int ...$keys): Value
 	{
 		$this->start();
 
-		return new Value($this->flash[$key] ?? null);
+		return new Value($this->flash)->get(...$keys);
 	}
 
 	/**
@@ -116,6 +117,18 @@ final class Session
 
 		if (session_status() !== PHP_SESSION_ACTIVE) {
 			session_start($options);
+		}
+
+		// PHP only sends the cookie for a new id. Renewing a kept one keeps an active visitor signed in past $lifetime.
+		$kept = ($_COOKIE[(string) session_name()] ?? null) === session_id();
+
+		if ($this->lifetime > 0 && $kept) {
+			$cookie = session_get_cookie_params();
+			unset($cookie['lifetime']);
+			setcookie((string) session_name(), (string) session_id(), [
+				'expires' => time() + $this->lifetime,
+				...$cookie,
+			]);
 		}
 
 		$this->started = true;

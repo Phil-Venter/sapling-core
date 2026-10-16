@@ -52,7 +52,7 @@ test('an empty file is skipped, not recorded, so it runs once it has SQL in it',
 	$filled = runInApp($this->app, 'migrations:run');
 
 	expect($empty)->toBe([0, "Skipped 001_notes.sql, it's empty\nNothing to migrate.\n"]);
-	expect($filled)->toBe([0, "Migrated 001_notes.sql\nRan 1 migrations.\n"]);
+	expect($filled)->toBe([0, "Migrated 001_notes.sql\nRan 1 migration.\n"]);
 });
 
 test('a failing file rolls back with its migrations row, and earlier files stay', function () {

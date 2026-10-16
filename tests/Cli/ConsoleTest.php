@@ -1,6 +1,7 @@
 <?php
 
 use Sapling\Cli\Console;
+use Sapling\Cli\UsageException;
 
 test('parses the command, options, flags and args', function () {
 	$console = new Console(['bin/console', 'notes:prune', '--days=7', '--dry-run', 'x']);
@@ -22,8 +23,8 @@ test('a missing option or argument gives the default', function () {
 test('an option without =value, or a flag with one, throws rather than giving the default', function () {
 	$console = new Console(['bin/console', 'notes:prune', '--days', '7', '--force=yes']);
 
-	expect(fn() => $console->option('days'))->toThrow(InvalidArgumentException::class, '--days needs a value');
-	expect(fn() => $console->flag('force'))->toThrow(InvalidArgumentException::class, '--force is a flag');
+	expect(fn() => $console->option('days'))->toThrow(UsageException::class, '--days needs a value');
+	expect(fn() => $console->flag('force'))->toThrow(UsageException::class, '--force is a flag');
 });
 
 test('every word after -- is an argument, even one that starts with dashes', function () {

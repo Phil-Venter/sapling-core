@@ -82,11 +82,11 @@ $created = datetime($row['created_at'], 'UTC');
 
 Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads), and a date string without its own zone is read in whichever timezone applies.
 
-Input from visitors can be wrong. An unknown timezone throws a `DateInvalidTimeZoneException`, and a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
+Input from visitors can be wrong. An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
 
 ```php
 try {
-    $start = datetime($request->input('start')->string(), 'Africa/Johannesburg');
+    $start = datetime($request->data('start')->string(), 'Africa/Johannesburg');
 } catch (DateMalformedStringException) {
     return Response::text('That start date is not a date.', 422);
 }
@@ -125,7 +125,7 @@ Each helper is skipped when a function with its name already exists, so an app c
 | `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
 | `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
-| `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone` |
+| `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `dd($value, ...$more)` | Dumps the values and stops |
 | `e($value)` | Escapes a value for HTML. A backed enum prints its value |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |

@@ -15,13 +15,14 @@ final class EchoRequest
 			'method' => $request->method,
 			'path' => $request->path,
 			'id' => $request->param('id')->raw,
-			'name' => $request->input('name')->raw,
+			'name' => $request->data('name')->raw,
 			'q' => $request->query('q')->raw,
 			'header' => $request->header('X-Test')->raw,
 			'cookie' => $request->cookie('c')->raw,
 			'body' => $request->body,
 			'ip' => $request->ip,
 			'content_type' => $request->header('content-type')->raw,
+			'content_length' => $request->header('content-length')->raw,
 		]);
 	}
 }

@@ -71,6 +71,10 @@ final readonly class RunMigrations
 
 		$summary = "Ran {$ran} migrations.";
 
+		if ($ran === 1) {
+			$summary = 'Ran 1 migration.';
+		}
+
 		if ($ran === 0) {
 			$summary = 'Nothing to migrate.';
 		}

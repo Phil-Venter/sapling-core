@@ -14,7 +14,11 @@ final class Template
 	/** @var array<string, mixed> */
 	private array $shared = [];
 
-	/** @var list<array{kind: 'slot'|'component', name: string, data: array<string, mixed>, slots: array<string, mixed>}> */
+	/**
+	 * The components and slots opened but not yet closed with end(), innermost last.
+	 *
+	 * @var list<array{kind: 'slot'|'component', name: string, data: array<string, mixed>, slots: array<string, mixed>}>
+	 */
 	private array $open = [];
 
 	/**
@@ -72,6 +76,11 @@ final class Template
 
 		try {
 			$run($file, $data + $this->shared);
+
+			// A partial's end() can't close what its page opened, or the output lands in the wrong place.
+			if (count($this->open) < $opened) {
+				throw new LogicException("end() in {$template} closes a component or slot it didn't open");
+			}
 
 			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
 			$unclosed = $this->open[$opened] ?? null;

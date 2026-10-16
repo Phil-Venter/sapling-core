@@ -39,7 +39,7 @@ APP_ENV=dev
 API_KEY="a long secret"
 ```
 
-A new app from `composer create-project sapling/skeleton` gets one for development, with a fresh `APP_KEY`, and ignores it in git.
+A new app from the [skeleton](../README.md#getting-started) gets one for development, with a fresh `APP_KEY`, and ignores it in git.
 
 ### How it's read
 
