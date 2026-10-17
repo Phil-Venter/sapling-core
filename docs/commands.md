@@ -155,7 +155,7 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `flag($name)` | Returns whether `--name` was given |
 | `line($text = '')` | Prints a line to standard output |
 | `error($text)` | Prints a line to standard error |
-| `$console->command` | The command name |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
 | `throw new UsageException($message)` | Stops the command with a usage mistake. Only the message is printed, and the exit code is 1 |
+| `$console->command` | The command name |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |

@@ -45,6 +45,8 @@ final class Response
 
 	/**
 	 * A JSON response.
+	 *
+	 * @throws JsonException When the data can't be encoded.
 	 */
 	public static function json(mixed $data, int $status = 200): self
 	{
@@ -88,9 +90,10 @@ final class Response
 	}
 
 	/**
-	 * A plain text response with the exception's status and message. App adds its headers.
+	 * A plain text response with the error's status and message, as in return Response::error($e) from an error
+	 * handler. App adds its headers.
 	 */
-	public static function fromHttpException(HttpException $e): self
+	public static function error(HttpException $e): self
 	{
 		return self::text($e->getMessage(), $e->status);
 	}
@@ -98,46 +101,13 @@ final class Response
 	/**
 	 * A 500 for a crash. In debug mode it's the debug page, otherwise a plain Internal Server Error.
 	 */
-	public static function fromException(Throwable $e, bool $debug, string $basePath = ''): self
+	public static function fromCrash(Throwable $e, bool $debug, string $basePath = ''): self
 	{
 		if (!$debug) {
 			return self::text('Internal Server Error', 500);
 		}
 
 		return self::html(DebugPage::render($e, $basePath), 500);
-	}
-
-	/**
-	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('name')->string(). More
-	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
-	 * the body as it is.
-	 *
-	 * @throws JsonException When a JSON body is invalid.
-	 * @throws RuntimeException When an XML body is invalid.
-	 */
-	public function data(string|int ...$keys): Value
-	{
-		$type = $this->header('content-type');
-
-		$firstOfList = $type->get(0)->string();
-		$contentType = $type->string($firstOfList);
-
-		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
-	}
-
-	/**
-	 * A header, whatever the case of its name, as in header('content-type')->string(). A header a reply sent more
-	 * than once is a list, read with array().
-	 */
-	public function header(string $name): Value
-	{
-		foreach ($this->headers as $key => $value) {
-			if (strcasecmp($key, $name) === 0) {
-				return new Value($value);
-			}
-		}
-
-		return new Value(null);
 	}
 
 	/**
@@ -161,6 +131,36 @@ final class Response
 		$copy->headers[$name] = $value;
 
 		return $copy;
+	}
+
+	/**
+	 * A header, whatever the case of its name, as in header('content-type')->string(). One set to a list, such as
+	 * several Set-Cookie values, is read with array().
+	 */
+	public function header(string $name): Value
+	{
+		foreach ($this->headers as $key => $value) {
+			if (strcasecmp($key, $name) === 0) {
+				return new Value($value);
+			}
+		}
+
+		return new Value(null);
+	}
+
+	/**
+	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('name')->string(). More
+	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
+	 * the body as it is.
+	 *
+	 * @throws JsonException When a JSON body is invalid.
+	 * @throws RuntimeException When an XML body is invalid.
+	 */
+	public function data(string|int ...$keys): Value
+	{
+		$contentType = $this->header('content-type')->string();
+
+		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 	}
 
 	/**

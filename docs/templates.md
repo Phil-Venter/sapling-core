@@ -200,12 +200,12 @@ An unknown prefix throws a `LogicException`. To use another suffix, such as plai
 
 | Method | What it does |
 | --- | --- |
-| `prefix($prefix, $dir)` | Makes `prefix::name` find templates in `$dir` |
-| `share($key, $value)` | Makes a value available to every template rendered after this |
 | `render($template, $data = [])` | Renders `views/{$template}.tmpl.php` with `$data` as its variables. Inside a template, it renders a partial |
 | `component($template, $data = [])` and `end()` | Print a partial, such as a layout, with everything printed between them as its default slot |
-| `slot($name, $content)` | Sets a named slot of the component it's in |
 | `slot($name)` and `end()` | Capture everything printed between them as a named slot |
+| `slot($name, $content)` | Sets a named slot of the component it's in |
 | `yield()` | Inside a component, returns its default slot |
 | `yield($name, $default = null)` | Inside a component, returns a named slot, or `$default` when it wasn't set |
+| `share($key, $value)` | Makes a value available to every template rendered after this |
+| `prefix($prefix, $dir)` | Makes `prefix::name` find templates in `$dir` |
 | `new Template($dir, $suffix = 'tmpl.php')` | Finds templates in `$dir` ending in `.{$suffix}`. `App` registers one for `views/` |

@@ -170,21 +170,3 @@ if (!function_exists('uuid')) {
 		);
 	}
 }
-
-if (!function_exists('value')) {
-	/**
-	 * The value, or the closure's result when the value is a closure.
-	 *
-	 * @template T
-	 * @param T|Closure(mixed...): T $value
-	 * @return T
-	 */
-	function value(mixed $value, mixed ...$args): mixed
-	{
-		if ($value instanceof Closure) {
-			return $value(...$args);
-		}
-
-		return $value;
-	}
-}

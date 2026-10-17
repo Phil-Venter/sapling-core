@@ -14,7 +14,7 @@
 
 ## Introduction
 
-Sapling sorts errors into two kinds. An `HttpException` is an error the visitor caused, such as asking for a page that doesn't exist, and it becomes a response with that status. Anything else thrown is a crash, a bug in the code, and it's logged and answered with a 500.
+Sapling sorts what goes wrong into two kinds. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist, and it becomes a response with that status. A crash is anything else thrown, a bug in the code, and it's logged and answered with a 500.
 
 Either way, your actions and middleware need no `try` and `catch`, and outside debug mode a visitor never sees a stack trace.
 
@@ -43,10 +43,10 @@ abort(503, 'Down for maintenance.', ['Retry-After' => '600']);
 
 ## Showing your own error page
 
-By default the error goes back as plain text, which is fine for an API but bare for a website. `httpExceptionHandler()` sets what answers it instead, as a class, an object or a closure that takes the exception and the request:
+By default the error goes back as plain text, which is fine for an API but bare for a website. `onError()` sets what answers it instead, as a class, an object or a closure that takes the exception and the request:
 
 ```php
-$app->httpExceptionHandler(function (HttpException $e, Request $request) use ($app): Response {
+$app->onError(function (HttpException $e, Request $request) use ($app): Response {
     $view = $app->container->get(Template::class);
     $html = $view->render('error', ['status' => $e->status, 'message' => $e->getMessage()]);
 
@@ -61,12 +61,12 @@ The exception's headers, like `Allow` on a 405, are added to whatever the handle
 The handler also gets the request, so one handler can answer in more than one way, such as JSON for paths under `/api/`:
 
 ```php
-$app->httpExceptionHandler(function (HttpException $e, Request $request): Response {
+$app->onError(function (HttpException $e, Request $request): Response {
     if (str_starts_with($request->path, '/api/')) {
         return Response::json(['error' => $e->getMessage()], $e->status);
     }
 
-    return Response::fromHttpException($e);
+    return Response::error($e);
 });
 ```
 
@@ -112,5 +112,5 @@ Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime
 | `abort_if($condition, $status, ...)` | Throws one when the condition is true |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
-| `$app->httpExceptionHandler($handler)` | Sets what turns an `HttpException` into a response |
-| `Response::fromHttpException($e)` | The default answer, in plain text with the exception's status and message |
+| `$app->onError($handler)` | Sets what turns an `HttpException` into a response |
+| `Response::error($e)` | The default answer, in plain text with the error's status and message |

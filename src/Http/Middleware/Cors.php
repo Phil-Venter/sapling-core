@@ -40,7 +40,11 @@ final readonly class Cors
 		}
 	}
 
-	/** @param Closure(Request): Response $next */
+	/**
+	 * Answers a preflight, or adds the CORS headers to the response.
+	 *
+	 * @param Closure(Request): Response $next
+	 */
 	public function __invoke(Request $request, Closure $next): Response
 	{
 		$origin = $request->header('origin')->string();

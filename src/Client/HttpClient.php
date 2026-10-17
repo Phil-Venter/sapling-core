@@ -4,7 +4,6 @@ namespace Sapling\Client;
 
 use CurlHandle;
 use RuntimeException;
-use Sapling\Http\Response;
 
 /**
  * Sends ClientRequests to other HTTP services through curl.
@@ -17,11 +16,11 @@ final readonly class HttpClient
 	public function __construct(private int $timeout = 30) {}
 
 	/**
-	 * Sends a request and returns the response, following redirects for GET and HEAD.
+	 * Sends a request and returns the reply, following redirects for GET and HEAD.
 	 *
-	 * @throws RuntimeException When the connection fails or times out. An error status is a normal response.
+	 * @throws RuntimeException When the connection fails or times out. An error status is a normal reply.
 	 */
-	public function send(ClientRequest $request): Response
+	public function send(ClientRequest $request): ClientResponse
 	{
 		$handle = $this->handle($request);
 		$content = curl_exec($handle);
@@ -34,10 +33,10 @@ final readonly class HttpClient
 	}
 
 	/**
-	 * Sends the requests at once and returns their responses in order.
+	 * Sends the requests at once and returns their replies in order.
 	 *
 	 * @param list<ClientRequest> $requests
-	 * @return list<Response>
+	 * @return list<ClientResponse>
 	 * @throws RuntimeException When a connection fails or times out, after every request has finished.
 	 */
 	public function sendAll(array $requests): array
@@ -83,8 +82,7 @@ final readonly class HttpClient
 	{
 		$lines = [];
 
-		// So Content-Type and content-type are one header, and the last one wins.
-		$headers = array_change_key_case($request->headers);
+		$headers = $request->headers;
 
 		// curl labels a string body as a form when it has no type, and an empty header line stops it.
 		if (is_string($request->body) && !array_key_exists('content-type', $headers)) {
@@ -127,7 +125,7 @@ final readonly class HttpClient
 		return $handle;
 	}
 
-	private function response(CurlHandle $handle, string $content): Response
+	private function response(CurlHandle $handle, string $content): ClientResponse
 	{
 		$size = (int) curl_getinfo($handle, CURLINFO_HEADER_SIZE);
 		$status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
@@ -158,6 +156,6 @@ final readonly class HttpClient
 			$headers[$name] = $values;
 		}
 
-		return new Response(substr($content, $size), $status, $headers);
+		return new ClientResponse(substr($content, $size), $status, $headers);
 	}
 }

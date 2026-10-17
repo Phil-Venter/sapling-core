@@ -16,6 +16,9 @@ final readonly class ListCommands
 
 	public function __construct(private CommandList $commands) {}
 
+	/**
+	 * Prints every command, grouped by the part of the name before the colon.
+	 */
 	public function __invoke(Console $console): int
 	{
 		$commands = $this->commands->all();

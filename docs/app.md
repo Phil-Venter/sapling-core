@@ -54,7 +54,7 @@ return $app;
 - `session_lifetime` sets how long the [session](sessions.md) lasts.
 - `app_key` is passed to [`Crypto`](encryption.md), and the `cors_*` settings to [`Cors` and `Csrf`](middleware.md).
 
-It also adds the `migrations:run`, `migrations:new` and `routes:list` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` command.
+It also adds the `migrations:run` and `migrations:new` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` and `routes:list` commands.
 
 ## Running the app
 
@@ -149,10 +149,10 @@ expect($response->status)->toBe(302);
 | --- | --- |
 | `App::boot($basePath, $config)` | Builds an app from its config, as described in [What booting sets up](#what-booting-sets-up) |
 | `new App($basePath, $debug = false)` | Builds a bare app, for tests and one-file apps |
-| `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes |
-| `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes |
+| `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes, skipping classes without them |
+| `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes. Throws a `LogicException` when it has no route or command |
 | `middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix` |
-| `httpExceptionHandler($handler)` | Sets what turns an `HttpException` into a response, see [errors](errors.md) |
+| `onError($handler)` | Sets what turns an `HttpException` into a response, see [errors](errors.md) |
 | `run()` | Answers the current request and sends it, or runs a command from the terminal |
 | `handle($request)` | Returns the `Response` for a `Request`. An error becomes a response too, so it never throws |
 | `runCommand($console)` | Runs a command and returns its exit code |

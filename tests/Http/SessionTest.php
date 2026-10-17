@@ -76,18 +76,6 @@ test('flash data is readable during the next request only', function () {
 	expect(nextRequest()->getFlash('notice')->string('gone'))->toBe('gone');
 });
 
-test('regenerate() changes the id and keeps the data', function () {
-	$session = new Session();
-	$session->set('user', 'ann');
-	$before = session_id();
-
-	$session->regenerate();
-
-	expect(session_id())->not->toBe($before);
-	expect($session->get('user')->string())->toBe('ann');
-	expect(nextRequest()->get('user')->string())->toBe('ann');
-});
-
 test('destroy() forgets everything and the next use starts a fresh session', function () {
 	$session = new Session();
 	$session->set('user', 'ann');

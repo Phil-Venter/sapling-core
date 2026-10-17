@@ -90,7 +90,7 @@ $this->session->destroy();
 
 ## The session cookie
 
-The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created itself.
+The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created itself. PHP sends the cookie, so it never appears on the response `$app->handle()` returns in a test.
 
 ### How long a session lasts
 
@@ -101,7 +101,7 @@ The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind
 ```
 
 > [!WARNING]
-> On Debian and Ubuntu, a cron job deletes old sessions by php.ini's `session.gc_maxlifetime` instead. Set it to the same value, or sessions end sooner than you expect.
+> On Debian and Ubuntu, a scheduled job deletes old sessions by php.ini's `session.gc_maxlifetime` instead. Set it to the same value, or sessions end sooner than you expect.
 
 ## Method reference
 

@@ -16,7 +16,9 @@ use XMLWriter;
 final class Data
 {
 	/**
-	 * JSON, with slashes and Unicode left as they are. Throws JsonException when the data can't be encoded.
+	 * JSON, with slashes and Unicode left as they are.
+	 *
+	 * @throws JsonException When the data can't be encoded.
 	 */
 	public static function toJson(mixed $data): string
 	{
@@ -24,7 +26,9 @@ final class Data
 	}
 
 	/**
-	 * Decodes JSON, with objects as arrays. Throws JsonException on invalid JSON.
+	 * Decodes JSON, with objects as arrays.
+	 *
+	 * @throws JsonException When the JSON is invalid.
 	 */
 	public static function fromJson(string $json): mixed
 	{

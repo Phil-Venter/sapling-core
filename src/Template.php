@@ -37,23 +37,6 @@ final class Template
 	public function __construct(private string $dir, private string $suffix = 'tmpl.php') {}
 
 	/**
-	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for
-	 * render('notes::list').
-	 */
-	public function prefix(string $prefix, string $dir): void
-	{
-		$this->prefixes[$prefix] = rtrim($dir, '/\\');
-	}
-
-	/**
-	 * Makes a value available to every template rendered after this.
-	 */
-	public function share(string $key, mixed $value): void
-	{
-		$this->shared[$key] = $value;
-	}
-
-	/**
 	 * Renders {$template}.{$suffix}. Inside a template, it prints a partial, as in render('_nav').
 	 *
 	 * @param array<string, mixed> $data
@@ -176,15 +159,21 @@ final class Template
 		return $this->slots[$name] ?? $default;
 	}
 
-	private function openComponent(): int
+	/**
+	 * Makes a value available to every template rendered after this.
+	 */
+	public function share(string $key, mixed $value): void
 	{
-		foreach (array_reverse($this->open, true) as $index => $open) {
-			if ($open['kind'] === 'component') {
-				return $index;
-			}
-		}
+		$this->shared[$key] = $value;
+	}
 
-		throw new LogicException('slot() outside a component()');
+	/**
+	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for
+	 * render('notes::list').
+	 */
+	public function prefix(string $prefix, string $dir): void
+	{
+		$this->prefixes[$prefix] = rtrim($dir, '/\\');
 	}
 
 	/** @throws RuntimeException */
@@ -212,5 +201,16 @@ final class Template
 		}
 
 		return $file;
+	}
+
+	private function openComponent(): int
+	{
+		foreach (array_reverse($this->open, true) as $index => $open) {
+			if ($open['kind'] === 'component') {
+				return $index;
+			}
+		}
+
+		throw new LogicException('slot() outside a component()');
 	}
 }

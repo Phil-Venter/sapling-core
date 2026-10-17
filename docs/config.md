@@ -94,6 +94,6 @@ On a server, set real environment variables instead of deploying `.env`. A `.env
 | Method | What it does |
 | --- | --- |
 | `Config::load($configFile, $envFile)` | Runs `config.php` with `$env`, built from `.env` and the real environment |
-| `new Config($values)` | Holds settings from an array, as in tests |
 | `get($key)` | Returns a setting. Throws `LogicException` when it's missing |
 | `get($key, $default)` | Returns a setting, or `$default` when it's missing |
+| `new Config($values)` | Holds settings from an array, as in tests |

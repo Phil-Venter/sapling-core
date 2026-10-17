@@ -4,6 +4,7 @@ namespace Sapling\Cli\Commands;
 
 use Sapling\App;
 use Sapling\Cli\Console;
+use Sapling\Cli\UsageException;
 
 /**
  * Creates an empty migration, named by the UTC time and the name you give.
@@ -16,15 +17,18 @@ final readonly class NewMigration
 
 	public function __construct(private App $app) {}
 
+	/**
+	 * Creates the migration named by the first argument.
+	 *
+	 * @throws UsageException When the name has nothing usable in it.
+	 */
 	public function __invoke(Console $console): int
 	{
 		$name = strtolower($console->arg(0)->string());
 		$name = trim((string) preg_replace('/[^a-z0-9]+/', '_', $name), '_');
 
 		if ($name === '') {
-			$console->error('Usage: php bin/console migrations:new <name>');
-
-			return Console::FAILURE;
+			throw new UsageException('Usage: php bin/console migrations:new <name>');
 		}
 
 		$dir = $this->app->path(RunMigrations::DIR);

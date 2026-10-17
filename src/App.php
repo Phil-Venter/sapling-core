@@ -10,6 +10,7 @@ use DateInvalidTimeZoneException;
 use DateTimeZone;
 use ErrorException;
 use FilesystemIterator;
+use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -32,6 +33,7 @@ use Sapling\Http\Router;
 use Sapling\Http\Session;
 use SplFileInfo;
 use Throwable;
+use UnexpectedValueException;
 
 /**
  * Holds the container, routes, commands and middleware, and answers requests or runs commands.
@@ -48,7 +50,7 @@ final class App
 	private array $middleware = [];
 
 	/** @var class-string|object */
-	private string|object $httpExceptionHandler;
+	private string|object $errorHandler;
 
 	/**
 	 * A bare app with only the commands:list command, for tests and one-file apps. Use boot() to build an app from
@@ -67,8 +69,9 @@ final class App
 		$this->container->set(Template::class, fn(): Template => new Template($this->path('views')));
 
 		$this->commands->add(ListCommands::NAME, ListCommands::class, ListCommands::DESCRIPTION);
+		$this->commands->add(ListRoutes::NAME, ListRoutes::class, ListRoutes::DESCRIPTION);
 
-		$this->httpExceptionHandler(Response::fromHttpException(...));
+		$this->onError(Response::error(...));
 	}
 
 	/**
@@ -106,25 +109,16 @@ final class App
 
 		$app->commands->add(NewMigration::NAME, NewMigration::class, NewMigration::DESCRIPTION);
 		$app->commands->add(RunMigrations::NAME, RunMigrations::class, RunMigrations::DESCRIPTION);
-		$app->commands->add(ListRoutes::NAME, ListRoutes::class, ListRoutes::DESCRIPTION);
 
 		return $app;
 	}
 
 	/**
-	 * An absolute path inside the app, such as path('views').
-	 */
-	public function path(string $relative = ''): string
-	{
-		$base = rtrim($this->basePath, '/\\');
-		$relative = ltrim($relative, '/\\');
-
-		return "{$base}/{$relative}";
-	}
-
-	/**
 	 * Registers every class in the folder and its subfolders by its #[Route], #[Middleware] and #[Command]
-	 * attributes. The namespace needs no trailing backslash, as in scan(__DIR__ . '/app', 'App').
+	 * attributes, skipping classes without them. The namespace needs no trailing backslash, as in
+	 * scan(__DIR__ . '/app', 'App').
+	 *
+	 * @throws UnexpectedValueException When the folder doesn't exist.
 	 */
 	public function scan(string $dir, string $namespace): void
 	{
@@ -150,7 +144,7 @@ final class App
 		sort($classes);
 
 		foreach ($classes as $class) {
-			$this->add($class);
+			$this->register($class);
 		}
 	}
 
@@ -161,21 +155,9 @@ final class App
 	 */
 	public function add(string $class): void
 	{
-		$reflection = new ReflectionClass($class);
-		$middleware = [];
-
-		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
-			$middleware[] = $attribute->newInstance()->class;
-		}
-
-		foreach ($reflection->getAttributes(Route::class) as $attribute) {
-			$route = $attribute->newInstance();
-			$this->router->add($route->method, $route->path, $class, $middleware);
-		}
-
-		foreach ($reflection->getAttributes(Command::class) as $attribute) {
-			$command = $attribute->newInstance();
-			$this->commands->add($command->name, $class, $command->description);
+		// scan() skips a class with nothing to register, but naming one here is a mistake.
+		if (!$this->register($class)) {
+			throw new LogicException("{$class} has no #[Route] or #[Command] to add");
 		}
 	}
 
@@ -195,6 +177,17 @@ final class App
 		}
 
 		$this->middleware[] = ['middleware' => $middleware, 'prefix' => $prefix];
+	}
+
+	/**
+	 * Sets what turns an HttpException, such as a 404 or abort(403), into a response. It's a class name, an object or a
+	 * closure, called with the exception and the request. The default answers in plain text.
+	 *
+	 * @param class-string|object $handler
+	 */
+	public function onError(string|object $handler): void
+	{
+		$this->errorHandler = $handler;
 	}
 
 	/**
@@ -236,7 +229,7 @@ final class App
 		} catch (Throwable $e) {
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
 
-			return Response::fromException($e, $this->debug, $this->basePath);
+			return Response::fromCrash($e, $this->debug, $this->basePath);
 		} finally {
 			restore_error_handler();
 		}
@@ -296,14 +289,43 @@ final class App
 	}
 
 	/**
-	 * Sets what turns an HttpException, such as a 404 or abort(403), into a response. It's a class name, an object or a
-	 * closure, called with the exception and the request. The default answers in plain text.
-	 *
-	 * @param class-string|object $handler
+	 * An absolute path inside the app, such as path('views').
 	 */
-	public function httpExceptionHandler(string|object $handler): void
+	public function path(string $relative = ''): string
 	{
-		$this->httpExceptionHandler = $handler;
+		$base = rtrim($this->basePath, '/\\');
+		$relative = ltrim($relative, '/\\');
+
+		return "{$base}/{$relative}";
+	}
+
+	/**
+	 * Registers a class by its attributes, and says whether it had a route or a command.
+	 *
+	 * @param class-string $class
+	 */
+	private function register(string $class): bool
+	{
+		$reflection = new ReflectionClass($class);
+		$routes = $reflection->getAttributes(Route::class);
+		$commands = $reflection->getAttributes(Command::class);
+		$middleware = [];
+
+		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
+			$middleware[] = $attribute->newInstance()->class;
+		}
+
+		foreach ($routes as $attribute) {
+			$route = $attribute->newInstance();
+			$this->router->add($route->method, $route->path, $class, $middleware);
+		}
+
+		foreach ($commands as $attribute) {
+			$command = $attribute->newInstance();
+			$this->commands->add($command->name, $class, $command->description);
+		}
+
+		return $routes !== [] || $commands !== [];
 	}
 
 	/** @throws HttpException */
@@ -356,7 +378,7 @@ final class App
 				return $step($request);
 			} catch (HttpException $e) {
 				/** @var callable(HttpException, Request): Response $handler */
-				$handler = $this->resolve($this->httpExceptionHandler);
+				$handler = $this->resolve($this->errorHandler);
 				$response = $handler($e, $request);
 
 				// So a handler can't lose them, such as Allow on a 405. Its own headers win.
@@ -376,7 +398,11 @@ final class App
 	/** @param class-string|object $handler */
 	private function resolve(string|object $handler): callable
 	{
-		return is_string($handler) ? $this->container->get($handler) : $handler;
+		if (is_string($handler)) {
+			return $this->container->get($handler);
+		}
+
+		return $handler;
 	}
 
 	private function throwOnError(int $severity, string $message, string $file, int $line): bool

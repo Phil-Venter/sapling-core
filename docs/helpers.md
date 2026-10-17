@@ -6,7 +6,7 @@
 - [Stopping with an error](#stopping-with-an-error)
 - [Checking for empty values](#checking-for-empty-values)
 - [Dates and times](#dates-and-times)
-- [Ids, closures and debugging](#ids-closures-and-debugging)
+- [Ids and debugging](#ids-and-debugging)
 - [Replacing a helper](#replacing-a-helper)
 - [Function reference](#function-reference)
 
@@ -58,15 +58,13 @@ blank(0);        // false
 blank(false);    // false
 ```
 
-A [`Value`](values.md) has to be read as a type first, since the object itself never looks empty, so `blank()` throws a `LogicException` when it's given one:
+A [`Value`](values.md) never looks empty, so `blank()` throws a `LogicException` when it's given one. Read it as a type first:
 
 ```php
 $email = $console->arg(0)->string();
 
 if (blank($email)) {
-    $console->error('Usage: php bin/console users:add <email>');
-
-    return Console::FAILURE;
+    throw new UsageException('Usage: php bin/console users:add <email>');
 }
 ```
 
@@ -92,16 +90,9 @@ try {
 }
 ```
 
-## Ids, closures and debugging
+## Ids and debugging
 
 `uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys.
-
-`value()` returns a value as it is, or calls it first when it's a closure:
-
-```php
-value('Hello');                                      // 'Hello'
-value(fn(string $name) => "Hello {$name}", 'Ann');   // 'Hello Ann'
-```
 
 `dd()` dumps its values and stops, which helps while you're working, but shouldn't be committed:
 
@@ -111,22 +102,21 @@ dd($request, $note);
 
 ## Replacing a helper
 
-Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's own code never calls the helpers, so replacing one never changes how Sapling behaves.
+Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, so replacing one never changes how they behave. `attr()` and `attrs()` do call `e()` and `blank()`, and follow your versions.
 
 > [!WARNING]
-> A package can define the same names first. Laravel's `illuminate/support` has its own `e()`, `blank()` and `value()`, and Laravel's `abort()` turns a 404 into a 500 here.
+> A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here.
 
 ## Function reference
 
 | Function | What it does |
 | --- | --- |
+| `e($value)` | Escapes a value for HTML. A backed enum prints its value |
+| `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
+| `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
 | `abort($status, $message = '', $headers = [])` | Throws an `HttpException`, which becomes the response |
 | `abort_if($condition, $status, $message = '', $headers = [])` | Throws like `abort()` when the condition is true |
-| `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
-| `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
-| `dd($value, ...$more)` | Dumps the values and stops |
-| `e($value)` | Escapes a value for HTML. A backed enum prints its value |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |
-| `value($value, ...$args)` | Returns the value, or the closure's result when it's a closure |
+| `dd($value, ...$more)` | Dumps the values and stops |

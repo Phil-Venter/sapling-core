@@ -11,10 +11,22 @@ use Stringable;
  */
 final readonly class Value
 {
+	public mixed $raw;
+
 	/**
-	 * Takes the data as it arrived, with null for a value that's missing. $raw holds it unchanged.
+	 * Takes the data as it arrived, with null for a value that's missing. $raw holds it unchanged, except that a Value
+	 * passed in is unwrapped, so wrapping twice changes nothing.
 	 */
-	public function __construct(public mixed $raw) {}
+	public function __construct(mixed $raw)
+	{
+		if ($raw instanceof self) {
+			$this->raw = $raw->raw;
+
+			return;
+		}
+
+		$this->raw = $raw;
+	}
 
 	/**
 	 * The value as a string. Numbers, Stringable objects and backed enums are cast, and a boolean gives the default.
@@ -128,17 +140,14 @@ final readonly class Value
 		return $value;
 	}
 
-	private function child(string|int $key): self
+	// A backed enum reads as its value.
+	private function plain(): mixed
 	{
-		if (is_object($this->raw)) {
-			return new self(get_object_vars($this->raw)[$key] ?? null);
+		if ($this->raw instanceof BackedEnum) {
+			return $this->raw->value;
 		}
 
-		if (is_array($this->raw)) {
-			return new self($this->raw[$key] ?? null);
-		}
-
-		return new self(null);
+		return $this->raw;
 	}
 
 	// An array or null is never a valid number or boolean, and filter_var() would turn true into 1.
@@ -153,13 +162,16 @@ final readonly class Value
 		return filter_var($value, $filter, FILTER_NULL_ON_FAILURE);
 	}
 
-	// A backed enum reads as its value.
-	private function plain(): mixed
+	private function child(string|int $key): self
 	{
-		if ($this->raw instanceof BackedEnum) {
-			return $this->raw->value;
+		if (is_object($this->raw)) {
+			return new self(get_object_vars($this->raw)[$key] ?? null);
 		}
 
-		return $this->raw;
+		if (is_array($this->raw)) {
+			return new self($this->raw[$key] ?? null);
+		}
+
+		return new self(null);
 	}
 }

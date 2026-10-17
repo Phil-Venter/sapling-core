@@ -65,7 +65,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `$request->data()` and `$response->data()` both use it.
+Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
 
 ## Reading nested data
 
@@ -82,8 +82,8 @@ $price = $envelope->get('soap:Body', 'Price')->string();
 | --- | --- |
 | `toJson($data)` | Returns JSON, with slashes and Unicode as they are. Throws `JsonException` when it can't |
 | `fromJson($json)` | Decodes JSON, with objects as arrays. Throws `JsonException` when it's invalid |
-| `toXml($data, $root = 'root')` | Returns an XML document with the data inside a root element |
-| `fromXml($xml)` | Decodes XML into arrays, or a string when the root only holds text. Throws `RuntimeException` when it's invalid |
 | `toForm($data)` | Returns a URL-encoded form body, the same format as a query string |
 | `fromForm($form)` | Decodes a URL-encoded form body |
+| `toXml($data, $root = 'root')` | Returns an XML document with the data inside a root element |
+| `fromXml($xml)` | Decodes XML into arrays, or a string when the root only holds text. Throws `RuntimeException` when it's invalid |
 | `decode($body, $contentType)` | Decodes JSON, XML or a form by its `Content-Type`. Any other type gives the body as it is |

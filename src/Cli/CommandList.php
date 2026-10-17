@@ -21,8 +21,9 @@ final class CommandList
 	public function add(string $name, string|object $action, string $description = ''): void
 	{
 		if (array_key_exists($name, $this->commands)) {
-			$first = $this->actionName($this->commands[$name]['action']);
-			$second = $this->actionName($action);
+			$taken = $this->commands[$name]['action'];
+			$first = is_object($taken) ? $taken::class : $taken;
+			$second = is_object($action) ? $action::class : $action;
 
 			throw new LogicException("Duplicate command {$name}: {$first} and {$second}");
 		}
@@ -51,14 +52,5 @@ final class CommandList
 		ksort($commands);
 
 		return $commands;
-	}
-
-	private function actionName(string|object $action): string
-	{
-		if (is_object($action)) {
-			$action = $action::class;
-		}
-
-		return $action;
 	}
 }

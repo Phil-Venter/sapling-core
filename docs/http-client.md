@@ -13,7 +13,7 @@
 
 ## Introduction
 
-Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Client\HttpClient` covers that without a client library. It sends requests with curl, and each reply is a `Response`, the same class your actions return.
+Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Client\HttpClient` covers that without a client library. It sends requests with curl, and each reply is a `Sapling\Client\ClientResponse`.
 
 ## Making requests
 
@@ -74,11 +74,10 @@ A failed connection throws after the other requests finish, and names the reques
 
 ## Reading the reply
 
-Since the reply is a [`Response`](requests.md#reading-a-response), it's read the same way as any other. `data()` decodes the body by its `Content-Type` and returns a [`Value`](values.md):
+A reply has its `status`, `headers` and `body`. `data()` decodes the body by its `Content-Type` and returns a [`Value`](values.md), and more keys read deeper:
 
 ```php
-$me = $reply->data();                          // ['profile' => ['name' => 'bob', 'age' => 30]]
-$name = $me->get('profile', 'name')->string(); // 'bob'
+$name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"name": "bob"}}
 ```
 
 A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` finds one whatever case you write it in:
@@ -116,13 +115,15 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 
 | Method | What it does |
 | --- | --- |
-| `send($request)` | Sends a `ClientRequest` and returns the reply as a `Response` |
+| `send($request)` | Sends a `ClientRequest` and returns the reply as a `ClientResponse` |
 | `sendAll($requests)` | Sends a list of `ClientRequest`s at once and returns their replies in the same order |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
-| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data |
+| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
-| `$reply->data()` | Returns the reply's body decoded as JSON, XML or a form, as a [`Value`](values.md). See [Reading a response](requests.md#reading-a-response) |
+| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body |
+| `$reply->header($name)` | Returns a header, whatever the case of its name, as a `Value`. A header sent more than once is a list |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
+| `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests |

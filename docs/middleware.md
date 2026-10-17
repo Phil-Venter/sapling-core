@@ -12,6 +12,7 @@
     - [Cross-site request protection](#cross-site-request-protection)
     - [CORS](#cors)
     - [Recommended order](#recommended-order)
+- [Method reference](#method-reference)
 
 ## Introduction
 
@@ -41,7 +42,7 @@ Like an action, middleware gets its constructor arguments from the [container](c
 
 ### Answering early
 
-Middleware doesn't have to call `$next`. Returning a response of its own stops the request there, which is how a login check works:
+Middleware doesn't have to call `$next`. Returning its own response stops the request there, as a login check does:
 
 ```php
 final class RequireLogin
@@ -134,7 +135,7 @@ $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"
 Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too.
 
 > [!NOTE]
-> There are no CSRF tokens to add to forms. Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. A form on a subdomain counts as another site, so list it in `cors_origins`.
+> There are no CSRF tokens to add to forms. Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, so a form on a subdomain, which browsers call same-site, needs listing in `cors_origins`.
 
 ### CORS
 
@@ -161,3 +162,15 @@ $app->middleware(RequireLogin::class);          // then your own
 
 > [!WARNING]
 > Put login checks after `Cors`. A preflight carries no cookie or token, so a login check in front of `Cors` refuses it, and the browser then blocks the real request.
+
+## Method reference
+
+| Method | What it does |
+| --- | --- |
+| `__invoke($request, $next)` | Your middleware's entry point. Calls `$next($request)` for the rest of the app, or returns its own response |
+| `$app->middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix`. Takes a class name, an object or a closure |
+| `#[Middleware($class)]` | Runs middleware around one class's routes. Repeat it for more, first outermost |
+| `new SecurityHeaders($policy = [])` | Sets the security headers and a content policy. Each directive in `$policy` replaces the default of the same name |
+| `SecurityHeaders::POLICY` | The default content policy |
+| `new Csrf($trustedOrigins = [])` | Refuses cross-site writes, except from the sites listed. `App::boot()` registers it with `cors_origins` |
+| `new Cors($origins, $allowCredentials = false)` | Lets the sites listed call the app from a browser. `App::boot()` registers it with `cors_origins` and `cors_credentials` |

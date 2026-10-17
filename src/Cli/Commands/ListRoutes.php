@@ -18,6 +18,9 @@ final readonly class ListRoutes
 
 	public function __construct(private Router $router) {}
 
+	/**
+	 * Prints every route, sorted by path and then method.
+	 */
 	public function __invoke(Console $console): int
 	{
 		$routes = $this->router->all();
@@ -32,17 +35,11 @@ final readonly class ListRoutes
 		usort($routes, $this->byPathThenMethod(...));
 
 		foreach ($routes as $route) {
-			$action = $route['action'];
-
-			if (is_object($action)) {
-				$action = $action::class;
-			}
-
 			$console->line(sprintf(
 				"%-{$methodWidth}s  %-{$pathWidth}s  %s",
 				$route['method'],
 				$route['path'],
-				$action,
+				$route['action'],
 			));
 		}
 
@@ -50,8 +47,8 @@ final readonly class ListRoutes
 	}
 
 	/**
-	 * @param array{method: string, path: string, action: class-string|object} $a
-	 * @param array{method: string, path: string, action: class-string|object} $b
+	 * @param array{method: string, path: string, action: string} $a
+	 * @param array{method: string, path: string, action: string} $b
 	 */
 	private function byPathThenMethod(array $a, array $b): int
 	{

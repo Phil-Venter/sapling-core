@@ -1,7 +1,6 @@
 <?php
 
 use Sapling\App;
-use Sapling\Cli\Commands\ListRoutes;
 use Sapling\Cli\Console;
 use Sapling\Config;
 use Sapling\Crypto;
@@ -137,6 +136,13 @@ describe('registering in code', function () {
 		expect(function_exists('scan_fixture_shared'))->toBeFalse();
 	});
 
+	test('add() refuses a class with no #[Route] or #[Command], which scan() would skip', function () {
+		$app = new App(FIXTURES);
+
+		expect(fn() => $app->add(Sapling\Tests\Fixtures\Container\Clock::class))
+			->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command] to add');
+	});
+
 	test('scan() takes its folder with or without a trailing slash', function () {
 		$app = new App(FIXTURES);
 		$app->scan(FIXTURES . '/Scan/', 'Sapling\\Tests\\Fixtures\\Scan\\');
@@ -146,7 +152,6 @@ describe('registering in code', function () {
 
 	test('routes, their middleware and commands can be closures registered in code', function () {
 		$app = new App(FIXTURES);
-		$app->commands->add('routes:list', ListRoutes::class);
 		$app->router->add(
 			'get',
 			'/hello/:name',
@@ -381,11 +386,11 @@ describe('errors', function () {
 	});
 });
 
-describe('httpExceptionHandler()', function () {
+describe('onError()', function () {
 	test('answers every HttpException with the request, and middleware sees its response', function () {
 		$app = scannedApp();
 		$app->middleware(Stamp::class);
-		$app->httpExceptionHandler(fn(HttpException $e, Request $request): Response => Response::text(
+		$app->onError(fn(HttpException $e, Request $request): Response => Response::text(
 			"{$e->status} at {$request->path}: {$e->getMessage()}",
 			$e->status,
 		));
@@ -403,7 +408,7 @@ describe('httpExceptionHandler()', function () {
 			'Retry-After' => '60',
 			'Content-Type' => 'application/json',
 		]));
-		$app->httpExceptionHandler(fn(HttpException $e): Response => Response::html('<h1>Busy</h1>', $e->status));
+		$app->onError(fn(HttpException $e): Response => Response::html('<h1>Busy</h1>', $e->status));
 
 		$response = $app->handle(new Request('GET', '/busy'));
 
@@ -415,7 +420,7 @@ describe('httpExceptionHandler()', function () {
 
 	test('takes a class name, built by the container when an error happens', function () {
 		$app = scannedApp();
-		$app->httpExceptionHandler(JsonErrors::class);
+		$app->onError(JsonErrors::class);
 
 		$ok = $app->handle(new Request('GET', '/notes'));
 		$trace = $app->container->get(Trace::class);
@@ -513,7 +518,7 @@ describe('commands', function () {
 		expect($result['code'])->toBe(1);
 		expect($result['stderr'])->toBe("Unknown command: nope\n");
 		expect($result['stdout'])
-			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n");
+			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n\n  routes:list    List every route and its class\n");
 	});
 
 	test('no command at all runs commands:list and exits 0', function () {

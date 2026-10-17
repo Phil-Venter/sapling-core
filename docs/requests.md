@@ -108,7 +108,7 @@ $remember = $request->data('remember')->bool();
 $city = $request->data('address', 'city')->string();
 ```
 
-The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP itself leaves alone. `data()` only reads the body, never the query string.
+The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP leaves alone. `data()` only reads the body, never the query string.
 
 > [!WARNING]
 > A JSON or XML body that doesn't decode stops the request with a 400.
@@ -137,7 +137,7 @@ Sapling only writes the session's cookie. To set another, add it with `withHeade
 
 ### Uploaded files
 
-Uploads don't come through `Value`. `$request->files` holds them exactly as PHP's `$_FILES` does:
+Uploads don't come through `Value`. `$request->files` holds them as PHP's `$_FILES` does:
 
 ```php
 $avatar = $request->files['avatar'] ?? null;
@@ -158,7 +158,7 @@ Only PUT, PATCH and DELETE are accepted, and any other value leaves the request 
 
 ## Creating responses
 
-Every action returns a `Response`. The static helpers cover the common cases and set the `Content-Type` for you:
+Every action returns a `Response`. The static helpers cover the common cases and set the `Content-Type`:
 
 ```php
 return Response::html($html);
@@ -244,7 +244,7 @@ $title = $response->data('title')->string();
 $location = $response->header('location')->string();
 ```
 
-An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does. Replies from [`HttpClient`](http-client.md) are responses too.
+An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does.
 
 ## Method reference
 
@@ -273,10 +273,10 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `Response::json($data, $status = 200)` | Returns JSON. Throws `JsonException` when the data can't be encoded |
 | `Response::redirect($url, $status = 302)` | Returns a redirect |
 | `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent |
-| `Response::fromHttpException($e)` | Returns plain text with the exception's status and message |
+| `Response::error($e)` | Returns plain text with an `HttpException`'s status and message, for an [error handler](errors.md#showing-your-own-error-page) |
 | `new Response($body, $status = 200, $headers = [])` | Returns any other response |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
+| `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `array()` |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
-| `header($name)` | Returns a header, case-insensitive, as a `Value`. A header sent more than once is a list |
-| `send($body = true)` | Sends the response. `App::run()` does this for you |
+| `send($body = true)` | Sends the response. `App::run()` calls it |
 | `$response->status`, `headers`, `body` | Read-only. `withHeader()` returns a copy with a new header |

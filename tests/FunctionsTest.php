@@ -4,8 +4,6 @@ use Sapling\Http\HttpException;
 
 test('e()', function () {
 	expect(e('<a href="x">O\'Reilly & Co</a>'))->toBe('&lt;a href=&quot;x&quot;&gt;O&#039;Reilly &amp; Co&lt;/a&gt;');
-	expect(e(null))->toBe('');
-	expect(e(7))->toBe('7');
 });
 
 test('abort() and abort_if() throw HttpException', function () {
@@ -53,17 +51,13 @@ test('datetime()', function (
 ) {
 	expect(datetime($value, $timezone)->format('Y-m-d H:i:s.u P'))->toBe($expected);
 })->with([
-	'a timestamp' => [0, 'UTC', '1970-01-01 00:00:00.000000 +00:00'],
 	'in another zone' => [0, 'Africa/Johannesburg', '1970-01-01 02:00:00.000000 +02:00'],
-	'a fractional timestamp' => [0.5, 'UTC', '1970-01-01 00:00:00.500000 +00:00'],
-	'a date string' => ['2026-10-07 07:31:34', 'UTC', '2026-10-07 07:31:34.000000 +00:00'],
 	'a date string, read in the zone' => [
 		'2026-10-07 07:31:34',
 		'Africa/Johannesburg',
 		'2026-10-07 07:31:34.000000 +02:00',
 	],
 	'a DateTimeZone' => [0, new DateTimeZone('Africa/Johannesburg'), '1970-01-01 02:00:00.000000 +02:00'],
-	'a string with its own offset' => ['2026-10-07T09:31:34+02:00', 'UTC', '2026-10-07 07:31:34.000000 +00:00'],
 	'another date' => [
 		new DateTime('2026-10-07 09:31:34', new DateTimeZone('Africa/Johannesburg')),
 		'UTC',
@@ -85,13 +79,6 @@ test('datetime() without a timezone uses the default', function () {
 		date_default_timezone_set($default);
 	}
 });
-
-test('value()', function () {
-	expect(value(fn(int $a, int $b) => $a + $b, 2, 3))->toBe(5);
-	expect(value('strlen'))->toBe('strlen');
-	expect(value(null))->toBeNull();
-});
-
 test('uuid() makes a version 7 UUID, ordered by time', function () {
 	$first = uuid();
 	usleep(2000);

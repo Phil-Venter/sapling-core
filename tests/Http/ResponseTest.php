@@ -1,6 +1,5 @@
 <?php
 
-use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 test('withHeader() returns a copy and replaces the header in any case', function () {
@@ -14,15 +13,14 @@ test('withHeader() returns a copy and replaces the header in any case', function
 	expect($cookies->headers['Set-Cookie'])->toBe(['a=1', 'b=2']);
 });
 
-test('a discarded withHeader() is a 500', function () {
-	[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/discards-header')));
+test('error() answers with the error\'s status and message', function () {
+	$response = Response::error(new Sapling\Http\HttpException(404, 'No such note'));
 
-	expect($response->status)->toBe(500);
-	expect($log[0])->toContain('withHeader() should either be used or intentionally ignored');
-})->skip(version_compare(PHP_VERSION, '8.5', '<'), 'needs #[NoDiscard], new in PHP 8.5');
+	expect([$response->status, $response->body])->toBe([404, 'No such note']);
+});
 
-test('fromException() without debug hides everything', function () {
-	expect(Response::fromException(new RuntimeException('secret path /etc'), false))
+test('fromCrash() without debug hides everything', function () {
+	expect(Response::fromCrash(new RuntimeException('secret path /etc'), false))
 		->status->toBe(500)
 		->body->toBe('Internal Server Error')
 		->headers->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
@@ -81,12 +79,6 @@ test('data() with a name reads one field, and without one the whole body', funct
 
 	expect($response->data('title')->string())->toBe('Notes');
 	expect($response->data()->array())->toBe(['title' => 'Notes', 'count' => 2]);
-});
-
-test('data() reads the first Content-Type when a reply sent it twice', function () {
-	$reply = new Response('{"saved":true}', 200, ['content-type' => ['application/json', 'text/plain']]);
-
-	expect($reply->data()->array())->toBe(['saved' => true]);
 });
 
 test('data() finds the Content-Type whatever the case of its name', function () {

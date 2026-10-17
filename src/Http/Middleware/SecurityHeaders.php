@@ -29,7 +29,11 @@ final readonly class SecurityHeaders
 	 */
 	public function __construct(private array $policy = []) {}
 
-	/** @param Closure(Request): Response $next */
+	/**
+	 * Adds the headers to the response, keeping any the action set.
+	 *
+	 * @param Closure(Request): Response $next
+	 */
 	public function __invoke(Request $request, Closure $next): Response
 	{
 		$policy = [];

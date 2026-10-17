@@ -17,7 +17,7 @@
 
 An action is the class that answers a request, what other frameworks call a controller. Its `#[Route]` says which method and path it answers, and its `__invoke()` takes the `Request` and returns a `Response`.
 
-Each action is one class in one file, with its route written on the class itself. That keeps an action's dependencies to itself, and means searching for a path finds the code behind it.
+Each action is one class in one file, with its route written on the class. That keeps each action's dependencies separate, and searching for a path finds the code behind it.
 
 ## Writing an action
 
@@ -145,4 +145,4 @@ php bin/console routes:list
 | `#[Middleware($class)]` | Runs middleware around the class's routes. Repeat it for more, first outermost |
 | `$app->router->add($method, $path, $action, $middleware = [])` | Adds a route in code |
 | `$app->router->match($method, $path)` | Returns the route and its parameters. Throws a 404 or 405 `HttpException` |
-| `$app->router->all()` | Returns every route, as `routes:list` shows them |
+| `$app->router->all()` | Returns every route with its action's class name, as `routes:list` shows them |

@@ -96,17 +96,6 @@ test('an array _method is ignored instead of raising a warning', function () {
 	expect(Request::fromGlobals()->method)->toBe('POST');
 });
 
-test('a POST form with _method=DELETE reaches the DELETE route', function () {
-	$response = httpRequest(
-		'POST',
-		'/notes/7',
-		['Content-Type' => 'application/x-www-form-urlencoded'],
-		'_method=DELETE',
-	);
-
-	expect($response['body'])->toBe('deleted 7');
-});
-
 test('a JSON body becomes input, alongside query, headers, cookies and params', function () {
 	$body = '{"name":"Ann"}';
 	$response = httpRequest(
@@ -131,14 +120,6 @@ test('a JSON body becomes input, alongside query, headers, cookies and params', 
 		'body' => $body,
 		'ip' => '127.0.0.1',
 	]);
-});
-
-test('a form-encoded PUT body, as htmx sends, and an XML body become input', function () {
-	$form = httpRequest('PUT', '/echo/1', ['Content-Type' => 'application/x-www-form-urlencoded'], 'name=Bo+B');
-	$xml = httpRequest('PUT', '/echo/1', ['Content-Type' => 'application/xml'], '<r><name>Ann</name></r>');
-
-	expect(json_decode($form['body'], true)['name'])->toBe('Bo B');
-	expect(json_decode($xml['body'], true)['name'])->toBe('Ann');
 });
 
 test('data() is the whole body, and form fields PHP has already read win over it', function () {

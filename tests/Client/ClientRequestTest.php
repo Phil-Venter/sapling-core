@@ -29,11 +29,8 @@ test('json() without data has no body or Content-Type, while [] and {} are sent 
 	expect(ClientRequest::json('PUT', '/', new stdClass())->body)->toBe('{}');
 });
 
-test('headers you pass come after the Content-Type, so they can replace it', function () {
+test('header names are lowercased, so one you pass replaces the Content-Type whatever its case', function () {
 	$request = ClientRequest::json('PUT', '/', ['name' => 'Ann'], ['Content-Type' => 'application/merge-patch+json']);
 
-	expect($request->headers)->toBe([
-		'content-type' => 'application/json',
-		'Content-Type' => 'application/merge-patch+json',
-	]);
+	expect($request->headers)->toBe(['content-type' => 'application/merge-patch+json']);
 });

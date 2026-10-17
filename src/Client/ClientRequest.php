@@ -11,9 +11,12 @@ use Sapling\Data;
  */
 final readonly class ClientRequest
 {
+	/** @var array<string, string> Lowercase names, as HTTP treats them. */
+	public array $headers;
+
 	/**
 	 * A string body goes as it is, so pass its Content-Type. An array goes as multipart form data, which can hold
-	 * CURLFile uploads.
+	 * CURLFile uploads. A header named twice in different cases keeps the last one.
 	 *
 	 * @param string|array<string, mixed> $body
 	 * @param array<string, string> $headers
@@ -22,8 +25,10 @@ final readonly class ClientRequest
 		public string $method,
 		public string $url,
 		public string|array $body = '',
-		public array $headers = [],
-	) {}
+		array $headers = [],
+	) {
+		$this->headers = array_change_key_case($headers);
+	}
 
 	/**
 	 * A request with $data as JSON, where [] sends [] and new stdClass() sends {}. Without data, there's no body.

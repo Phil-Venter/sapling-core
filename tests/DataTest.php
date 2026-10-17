@@ -2,12 +2,11 @@
 
 use Sapling\Data;
 
-test('JSON and form round-trip', function () {
+test('toJson() leaves slashes and Unicode as they are, and fromJson() gives arrays', function () {
 	$data = ['name' => 'Ann', 'tags' => ['a', 'b'], 'url' => 'https://example.com/ä'];
 
 	expect(Data::toJson($data))->toBe('{"name":"Ann","tags":["a","b"],"url":"https://example.com/ä"}');
 	expect(Data::fromJson(Data::toJson($data)))->toBe($data);
-	expect(Data::fromForm(Data::toForm($data)))->toBe($data);
 });
 
 test('XML round-trips: elements, repeated elements, attributes, text beside attributes, escaping', function () {

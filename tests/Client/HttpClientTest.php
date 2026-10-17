@@ -34,28 +34,6 @@ test('a string body goes as it is with the Content-Type you pass, and data() dec
 	]);
 });
 
-test('an array body uploads multipart fields and files', function () {
-	$fields = ['name' => 'Ann', 'file' => new CURLStringFile('hello', 'hello.txt', 'text/plain')];
-	$echo = $this->client
-		->send(new ClientRequest('POST', serverUrl('/echo-upload'), $fields))
-		->data()
-		->array();
-
-	expect($echo)->toBe(['name' => 'Ann', 'file' => 'hello.txt', 'contents' => 'hello']);
-});
-
-test('a Content-Type you pass replaces the default, whatever its case', function () {
-	$request = ClientRequest::json(
-		'PUT',
-		serverUrl('/echo/7'),
-		['name' => 'Ann'],
-		['content-TYPE' => 'application/merge-patch+json'],
-	);
-	$echo = $this->client->send($request)->data();
-
-	expect($echo->get('content_type')->string())->toBe('application/merge-patch+json');
-});
-
 test('a GET follows redirects and keeps only the final headers; a POST gets the redirect back', function () {
 	$followed = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
 	$returned = $this->client->send(ClientRequest::form('POST', serverUrl('/notes'), ['body' => 'x']));

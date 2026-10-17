@@ -123,12 +123,19 @@ final readonly class Db
 	/**
 	 * Runs the closure in a transaction and returns its result.
 	 *
+	 * @template T
+	 * @param Closure(self): T $fn
+	 * @return T
 	 * @throws PDOException When the transaction can't start or commit.
 	 * @throws Throwable Whatever the closure throws, after rolling back.
 	 */
 	public function transaction(Closure $fn): mixed
 	{
-		$this->begin();
+		// On SQLite, IMMEDIATE takes the write lock now, so the transaction waits for it like any other write.
+		match ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+			'sqlite' => $this->pdo->exec('BEGIN IMMEDIATE'),
+			default => $this->pdo->beginTransaction(),
+		};
 
 		try {
 			$result = $fn($this);
@@ -145,18 +152,6 @@ final readonly class Db
 		}
 
 		return $result;
-	}
-
-	/** @throws PDOException */
-	private function begin(): void
-	{
-		if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-			$this->pdo->exec('BEGIN IMMEDIATE');
-
-			return;
-		}
-
-		$this->pdo->beginTransaction();
 	}
 
 	/**

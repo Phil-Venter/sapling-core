@@ -60,8 +60,9 @@ final class Router
 		$taken = $node->routes[$method]['action'] ?? null;
 
 		if ($taken !== null) {
-			$first = $this->actionName($taken);
-			$second = $this->actionName($action);
+			// @mago-expect analysis:mixed-assignment
+			$first = is_object($taken) ? $taken::class : $taken;
+			$second = is_object($action) ? $action::class : $action;
 
 			throw new LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
 		}
@@ -113,13 +114,25 @@ final class Router
 	}
 
 	/**
-	 * Every route, read back from the tree, fixed segments first.
+	 * Every route, read back from the tree, fixed segments first, with the class name of its action.
 	 *
-	 * @return list<array{method: string, path: string, action: class-string|object}>
+	 * @return list<array{method: string, path: string, action: string}>
 	 */
 	public function all(): array
 	{
 		return iterator_to_array($this->routesBelow($this->tree), false);
+	}
+
+	// Typed as object, so the analyzer can follow a node down the tree.
+	private function branch(object $node, string $segment): object
+	{
+		if (str_starts_with($segment, ':')) {
+			// @mago-expect analysis:ambiguous-object-property-access
+			return $node->param ??= (object) self::NODE;
+		}
+
+		// @mago-expect analysis:ambiguous-object-property-access
+		return $node->fixed[$segment] ??= (object) self::NODE;
 	}
 
 	/**
@@ -152,7 +165,7 @@ final class Router
 
 	/**
 	 * @param list<string> $segments
-	 * @return Generator<array{method: string, path: string, action: class-string|object}>
+	 * @return Generator<array{method: string, path: string, action: string}>
 	 */
 	private function routesBelow(object $node, array $segments = []): Generator
 	{
@@ -170,8 +183,11 @@ final class Router
 				$parts[] = $segment;
 			}
 
+			// @mago-expect analysis:mixed-assignment
+			$action = is_object($route['action']) ? $route['action']::class : $route['action'];
+
 			// @mago-expect analysis:invalid-yield-value-type
-			yield ['method' => $method, 'path' => '/' . implode('/', $parts), 'action' => $route['action']];
+			yield ['method' => $method, 'path' => '/' . implode('/', $parts), 'action' => $action];
 		}
 
 		// @mago-expect analysis:ambiguous-object-property-access
@@ -184,26 +200,5 @@ final class Router
 		if ($node->param !== null) {
 			yield from $this->routesBelow($node->param, [...$segments, ':']);
 		}
-	}
-
-	private function actionName(string|object $action): string
-	{
-		if (is_object($action)) {
-			$action = $action::class;
-		}
-
-		return $action;
-	}
-
-	// Typed as object, so the analyzer can follow a node down the tree.
-	private function branch(object $node, string $segment): object
-	{
-		if (str_starts_with($segment, ':')) {
-			// @mago-expect analysis:ambiguous-object-property-access
-			return $node->param ??= (object) self::NODE;
-		}
-
-		// @mago-expect analysis:ambiguous-object-property-access
-		return $node->fixed[$segment] ??= (object) self::NODE;
 	}
 }

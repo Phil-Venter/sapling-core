@@ -22,6 +22,8 @@ final readonly class RunMigrations
 	public function __construct(private App $app, private Db $db) {}
 
 	/**
+	 * Runs the migrations that haven't run yet.
+	 *
 	 * @throws PDOException When a migration's SQL fails. Its transaction is rolled back.
 	 * @throws Throwable
 	 */

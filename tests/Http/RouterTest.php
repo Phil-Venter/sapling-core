@@ -110,13 +110,14 @@ test('the same method and path on two classes throws at boot and names both', fu
 		);
 });
 
-test('all() reads every route back from the tree, with each route\'s own :param names', function () {
+test('all() reads every route back from the tree, with its own :param names and its action\'s class name', function () {
 	$router = new Router();
 	$router->add('GET', '/', 'Home');
 	$router->add('GET', '/notes/:id', 'ShowNote');
 	$router->add('DELETE', '/notes/:note', 'DeleteNote');
 	$router->add('GET', '/notes/new', 'NewNote');
 	$router->add('GET', '/notes/:id/files/:name', 'ShowFile');
+	$router->add('GET', '/ping', fn() => null);
 
 	expect($router->all())->toBe([
 		['method' => 'GET', 'path' => '/', 'action' => 'Home'],
@@ -124,6 +125,7 @@ test('all() reads every route back from the tree, with each route\'s own :param 
 		['method' => 'GET', 'path' => '/notes/:id', 'action' => 'ShowNote'],
 		['method' => 'DELETE', 'path' => '/notes/:note', 'action' => 'DeleteNote'],
 		['method' => 'GET', 'path' => '/notes/:id/files/:name', 'action' => 'ShowFile'],
+		['method' => 'GET', 'path' => '/ping', 'action' => 'Closure'],
 	]);
 });
 

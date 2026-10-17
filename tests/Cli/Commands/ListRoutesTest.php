@@ -1,11 +1,9 @@
 <?php
 
-use Sapling\Cli\Commands\ListRoutes;
 use Sapling\Http\Router;
 
 test('routes lists method, path and class for every route', function () {
 	$app = scannedApp();
-	$app->commands->add('routes:list', ListRoutes::class);
 
 	[$code, $output] = runInApp($app, 'routes:list');
 	$lines = explode("\n", trim($output));
@@ -18,7 +16,6 @@ test('routes lists method, path and class for every route', function () {
 
 test('the paths line up, however long the methods are', function () {
 	$app = new Sapling\App(FIXTURES);
-	$app->commands->add('routes:list', ListRoutes::class);
 	$app->router->add('GET', '/notes', fn() => null);
 	$app->router->add('OPTIONS', '/notes', fn() => null);
 

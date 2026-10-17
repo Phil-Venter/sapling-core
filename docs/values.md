@@ -7,6 +7,7 @@
     - [Numbers](#numbers)
     - [Booleans](#booleans)
     - [Arrays](#arrays)
+    - [Enums](#enums)
 - [Nested data](#nested-data)
 - [Missing and required values](#missing-and-required-values)
 - [Wrapping your own data](#wrapping-your-own-data)
@@ -28,7 +29,8 @@ Everything in Sapling that hands you outside data returns a `Value`:
 | `$console->arg()`, `option()` | A command-line argument or option |
 | `$session->get()`, `getFlash()` | A session value, or one stored for the next request |
 | `$db->value()` | The first column of the first row |
-| `$response->data()`, `header()` | A response's decoded body or a header, such as from another service |
+| `$response->data()`, `header()` | A response's decoded body or a header, such as in a test |
+| `$reply->data()`, `header()` | A reply's decoded body or a header, from [another service](http-client.md) |
 | `new Value($data)` | Anything else, such as a decoded file |
 
 ## Reading a value
@@ -88,6 +90,18 @@ foreach ($reply->data('items')->items() as $item) {
 ```
 
 Anything that isn't an array gives `[]`.
+
+### Enums
+
+To read a case of a backed enum, pass the typed value to the enum's `tryFrom()`, and give the default with `??`:
+
+```php
+$sort = Sort::tryFrom($request->query('sort')->string()) ?? Sort::Newest;
+$priority = Priority::tryFrom($request->query('priority')->int(-1)) ?? Priority::Normal;
+```
+
+> [!WARNING]
+> For an int-backed enum, give `int()` a default that isn't a case, such as `-1`. Its usual default of `0` would match a case whose value is 0.
 
 ## Nested data
 
