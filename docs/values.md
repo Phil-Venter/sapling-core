@@ -15,7 +15,7 @@
 
 ## Introduction
 
-Data from outside the app is loosely typed. A form field can turn out to be an array, a query parameter is always a string, and JSON can hold anything. Checking each one by hand means a cast or an `is_string()` at every read, and forgetting one means a crafted `body[]=x` reaches a `string` parameter and becomes a 500.
+Data from outside the app is loosely typed. A form field can turn out to be an array, a query parameter is always a string, and JSON can hold anything. Checking each one by hand takes a cast or an `is_string()` at every read. Miss one, and a crafted `body[]=x` reaches a `string` parameter and becomes a 500.
 
 `Sapling\Value` does those checks in one place. It wraps a piece of outside data and reads it as the type you ask for, and a value that's missing or of the wrong type gives a default instead.
 
@@ -35,7 +35,7 @@ Everything in Sapling that hands you outside data returns a `Value`:
 
 ## Reading a value
 
-Call the method for the type you need, right where you read the value. Each one takes a default, which always has the right type because it goes on the typed method, and nothing throws:
+Call the method for the type you need, right where you read the value. Each one takes a default of that type, and nothing throws:
 
 ```php
 $id = $request->param('id')->int();
@@ -45,7 +45,7 @@ $days = $console->option('days')->int(30);
 $count = $db->value($sql)->int();
 ```
 
-A `Value` itself isn't a string, so `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`. Call `string()` first.
+A `Value` isn't a string, so `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`. Call `string()` first.
 
 ### Strings
 
@@ -116,7 +116,7 @@ A missing key at any level gives an empty `Value`, and no key at all gives the w
 
 ## Missing and required values
 
-A default keeps your code safe, but it can't tell you whether a value was sent at all. `string()` gives `''` both for an empty field and a missing one. When the difference matters, `$value->raw` holds the value as it arrived, or `null` when it's missing:
+A default can't tell you whether a value was sent. `string()` gives `''` both for an empty field and a missing one. When the difference matters, `$value->raw` holds the value as it arrived, or `null` when it's missing:
 
 ```php
 $editing = $request->param('id')->raw !== null;
@@ -134,7 +134,7 @@ if (blank($body)) {
 
 ## Wrapping your own data
 
-`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it, rather than reaching in with `?? ''` at every level:
+`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it instead of reaching in with `?? ''` at every level:
 
 ```php
 $json = file_get_contents(__DIR__ . '/settings.json');

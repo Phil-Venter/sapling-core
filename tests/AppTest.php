@@ -86,6 +86,16 @@ describe('boot()', function () {
 		expect($response->headers['Access-Control-Allow-Origin'])->toBe('https://app.example');
 	});
 
+	test('gives SecurityHeaders the content_policy from the config', function () {
+		$app = App::boot(BOOT, new Config(['content_policy' => ['img-src' => "'self'"]]));
+		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
+		$app->middleware(SecurityHeaders::class);
+
+		$response = $app->handle(new Request('GET', '/hello'));
+
+		expect($response->headers['Content-Security-Policy'])->toContain("img-src 'self';");
+	});
+
 	test('refuses a string where a setting must be true or false, since "false" would read as on', function (string $key) {
 		expect(
 			fn() => App::boot(BOOT, new Config([
@@ -272,7 +282,7 @@ describe('middleware', function () {
 	test('middleware can be a class, an object or a closure', function () {
 		$app = scannedApp();
 		$app->middleware(GlobalOne::class);
-		$app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
+		$app->middleware(new SecurityHeaders(['img-src' => "'self'"]));
 		$app->middleware(fn(Request $request, Closure $next): Response => $next($request)->withHeader(
 			'X-Closure',
 			'yes',
@@ -281,7 +291,7 @@ describe('middleware', function () {
 		$headers = $app->handle(new Request('GET', '/notes'))->headers;
 
 		expect([$headers['X-Global-One'], $headers['X-Closure']])->toBe(['yes', 'yes']);
-		expect($headers['Content-Security-Policy'])->toContain("script-src 'self' https://unpkg.com");
+		expect($headers['Content-Security-Policy'])->toContain("img-src 'self';");
 	});
 
 	test('a prefix runs global middleware for that path and below only', function (
@@ -434,6 +444,26 @@ describe('onError()', function () {
 			'Allow' => 'DELETE, GET, HEAD',
 		]);
 		expect($trace->events)->toBe(['PATCH /notes/7']);
+	});
+});
+
+describe('testing', function () {
+	test('a test can sign in by setting the session before handle()', function () {
+		$app = new App(FIXTURES);
+		$app->router->add('GET', '/me', function () use ($app): Response {
+			$user = $app->container->get(Session::class)->get('user_id')->int();
+
+			return Response::text("user {$user}");
+		});
+
+		$session = $app->container->get(Session::class);
+		$session->set('user_id', 7);
+
+		try {
+			expect($app->handle(new Request('GET', '/me'))->body)->toBe('user 7');
+		} finally {
+			$session->destroy();
+		}
 	});
 });
 

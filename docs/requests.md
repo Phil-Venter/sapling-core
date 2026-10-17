@@ -26,7 +26,7 @@ Every action receives the incoming request as a `Sapling\Http\Request` and retur
 
 ## The request lifecycle
 
-Before looking at the two objects, it helps to know the path a request takes through the app:
+A request takes this path through the app:
 
 1. The web server runs `public/index.php`, which loads [`bootstrap.php`](app.md#booting-the-app).
 2. `$app->run()` builds a `Request` from PHP's globals. It tidies the path and applies a form's [`_method`](#sending-put-patch-and-delete-from-forms).
@@ -65,17 +65,17 @@ final class StoreNote
 Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, so `//notes/` arrives as `/notes`.
 
 > [!NOTE]
-> Behind a proxy or load balancer, `$request->ip` is the proxy's address. Sapling doesn't read `X-Forwarded-For`, since any visitor can send one and pick their own address. It only trusts `X-Forwarded-Proto`, to mark the session cookie Secure, because faking that only makes the visitor's own cookie stricter.
+> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address, because anyone can send `X-Forwarded-For` and pick their own. `X-Forwarded-Proto` is trusted from anyone, since all it does is mark the session cookie Secure.
 
 ## Retrieving input
 
-Whatever part of the request you read, you get a [`Value`](values.md) back, which you then read as the type you need, with a default for when it's missing:
+Every part of the request comes back as a [`Value`](values.md). Read it as the type you need, with a default for when it's missing:
 
 ```php
 $page = $request->query('page')->int(1);
 ```
 
-This also protects you from crafted input. If someone sends `body[]=x` where you expect text, `string()` gives the default rather than an array. Every reader takes more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
+Crafted input can't change the type either. If someone sends `body[]=x` where you expect text, `string()` gives the default. Every reader takes more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
 
 ### Route parameters
 
@@ -100,7 +100,7 @@ $next = '/notes?' . Data::toForm([...$request->query()->array(), 'page' => $page
 
 ### Body fields
 
-`data()` reads a field from the request body, whichever format it was sent in:
+`data()` reads a field from the request body, sent as JSON, XML or a form:
 
 ```php
 $title = $request->data('title')->string();
@@ -194,7 +194,7 @@ return Response::redirect('/notes/7', 303);
 
 ### Error responses
 
-For an error, you don't build a response at all. `abort()` stops the request with an error status from anywhere, including middleware and templates:
+For an error, you don't build a response. `abort()` stops the request with an error status from anywhere, including middleware and templates:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
@@ -235,7 +235,7 @@ find public/downloads -mindepth 1 -maxdepth 1 -type d -mmin +60 -exec rm -rf {} 
 
 ## Reading a response
 
-Responses aren't only written. Middleware reads what the action returned, and tests read what `handle()` gives back. Both can use `status`, `headers` and `body`, and two methods mirror the request's. `data()` decodes the body by its `Content-Type`, and `header()` reads a header case-insensitively:
+Middleware reads what the action returned, and tests read what `handle()` gives back. Both can use `status`, `headers` and `body`, and two methods mirror the request's. `data()` decodes the body by its `Content-Type`, and `header()` reads a header case-insensitively:
 
 ```php
 $response = $app->handle(new Request('GET', '/api/notes/7'));

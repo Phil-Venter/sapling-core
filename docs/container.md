@@ -75,11 +75,11 @@ final class Weather
 }
 ```
 
-When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so convert `.env` strings in `config.php`, as in `'retries' => (int) ($env['RETRIES'] ?? 3)`. For a boolean, compare instead, as in `'cache' => ($env['CACHE'] ?? '') === 'true'`, since `(bool) 'false'` is `true`.
+When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so convert `.env` strings in `config.php`, as in `'retries' => (int) ($env['RETRIES'] ?? 3)`. Compare booleans instead, as in `'cache' => ($env['CACHE'] ?? '') === 'true'`, because `(bool) 'false'` is `true`.
 
 ## How a class is built
 
-Putting that together, each constructor parameter gets the first of these that applies:
+Each constructor parameter gets the first of these that applies:
 
 1. The setting named by `#[Config]`, or the parameter's default when the setting is missing.
 2. The container's instance of its class or interface type.

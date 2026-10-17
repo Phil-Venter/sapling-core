@@ -7,14 +7,14 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 /**
- * Sets the browser security headers and a content policy, unless the response already has them. Directives you pass
- * replace the defaults, as in new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]).
+ * Sets the browser security headers and a content policy, unless the response already has them. The content_policy
+ * setting's directives replace the defaults. Inline styles are allowed, and inline scripts aren't.
  */
 final readonly class SecurityHeaders
 {
 	public const array POLICY = [
 		'default-src' => "'self'",
-		'style-src' => "'self' https:",
+		'style-src' => "'self' https: 'unsafe-inline'",
 		'img-src' => "'self' https: data:",
 		'font-src' => "'self' https: data:",
 		'base-uri' => "'none'",
@@ -50,7 +50,7 @@ final readonly class SecurityHeaders
 			'Content-Security-Policy' => implode('; ', $policy),
 		];
 
-		// A header the action set itself wins, so one page can have its own policy.
+		// A header the action set wins, so one page can have its own policy.
 		foreach ($headers as $name => $value) {
 			if ($response->header($name)->raw !== null) {
 				continue;

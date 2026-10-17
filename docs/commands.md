@@ -89,7 +89,7 @@ $role = $console->arg(1)->string('member'); // member
 
 ### Options and flags
 
-`option()` also returns a `Value`, while `flag()` just says whether the flag was given:
+`option()` also returns a `Value`, while `flag()` says whether the flag was given:
 
 ```php
 // php bin/console notes:prune --days=7 --dry-run
@@ -113,7 +113,7 @@ $console->error('No such user.');
 
 Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws prints the error and exits with 1. It's also logged when `error_log` is set, such as to a file or `syslog`. Without it, PHP's log is the terminal.
 
-A `Sapling\Cli\UsageException`, such as the one `--days 7` causes, prints only its message and exits with 1, without a trace or a log line. Throw one for a usage mistake of your own:
+A `Sapling\Cli\UsageException`, such as the one `--days 7` causes, prints its message and exits with 1, with no trace and no log line. Throw one for your own usage mistakes:
 
 ```php
 if (blank($email)) {
@@ -121,7 +121,7 @@ if (blank($email)) {
 }
 ```
 
-Every other exception is a crash, so a bug that throws an `InvalidArgumentException` still shows its trace.
+Any other exception is a crash and shows its trace, an `InvalidArgumentException` from a bug included.
 
 ## Adding commands in code
 
@@ -156,6 +156,6 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `line($text = '')` | Prints a line to standard output |
 | `error($text)` | Prints a line to standard error |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
-| `throw new UsageException($message)` | Stops the command with a usage mistake. Only the message is printed, and the exit code is 1 |
+| `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
 | `$console->command` | The command name |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |

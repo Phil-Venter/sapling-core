@@ -10,7 +10,7 @@
 
 ## Introduction
 
-A session keeps values for one visitor between requests, such as who's logged in. `Sapling\Http\Session` is PHP's own session with two things added. It sets safer cookie settings before the session starts, which PHP's defaults don't, and it has flash values for messages that need to survive a redirect.
+A session keeps values for one visitor between requests, such as who's logged in. `Sapling\Http\Session` is PHP's session with two additions. It sets safer cookie settings before the session starts, which PHP's defaults don't, and it has flash values for messages that need to survive a redirect.
 
 The session only starts the first time something uses it, so a request that never touches it sends no cookie.
 
@@ -71,7 +71,7 @@ $notice = $this->session->getFlash('notice')->string();
 ```
 
 > [!NOTE]
-> "The next request" is whichever one uses the session first. A background request, such as an htmx poll, can take the flash value before the page does.
+> "The next request" is the first one that uses the session. A background request, such as an htmx poll, can take the flash value before the page does.
 
 ## Logging in and out
 
@@ -90,7 +90,7 @@ $this->session->destroy();
 
 ## The session cookie
 
-The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created itself. PHP sends the cookie, so it never appears on the response `$app->handle()` returns in a test.
+The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created. PHP sends the cookie, so it never appears on the response `$app->handle()` returns in a test.
 
 ### How long a session lasts
 

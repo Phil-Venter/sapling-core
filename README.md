@@ -86,6 +86,7 @@ Sapling keeps the parts that worked and drops the rest. You can read the whole c
 | [Values](docs/values.md) | Reading outside data safely with `Value`, from requests, commands, sessions and replies |
 | [Middleware](docs/middleware.md) | Writing middleware, and the built-in `SecurityHeaders`, `Csrf` and `Cors` |
 | [Templates](docs/templates.md) | Partials, components, layouts and escaping |
+| [htmx](docs/htmx.md) | Fragments, redirects, errors, scripts and sessions with htmx |
 | [Sessions](docs/sessions.md) | Session values, flash values and the cookie |
 | [Database](docs/database.md) | `Db`, SQLite and migrations |
 | [Configuration](docs/config.md) | `config.php`, `.env` and the settings Sapling reads |
@@ -134,4 +135,4 @@ Each guide in `docs/` has a table of contents, an introduction, sections named a
 
 ## License
 
-Sapling is 0BSD, so you can use it for anything, with no conditions. See `LICENSE`.
+Sapling is 0BSD, so you can use it for anything. See `LICENSE`.

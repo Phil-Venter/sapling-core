@@ -26,7 +26,7 @@ final readonly class ClientResponse
 	}
 
 	/**
-	 * A header, whatever the case of its name, as in header('Retry-After')->int(60). A header sent more than once is
+	 * A header, ignoring the case of its name, as in header('Retry-After')->int(60). A header sent more than once is
 	 * a list, read with array().
 	 */
 	public function header(string $name): Value

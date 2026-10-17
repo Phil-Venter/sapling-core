@@ -64,7 +64,7 @@ final class Response
 	}
 
 	/**
-	 * A download of the file, under its own name or $name.
+	 * A download of the file, under the file's name, or $name.
 	 *
 	 * @throws RuntimeException When the file is missing.
 	 */
@@ -111,7 +111,7 @@ final class Response
 	}
 
 	/**
-	 * A copy with the header set, replacing it whatever the case of its name. The original is unchanged.
+	 * A copy with the header set, replacing any of the same name, ignoring case. The original is unchanged.
 	 *
 	 * @param string|list<string> $value
 	 */
@@ -134,7 +134,7 @@ final class Response
 	}
 
 	/**
-	 * A header, whatever the case of its name, as in header('content-type')->string(). One set to a list, such as
+	 * A header, ignoring the case of its name, as in header('content-type')->string(). One set to a list, such as
 	 * several Set-Cookie values, is read with array().
 	 */
 	public function header(string $name): Value

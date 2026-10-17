@@ -41,7 +41,7 @@ final class Template
 	 *
 	 * @param array<string, mixed> $data
 	 * @throws RuntimeException When the template file is missing.
-	 * @throws Throwable Whatever the template throws.
+	 * @throws Throwable Anything the template throws.
 	 */
 	public function render(string $template, array $data = []): string
 	{
@@ -120,7 +120,7 @@ final class Template
 	 * Closes the last slot() or component(). Closing a component prints it.
 	 *
 	 * @throws RuntimeException When a component's template file is missing.
-	 * @throws Throwable Whatever a component's template throws.
+	 * @throws Throwable Anything a component's template throws.
 	 */
 	public function end(): void
 	{

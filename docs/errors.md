@@ -54,7 +54,7 @@ $app->onError(function (HttpException $e, Request $request) use ($app): Response
 });
 ```
 
-The exception's headers, like `Allow` on a 405, are added to whatever the handler returns. Any header the handler sets itself wins.
+The exception's headers, like `Allow` on a 405, are added to the handler's response. A header the handler sets wins.
 
 ### Answering in JSON
 
@@ -80,9 +80,9 @@ While you're working, set `debug` in the [config](config.md). A crash then shows
 
 ### Warnings and notices
 
-PHP's warnings and notices are easy to miss, so inside a request or a command they throw an `ErrorException` and crash like any other bug. Reading an undefined array key crashes, for example, rather than carrying on with `null`.
+Inside a request or a command, PHP's warnings and notices throw an `ErrorException` and crash like any other bug. Reading an undefined array key crashes, for example, instead of giving `null`.
 
-That changes how some PHP functions fail. `file_get_contents()` on a missing file throws, so a `=== false` check after it never runs, and you check with `is_file()` first instead. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
+`file_get_contents()` on a missing file throws, so a `=== false` check after it never runs. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
 
 Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP. A command that crashes prints the error and exits with 1.
 

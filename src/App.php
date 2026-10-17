@@ -27,6 +27,7 @@ use Sapling\Cli\UsageException;
 use Sapling\Http\HttpException;
 use Sapling\Http\Middleware\Cors;
 use Sapling\Http\Middleware\Csrf;
+use Sapling\Http\Middleware\SecurityHeaders;
 use Sapling\Http\Request;
 use Sapling\Http\Response;
 use Sapling\Http\Router;
@@ -52,8 +53,11 @@ final class App
 	/** @var class-string|object */
 	private string|object $errorHandler;
 
+	/** @var list<string> */
+	private array $trustedProxies = [];
+
 	/**
-	 * A bare app with only the commands:list command, for tests and one-file apps. Use boot() to build an app from
+	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build an app from
 	 * its config.
 	 */
 	public function __construct(public readonly string $basePath, public readonly bool $debug = false)
@@ -75,8 +79,8 @@ final class App
 	}
 
 	/**
-	 * Builds the app from its config: debug mode, the timezone, Session, Crypto, Cors, Csrf and the migrations and
-	 * routes commands.
+	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders, Cors,
+	 * Csrf and the migrations commands.
 	 *
 	 * @throws DateInvalidTimeZoneException When the timezone setting isn't a known timezone.
 	 */
@@ -100,6 +104,13 @@ final class App
 
 			return new Cors($trusted, $creds);
 		});
+
+		$app->trustedProxies = $config->get('trusted_proxies', []);
+
+		$app->container->set(
+			SecurityHeaders::class,
+			fn(): SecurityHeaders => new SecurityHeaders($config->get('content_policy', [])),
+		);
 
 		$app->container->set(Csrf::class, function () use ($config): Csrf {
 			$trusted = array_diff($config->get('cors_origins', []), ['*']);
@@ -200,7 +211,7 @@ final class App
 			exit($this->runCommand($console));
 		}
 
-		$request = Request::fromGlobals();
+		$request = Request::fromGlobals($this->trustedProxies);
 		$response = $this->handle($request);
 
 		// HEAD gets the headers and no body, so a download isn't read for nothing.

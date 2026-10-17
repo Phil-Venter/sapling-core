@@ -44,9 +44,12 @@ final class Request
 
 	/**
 	 * The current request, from PHP's globals. A POST with _method set to PUT, PATCH or DELETE becomes that
-	 * method.
+	 * method. When the connection comes from one of $trustedProxies, or any with ['*'], the ip is the visitor's,
+	 * from X-Forwarded-For.
+	 *
+	 * @param list<string> $trustedProxies
 	 */
-	public static function fromGlobals(): self
+	public static function fromGlobals(array $trustedProxies = []): self
 	{
 		$headers = self::readHeaders();
 		$body = (string) file_get_contents('php://input');
@@ -60,7 +63,7 @@ final class Request
 			cookies: $_COOKIE,
 			files: $_FILES,
 			body: $body,
-			ip: $_SERVER['REMOTE_ADDR'] ?? '',
+			ip: self::readIp($trustedProxies),
 		);
 	}
 
@@ -117,6 +120,29 @@ final class Request
 		return $headers;
 	}
 
+	/** @param list<string> $trusted */
+	private static function readIp(array $trusted): string
+	{
+		$remote = $_SERVER['REMOTE_ADDR'] ?? '';
+		$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
+		$any = in_array('*', $trusted, true);
+
+		if (!is_string($forwarded) || !$any && !in_array($remote, $trusted, true)) {
+			return $remote;
+		}
+
+		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added.
+		$hops = array_map(trim(...), explode(',', $forwarded));
+
+		foreach (array_reverse($hops) as $hop) {
+			if (!$any && !in_array($hop, $trusted, true)) {
+				return $hop;
+			}
+		}
+
+		return $hops[0];
+	}
+
 	/**
 	 * A :name parameter from the route path, as in param('id')->int(). Without a name, every parameter.
 	 */
@@ -151,7 +177,7 @@ final class Request
 	}
 
 	/**
-	 * A request header, whatever the case of its name, as in header('accept')->string().
+	 * A request header, ignoring the case of its name, as in header('accept')->string().
 	 */
 	public function header(string $name): Value
 	{

@@ -127,7 +127,7 @@ final readonly class Db
 	 * @param Closure(self): T $fn
 	 * @return T
 	 * @throws PDOException When the transaction can't start or commit.
-	 * @throws Throwable Whatever the closure throws, after rolling back.
+	 * @throws Throwable Anything the closure throws, after rolling back.
 	 */
 	public function transaction(Closure $fn): mixed
 	{

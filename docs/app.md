@@ -13,7 +13,7 @@
 
 ## Introduction
 
-`Sapling\App` ties an app together. It holds the [container](container.md) that builds your classes, the [routes](routing.md) and [commands](commands.md) they answer, and the [middleware](middleware.md) around them. The same object answers web requests and runs commands, depending on how PHP was started.
+`Sapling\App` holds the [container](container.md) that builds your classes, the [routes](routing.md) and [commands](commands.md) they answer, and the [middleware](middleware.md) around them. The same object answers web requests and runs commands, depending on how PHP was started.
 
 An app lives for one request and has no static state, so each test builds its own.
 
@@ -43,7 +43,7 @@ $app->middleware(Csrf::class);
 return $app;
 ```
 
-`App::boot()` takes the app's folder and its [configuration](config.md), and sets up what Sapling itself needs. In the rest of the file, you register services such as the database, scan `app/` for your classes, and add the middleware every request goes through. Services registered as closures are only built when something asks for them, so a request that never touches the database never connects.
+`App::boot()` takes the app's folder and its [configuration](config.md), and sets up what Sapling needs. In the rest of the file, you register services such as the database, scan `app/` for your classes, and add the middleware every request goes through. Services registered as closures are only built when something asks for them.
 
 ### What booting sets up
 
@@ -52,7 +52,8 @@ return $app;
 - `debug` turns on [debug mode](errors.md#debug-mode).
 - `timezone` sets PHP's default timezone. An unknown name throws a `DateInvalidTimeZoneException`.
 - `session_lifetime` sets how long the [session](sessions.md) lasts.
-- `app_key` is passed to [`Crypto`](encryption.md), and the `cors_*` settings to [`Cors` and `Csrf`](middleware.md).
+- `app_key` is passed to [`Crypto`](encryption.md), `content_policy` to [`SecurityHeaders`](middleware.md#security-headers), and the `cors_*` settings to [`Cors` and `Csrf`](middleware.md).
+- `trusted_proxies` lists the proxies whose `X-Forwarded-For` gives [`$request->ip`](requests.md#accessing-the-request).
 
 It also adds the `migrations:run` and `migrations:new` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` and `routes:list` commands.
 
@@ -98,7 +99,7 @@ There's no cache, so every request scans. That takes about 0.2 ms for a dozen cl
 
 ### Adding one class
 
-For a class outside the scanned folder, `add()` registers it on its own:
+For a class outside the scanned folder, `add()` registers it:
 
 ```php
 $app->add(HealthCheck::class);
@@ -139,6 +140,14 @@ expect($response->status)->toBe(302);
 ```
 
 `handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
+
+To act as a signed-in visitor, set the session before the request. The app shares one `Session`, so the action sees the same values:
+
+```php
+$app->container->get(Session::class)->set('user_id', 7);
+
+$response = $app->handle(new Request('GET', '/settings'));
+```
 
 > [!NOTE]
 > Send one request per app, as the server does. A second request through the same app shares the first one's objects.

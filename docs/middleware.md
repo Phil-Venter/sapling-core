@@ -16,7 +16,7 @@
 
 ## Introduction
 
-Some work applies to many routes at once, such as checking a login, adding headers or refusing cross-site requests. Middleware keeps that code out of each action. It runs around your actions, seeing the request on the way in and the response on the way out, and it can answer without calling the action at all.
+Some work applies to many routes, such as checking a login, adding headers or refusing cross-site requests. Middleware keeps that code out of each action. It runs around your actions, seeing the request on the way in and the response on the way out, and it can answer without calling the action.
 
 ## Writing middleware
 
@@ -69,7 +69,7 @@ Middleware is added in `bootstrap.php`, so the server and your tests run the sam
 ```php
 $app->middleware(NoIndex::class);
 
-$app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
+$app->middleware(new Cors(['https://app.example']));
 
 $app->middleware(function (Request $request, Closure $next): Response {
     return $next($request)->withHeader('Cache-Control', 'no-store');
@@ -96,7 +96,7 @@ final class ListUsers
 
 ## The order middleware runs in
 
-With middleware coming from two places, the order matters. For each request it is:
+For each request, middleware runs in this order:
 
 1. Middleware from `$app->middleware()`, in the order it was added. The first is outermost.
 2. Routing, so 404s and 405s pass through the middleware above.
@@ -115,18 +115,18 @@ Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.p
 
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from your own site, while styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site, while styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works. Inline styles are allowed, `<style>` blocks and `style` attributes included.
 
 > [!WARNING]
-> Inline code is blocked, and browsers only report it in the console. That includes `<script>` and `<style>` blocks, `style` and `onclick` attributes, and libraries such as Alpine.js that evaluate strings.
+> Inline scripts are blocked, and browsers only report it in the console. That includes `<script>` blocks, `onclick` attributes, and libraries such as Alpine.js that evaluate strings. Put scripts in a file under `public/`, such as `public/app.js`.
 
-To loosen the policy, pass the directives you want. Each replaces the default of the same name and leaves the rest:
+To loosen the policy, set `content_policy` in `config.php`. Each directive replaces the default of the same name and leaves the rest:
 
 ```php
-$app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"]));
+'content_policy' => ['script-src' => "'self' https://unpkg.com"],
 ```
 
-`SecurityHeaders::POLICY` holds the defaults. A header the action sets itself is kept, so one page can have its own policy.
+`SecurityHeaders::POLICY` holds the defaults. A header the action sets is kept, so one page can have its own policy.
 
 ### Cross-site request protection
 
@@ -135,7 +135,7 @@ $app->middleware(new SecurityHeaders(['script-src' => "'self' https://unpkg.com"
 Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too.
 
 > [!NOTE]
-> There are no CSRF tokens to add to forms. Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, so a form on a subdomain, which browsers call same-site, needs listing in `cors_origins`.
+> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, so a form on a subdomain, which browsers call same-site, needs listing in `cors_origins`.
 
 ### CORS
 
@@ -170,7 +170,7 @@ $app->middleware(RequireLogin::class);          // then your own
 | `__invoke($request, $next)` | Your middleware's entry point. Calls `$next($request)` for the rest of the app, or returns its own response |
 | `$app->middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix`. Takes a class name, an object or a closure |
 | `#[Middleware($class)]` | Runs middleware around one class's routes. Repeat it for more, first outermost |
-| `new SecurityHeaders($policy = [])` | Sets the security headers and a content policy. Each directive in `$policy` replaces the default of the same name |
+| `new SecurityHeaders($policy = [])` | Sets the security headers and a content policy. Each directive in `$policy` replaces the default of the same name. `App::boot()` registers it with `content_policy` |
 | `SecurityHeaders::POLICY` | The default content policy |
 | `new Csrf($trustedOrigins = [])` | Refuses cross-site writes, except from the sites listed. `App::boot()` registers it with `cors_origins` |
 | `new Cors($origins, $allowCredentials = false)` | Lets the sites listed call the app from a browser. `App::boot()` registers it with `cors_origins` and `cors_credentials` |

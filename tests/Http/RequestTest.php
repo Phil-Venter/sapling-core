@@ -35,6 +35,21 @@ test('fromGlobals() reads method, normalized path, query, headers, cookies and f
 	expect($request->ip)->toBe('203.0.113.7');
 });
 
+test('behind a trusted proxy, the ip is the visitor\'s from X-Forwarded-For', function (
+	array $trusted,
+	string $expected,
+) {
+	$_SERVER['REMOTE_ADDR'] = '10.0.0.2';
+	$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.7, 203.0.113.9, 10.0.0.1';
+
+	expect(Request::fromGlobals($trusted)->ip)->toBe($expected);
+})->with([
+	'no trusted proxies' => [[], '10.0.0.2'],
+	'an untrusted proxy' => [['10.0.0.9'], '10.0.0.2'],
+	'trusted proxies, closest first' => [['10.0.0.2', '10.0.0.1'], '203.0.113.9'],
+	'any proxy' => [['*'], '198.51.100.7'],
+]);
+
 test('the readers take a path of keys, as Value::get() does', function () {
 	$request = new Request(
 		'GET',

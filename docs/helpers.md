@@ -78,9 +78,9 @@ $meeting = datetime('2026-10-15 09:00', 'Africa/Johannesburg');
 $created = datetime($row['created_at'], 'UTC');
 ```
 
-Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads), and a date string without its own zone is read in whichever timezone applies.
+Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads). A date string without a zone is read in the same timezone.
 
-Input from visitors can be wrong. An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
+An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
 
 ```php
 try {
@@ -102,7 +102,7 @@ dd($request, $note);
 
 ## Replacing a helper
 
-Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, so replacing one never changes how they behave. `attr()` and `attrs()` do call `e()` and `blank()`, and follow your versions.
+Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
 
 > [!WARNING]
 > A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here.

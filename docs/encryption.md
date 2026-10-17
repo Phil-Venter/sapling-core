@@ -11,23 +11,23 @@
 
 ## Introduction
 
-Some secrets can't be hashed, because the app has to send the original somewhere, such as a tenant's API key for another service. `Sapling\Crypto` encrypts those before they're stored, so a copy of the database on its own reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
+Some secrets can't be hashed, because the app has to send the original somewhere, such as a tenant's API key for another service. `Sapling\Crypto` encrypts those before they're stored, so a copy of the database without the key reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
 
 ## The app key
 
-Everything `Crypto` does depends on one key. `app_key` is 32 random bytes in base64, which a new app from the skeleton gets in `.env` and `config.php` passes on:
+`Crypto` uses one key, `app_key`, which is 32 random bytes in base64. A new app from the skeleton gets one in `.env`, and `config.php` passes it on:
 
 ```php
 'app_key' => $env['APP_KEY'] ?? '',
 ```
 
-Each server needs a key of its own. To generate one:
+Each server needs its own key. To generate one:
 
 ```sh
 php -r 'echo "APP_KEY=" . base64_encode(random_bytes(32)), PHP_EOL;'
 ```
 
-A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Without the right key, nothing can be decrypted again, so keep it safe, and keep it apart from database backups.
+A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Without the right key nothing can be decrypted, so keep it out of database backups.
 
 ## Encrypting and decrypting
 
@@ -48,7 +48,7 @@ The second argument is a context, a string that ties the value to the place it's
 
 ### When decrypting fails
 
-`decrypt()` never throws. It returns `null` when the value was changed, the context differs or the key is wrong, and the app decides what to do:
+`decrypt()` never throws. It returns `null` when the value was changed, the context differs or the key is wrong:
 
 ```php
 $apiKey = $this->crypto->decrypt($stored, "tenant:{$tenantId}:evernote");
@@ -59,7 +59,7 @@ if ($apiKey === null) {
 ```
 
 > [!TIP]
-> Treat `null` as "connect again" rather than as a crash. Changing `app_key` makes every stored secret unreadable at once.
+> Treat `null` as "connect again", not as a crash. Changing `app_key` makes every stored secret unreadable.
 
 ## What not to encrypt
 
@@ -69,7 +69,7 @@ Passwords never need decrypting, only checking, so hash them with `password_hash
 
 - **It's authenticated.** A tampered value fails to decrypt, and the context is checked along with it without being stored.
 - **Its nonce is 24 bytes,** so each value can safely get a random one, with no counter to keep.
-- **It's everywhere.** It ships with sodium and runs in constant time without special CPU support.
+- **It comes with PHP.** It's part of the sodium extension and runs in constant time without special CPU support.
 
 ## Method reference
 

@@ -115,7 +115,7 @@ final readonly class Value
 	}
 
 	/**
-	 * Each item of an array as a Value of its own, under its key, as in foreach ($value->items() as $item). Anything
+	 * Each item of an array as a Value, under its key, as in foreach ($value->items() as $item). Anything
 	 * that isn't an array gives [].
 	 *
 	 * @return array<array-key, self>

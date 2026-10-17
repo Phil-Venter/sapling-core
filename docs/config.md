@@ -14,7 +14,7 @@
 
 An app's settings live in one PHP file, `config.php`, where each one can have a default and a comment. Secrets and anything that differs between servers come from `.env` or the server's environment, and stay out of git.
 
-`config.php` is the only code that reads `.env` and the environment. `Sapling\Config` holds what it returns, so the rest of the app never needs to know where a value came from.
+`config.php` is the only code that reads `.env` and the environment. `Sapling\Config` holds what it returns.
 
 ## The config file
 
@@ -81,6 +81,8 @@ $lifetime = $config->get('session_lifetime', 0);
 | `app_key` | The key [`Crypto`](encryption.md) encrypts with | `Crypto` throws when it's first used |
 | `cors_origins` | Sites that may call the app from a browser, for [`Cors` and `Csrf`](middleware.md) | None |
 | `cors_credentials` | Whether those sites may send cookies | No |
+| `content_policy` | Directives that replace [`SecurityHeaders`](middleware.md#security-headers)' defaults | None |
+| `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` for any | None |
 
 ## Configuration in production
 

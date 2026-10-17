@@ -38,7 +38,7 @@ ClientRequest::text('PUT', 'https://api.example.com/notes/7/body', 'Buy milk');
 
 ### Headers
 
-Headers are the last argument of every constructor. One you pass replaces the default of the same name, whatever its case:
+Headers are the last argument of every constructor. One you pass replaces the default of the same name, ignoring case:
 
 ```php
 $me = $this->http->send(new ClientRequest('GET', 'https://api.example.com/me', headers: ['Authorization' => "Bearer {$token}"]));
@@ -80,7 +80,7 @@ A reply has its `status`, `headers` and `body`. `data()` decodes the body by its
 $name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"name": "bob"}}
 ```
 
-A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` finds one whatever case you write it in:
+A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` ignores case:
 
 ```php
 $retryAfter = $reply->header('Retry-After')->int(60);
@@ -124,6 +124,6 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 | `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
 | `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body |
-| `$reply->header($name)` | Returns a header, whatever the case of its name, as a `Value`. A header sent more than once is a list |
+| `$reply->header($name)` | Returns a header, ignoring case, as a `Value`. A header sent more than once is a list |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
 | `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests |

@@ -27,6 +27,12 @@ count = 1
 [[issues]]
 file = "src/App.php"
 code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Sapling\Http\Middleware\SecurityHeaders::__construct`: expected `array<string, string>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-argument"
 message = 'Invalid argument type for argument #1 of `Sapling\Http\Session::__construct`: expected `int`, but found `mixed`.'
 count = 1
 
@@ -53,6 +59,12 @@ file = "src/App.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
 count = 3
+
+[[issues]]
+file = "src/App.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$trustedProxies` (list<string>)."
+count = 1
 
 [[issues]]
 file = "src/App.php"

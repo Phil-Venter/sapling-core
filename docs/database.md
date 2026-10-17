@@ -19,7 +19,7 @@
 
 `Sapling\Db` is a thin layer over PDO. PDO does the real work, but every query takes a prepare, an execute and a fetch, and rows come back twice, by name and by position. `Db` turns each query into one call with `?` placeholders, and returns rows as arrays keyed by column name.
 
-There's no query builder or ORM. You write the SQL, and it stays where you can read it.
+There's no query builder or ORM. You write the SQL.
 
 ## Connecting
 
@@ -31,7 +31,7 @@ $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 
 ### SQLite
 
-SQLite suits most small apps, since the whole database is one file. `Db::sqlite()` opens that file, creating it if needed, and applies settings that suit a web app:
+SQLite suits most small apps, since the whole database is one file. `Db::sqlite()` opens that file, creating it if needed, and applies these settings:
 
 | Setting | What it does |
 | --- | --- |
@@ -123,7 +123,7 @@ $id = $this->db->lastId();
 
 ## Transactions
 
-Writes that belong together should succeed or fail together. `transaction()` runs a closure and commits everything it does, or rolls it all back if it throws, and returns whatever the closure returns:
+`transaction()` runs a closure and commits its writes, or rolls them all back if it throws. It returns the closure's result:
 
 ```php
 $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
@@ -150,11 +150,11 @@ $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
 On SQLite, a transaction starts with `BEGIN IMMEDIATE`, so it waits for the write lock like any other write, instead of failing at its first write.
 
 > [!WARNING]
-> Transactions don't nest. A `transaction()` inside another throws a `PDOException`, so start the transaction in the outermost code, such as the action, and let the classes it calls use plain `run()`.
+> Transactions don't nest. A `transaction()` inside another throws a `PDOException`. Start the transaction in the outermost code, such as the action, and let the classes it calls use plain `run()`.
 
 ## Migrations
 
-The schema changes over time, one step at a time. Each step is a migration, a plain SQL file in `database/migrations/`, and two commands manage them.
+Each schema change is a migration, a plain SQL file in `database/migrations/`, and two commands manage them.
 
 ### Creating a migration
 
@@ -177,7 +177,7 @@ This runs the files that haven't run yet, in name order and each in its own tran
 
 ## Using PDO directly
 
-For anything the methods don't cover, `$db->pdo` is the PDO connection itself. A common use is setting more SQLite pragmas when the database is registered:
+For anything the methods don't cover, `$db->pdo` is the PDO connection. A common use is setting more SQLite pragmas when the database is registered:
 
 ```php
 $app->container->set(Db::class, function () use ($config): Db {
@@ -200,4 +200,4 @@ $app->container->set(Db::class, function () use ($config): Db {
 | `transaction($fn)` | Runs `$fn` with the `Db` in a transaction and returns its result. Rolls back if it throws |
 | `Db::sqlite($file)` | Opens a SQLite file with the settings above |
 | `new Db($pdo)` | Wraps any PDO connection, set to throw on errors, fetch rows by name and use real prepared statements |
-| `$db->pdo` | The PDO connection itself, for anything the methods don't cover |
+| `$db->pdo` | The PDO connection, for anything the methods don't cover |
