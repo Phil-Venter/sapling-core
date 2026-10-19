@@ -121,7 +121,7 @@ if (blank($email)) {
 }
 ```
 
-Any other exception is a crash and shows its trace, an `InvalidArgumentException` from a bug included.
+Any other exception, such as an `InvalidArgumentException` from a bug, is a crash and shows its trace.
 
 ## Adding commands in code
 

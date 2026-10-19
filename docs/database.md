@@ -17,7 +17,7 @@
 
 ## Introduction
 
-`Sapling\Db` is a thin layer over PDO. PDO does the real work, but every query takes a prepare, an execute and a fetch, and rows come back twice, by name and by position. `Db` turns each query into one call with `?` placeholders, and returns rows as arrays keyed by column name.
+`Sapling\Db` is a thin layer over PDO. With PDO alone, every query takes a prepare, an execute and a fetch, and rows come back twice, by name and by position. `Db` turns each query into one call with `?` placeholders, and returns rows as arrays keyed by column name.
 
 There's no query builder or ORM. You write the SQL.
 

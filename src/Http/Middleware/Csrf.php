@@ -9,7 +9,7 @@ use Sapling\Http\Response;
 
 /**
  * Turns away a POST, PUT, PATCH or DELETE that a browser sent from another site. Browsers say where a request comes
- * from, in Sec-Fetch-Site or, when they're older, in Origin, so no token is needed.
+ * from in Sec-Fetch-Site, or in Origin when they're older, so no token is needed.
  */
 final readonly class Csrf
 {

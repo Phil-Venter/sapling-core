@@ -15,7 +15,7 @@ PHP's own functions for JSON, XML and form strings each report errors differentl
 
 ## JSON
 
-JSON is the format most APIs speak:
+`toJson()` and `fromJson()` turn arrays into JSON and back:
 
 ```php
 $json = Data::toJson(['name' => 'Ann', 'city' => 'Cape Town']);

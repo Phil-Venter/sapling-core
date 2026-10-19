@@ -14,7 +14,7 @@
 
 ## Introduction
 
-Sapling sorts what goes wrong into two kinds. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist, and it becomes a response with that status. A crash is anything else thrown, a bug in the code, and it's logged and answered with a 500.
+Sapling sorts what goes wrong into two kinds. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist. It becomes a response with that status. A crash is anything else thrown, usually a bug, and it's logged and answered with a 500.
 
 Either way, your actions and middleware need no `try` and `catch`, and outside debug mode a visitor never sees a stack trace.
 
@@ -84,7 +84,7 @@ Inside a request or a command, PHP's warnings and notices throw an `ErrorExcepti
 
 `file_get_contents()` on a missing file throws, so a `=== false` check after it never runs. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
 
-Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP. A command that crashes prints the error and exits with 1.
+Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP.
 
 ## Logging
 

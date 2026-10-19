@@ -115,7 +115,7 @@ Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.p
 
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site, while styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works. Inline styles are allowed, `<style>` blocks and `style` attributes included.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site. Styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works. Inline styles are allowed, `<style>` blocks and `style` attributes included.
 
 > [!WARNING]
 > Inline scripts are blocked, and browsers only report it in the console. That includes `<script>` blocks, `onclick` attributes, and libraries such as Alpine.js that evaluate strings. Put scripts in a file under `public/`, such as `public/app.js`.
@@ -132,10 +132,10 @@ To loosen the policy, set `content_policy` in `config.php`. Each directive repla
 
 `Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
 
-Scripts and servers send neither header, so their requests pass, unless they carry the session cookie as a forged browser request would. Sites listed in `cors_origins` may write too.
+Scripts and servers send neither header, so their requests pass. A request with neither header is still refused when it carries the session cookie, since that's what a forged browser request looks like. Sites listed in `cors_origins` may write too.
 
 > [!NOTE]
-> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, so a form on a subdomain, which browsers call same-site, needs listing in `cors_origins`.
+> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write. A form on a subdomain is same-site but not same-origin, so list the subdomain in `cors_origins`.
 
 ### CORS
 

@@ -80,7 +80,7 @@ $created = datetime($row['created_at'], 'UTC');
 
 Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads). A date string without a zone is read in the same timezone.
 
-An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`, so catch them where a visitor supplies the value:
+An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`. Catch them where a visitor supplies the value:
 
 ```php
 try {
@@ -94,7 +94,7 @@ try {
 
 `uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys.
 
-`dd()` dumps its values and stops, which helps while you're working, but shouldn't be committed:
+`dd()` dumps its values and stops:
 
 ```php
 dd($request, $note);

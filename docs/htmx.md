@@ -65,7 +65,7 @@ The browser follows a redirect before htmx sees it, so htmx would swap the whole
 
 `Csrf` lets htmx's requests through without a token, since they come from your own pages and browsers mark them as same-origin.
 
-`hx-put` and `hx-patch` send their values in the body, which `$request->data()` decodes, though PHP only reads POST bodies. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET, so read them with `query()`:
+`hx-put` and `hx-patch` send their values in the body. PHP only reads POST bodies, but `$request->data()` decodes these too. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET, so read them with `query()`:
 
 ```php
 $id = $request->query('id')->int();

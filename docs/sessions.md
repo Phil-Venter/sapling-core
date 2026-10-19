@@ -10,7 +10,7 @@
 
 ## Introduction
 
-A session keeps values for one visitor between requests, such as who's logged in. `Sapling\Http\Session` is PHP's session with two additions. It sets safer cookie settings before the session starts, which PHP's defaults don't, and it has flash values for messages that need to survive a redirect.
+A session keeps values for one visitor between requests, such as who's logged in. `Sapling\Http\Session` is PHP's session with two additions. It sets safer cookie settings than PHP's defaults before the session starts, and it has flash values for messages that need to survive a redirect.
 
 The session only starts the first time something uses it, so a request that never touches it sends no cookie.
 
@@ -94,7 +94,7 @@ The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind
 
 ### How long a session lasts
 
-`session_lifetime` in `config.php` sets, in seconds, how long a visitor stays signed in between requests, since every request that uses the session renews the cookie. Without it, php.ini decides:
+`session_lifetime` in `config.php` sets how many seconds a visitor can go between requests and stay signed in. Every request that uses the session renews the cookie. Without the setting, php.ini decides:
 
 ```php
 'session_lifetime' => 60 * 60 * 24 * 14,   // two weeks
