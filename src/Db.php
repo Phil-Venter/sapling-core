@@ -2,13 +2,6 @@
 
 namespace Sapling;
 
-use Closure;
-use PDO;
-use PDOException;
-use PDOStatement;
-use RuntimeException;
-use Throwable;
-
 /**
  * A thin layer over PDO that runs SQL with ? placeholders.
  */
@@ -17,34 +10,34 @@ final readonly class Db
 	/**
 	 * Wraps a PDO connection and sets it to throw on errors, fetch rows as arrays and use real prepared statements.
 	 *
-	 * @throws PDOException
+	 * @throws \PDOException
 	 */
-	public function __construct(public PDO $pdo)
+	public function __construct(public \PDO $pdo)
 	{
-		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 
 		// Emulated prepares quote every value, so LIMIT ? fails on MySQL.
-		$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+		$pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
 	}
 
 	/**
 	 * Opens a SQLite file with WAL, synchronous NORMAL, foreign keys, a 5 second busy timeout and a 64 MB journal
 	 * size limit.
 	 *
-	 * @throws RuntimeException When the file can't be opened.
+	 * @throws \RuntimeException When the file can't be opened.
 	 */
 	public static function sqlite(string $file): self
 	{
 		try {
-			$db = new self(new PDO("sqlite:{$file}"));
+			$db = new self(new \PDO("sqlite:{$file}"));
 			$db->pdo->exec('PRAGMA busy_timeout = 5000');
 			$db->pdo->exec('PRAGMA journal_mode = WAL');
 			$db->pdo->exec('PRAGMA synchronous = NORMAL');
 			$db->pdo->exec('PRAGMA journal_size_limit = 67108864');
 			$db->pdo->exec('PRAGMA foreign_keys = ON');
-		} catch (PDOException $e) {
-			throw new RuntimeException("Cannot open {$file}: {$e->getMessage()}", 0, $e);
+		} catch (\PDOException $e) {
+			throw new \RuntimeException("Cannot open {$file}: {$e->getMessage()}", 0, $e);
 		}
 
 		return $db;
@@ -55,7 +48,7 @@ final readonly class Db
 	 *
 	 * @param array<array-key, mixed> $params
 	 * @return list<array<string, mixed>>
-	 * @throws PDOException When the query fails.
+	 * @throws \PDOException When the query fails.
 	 */
 	public function all(string $sql, array $params = []): array
 	{
@@ -67,7 +60,7 @@ final readonly class Db
 	 *
 	 * @param array<array-key, mixed> $params
 	 * @return array<string, mixed>|null
-	 * @throws PDOException When the query fails.
+	 * @throws \PDOException When the query fails.
 	 */
 	public function one(string $sql, array $params = []): ?array
 	{
@@ -85,12 +78,12 @@ final readonly class Db
 	 * Value.
 	 *
 	 * @param array<array-key, mixed> $params
-	 * @throws PDOException When the query fails.
+	 * @throws \PDOException When the query fails.
 	 */
 	public function value(string $sql, array $params = []): Value
 	{
 		// Not fetchColumn(), which also returns false for a real false, such as a PostgreSQL boolean.
-		$row = $this->query($sql, $params)->fetch(PDO::FETCH_NUM);
+		$row = $this->query($sql, $params)->fetch(\PDO::FETCH_NUM);
 
 		if (!is_array($row)) {
 			return new Value(null);
@@ -103,7 +96,7 @@ final readonly class Db
 	 * Runs a statement and returns the number of rows it changed.
 	 *
 	 * @param array<array-key, mixed> $params
-	 * @throws PDOException When the statement fails.
+	 * @throws \PDOException When the statement fails.
 	 */
 	public function run(string $sql, array $params = []): int
 	{
@@ -113,7 +106,7 @@ final readonly class Db
 	/**
 	 * The id of the last inserted row.
 	 *
-	 * @throws PDOException
+	 * @throws \PDOException
 	 */
 	public function lastId(): string
 	{
@@ -124,15 +117,15 @@ final readonly class Db
 	 * Runs the closure in a transaction and returns its result.
 	 *
 	 * @template T
-	 * @param Closure(self): T $fn
+	 * @param \Closure(self): T $fn
 	 * @return T
-	 * @throws PDOException When the transaction can't start or commit.
-	 * @throws Throwable Anything the closure throws, after rolling back.
+	 * @throws \PDOException When the transaction can't start or commit.
+	 * @throws \Throwable Anything the closure throws, after rolling back.
 	 */
-	public function transaction(Closure $fn): mixed
+	public function transaction(\Closure $fn): mixed
 	{
 		// On SQLite, IMMEDIATE takes the write lock now, so the transaction waits for it like any other write.
-		match ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+		match ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME)) {
 			'sqlite' => $this->pdo->exec('BEGIN IMMEDIATE'),
 			default => $this->pdo->beginTransaction(),
 		};
@@ -143,7 +136,7 @@ final readonly class Db
 			if ($this->pdo->inTransaction()) {
 				$this->pdo->commit();
 			}
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			if ($this->pdo->inTransaction()) {
 				$this->pdo->rollBack();
 			}
@@ -156,9 +149,9 @@ final readonly class Db
 
 	/**
 	 * @param array<array-key, mixed> $params
-	 * @throws PDOException
+	 * @throws \PDOException
 	 */
-	private function query(string $sql, array $params): PDOStatement
+	private function query(string $sql, array $params): \PDOStatement
 	{
 		$statement = $this->pdo->prepare($sql);
 		$statement->execute($params);

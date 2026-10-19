@@ -2,12 +2,10 @@
 
 namespace Sapling\Attributes;
 
-use Attribute;
-
 /**
  * Makes the class a command, as in #[Command('notes:prune', 'Delete old notes')].
  */
-#[Attribute(Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS)]
 final readonly class Command
 {
 	/**

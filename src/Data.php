@@ -2,12 +2,6 @@
 
 namespace Sapling;
 
-use InvalidArgumentException;
-use JsonException;
-use RuntimeException;
-use SimpleXMLElement;
-use XMLWriter;
-
 /**
  * Converts between PHP arrays and JSON, forms and XML.
  *
@@ -18,7 +12,7 @@ final class Data
 	/**
 	 * JSON, with slashes and Unicode left as they are.
 	 *
-	 * @throws JsonException When the data can't be encoded.
+	 * @throws \JsonException When the data can't be encoded.
 	 */
 	public static function toJson(mixed $data): string
 	{
@@ -28,7 +22,7 @@ final class Data
 	/**
 	 * Decodes JSON, with objects as arrays.
 	 *
-	 * @throws JsonException When the JSON is invalid.
+	 * @throws \JsonException When the JSON is invalid.
 	 */
 	public static function fromJson(string $json): mixed
 	{
@@ -66,10 +60,10 @@ final class Data
 	public static function toXml(array $data, string $root = 'root'): string
 	{
 		if ($data !== [] && array_is_list($data)) {
-			throw new InvalidArgumentException('An XML document has one root element, so toXml() needs keys, not a list');
+			throw new \InvalidArgumentException('An XML document has one root element, so toXml() needs keys, not a list');
 		}
 
-		$writer = new XMLWriter();
+		$writer = new \XMLWriter();
 		$writer->openMemory();
 		$writer->startDocument('1.0', 'UTF-8');
 
@@ -84,7 +78,7 @@ final class Data
 	 * Decodes XML into arrays, or a string when the root only holds text.
 	 *
 	 * @return array<string, mixed>|string
-	 * @throws RuntimeException When the XML is invalid.
+	 * @throws \RuntimeException When the XML is invalid.
 	 */
 	public static function fromXml(string $xml): array|string
 	{
@@ -95,11 +89,11 @@ final class Data
 		libxml_use_internal_errors($previous);
 
 		if ($element === false && $error !== false) {
-			throw new RuntimeException('Invalid XML: ' . trim($error->message));
+			throw new \RuntimeException('Invalid XML: ' . trim($error->message));
 		}
 
 		if ($element === false) {
-			throw new RuntimeException('Invalid XML: nothing to parse');
+			throw new \RuntimeException('Invalid XML: nothing to parse');
 		}
 
 		return self::readElement($element);
@@ -109,8 +103,8 @@ final class Data
 	 * Decodes a body by its Content-Type, as JSON, XML or a form. An empty body gives null, and any other type gives
 	 * the body as it is.
 	 *
-	 * @throws JsonException When a JSON body is invalid.
-	 * @throws RuntimeException When an XML body is invalid.
+	 * @throws \JsonException When a JSON body is invalid.
+	 * @throws \RuntimeException When an XML body is invalid.
 	 */
 	public static function decode(string $body, string $contentType): mixed
 	{
@@ -130,7 +124,7 @@ final class Data
 		};
 	}
 
-	private static function writeElement(XMLWriter $writer, string $name, mixed $value): void
+	private static function writeElement(\XMLWriter $writer, string $name, mixed $value): void
 	{
 		// So an empty list becomes an empty element instead of vanishing.
 		if (is_array($value) && $value !== [] && array_is_list($value)) {
@@ -189,7 +183,7 @@ final class Data
 	}
 
 	/** @return array<string, mixed>|string */
-	private static function readElement(SimpleXMLElement $element): array|string
+	private static function readElement(\SimpleXMLElement $element): array|string
 	{
 		$data = [];
 
@@ -203,13 +197,13 @@ final class Data
 			$children = $element->children($prefix, true) ?? [];
 			$counts = [];
 
-			/** @var SimpleXMLElement $child */
+			/** @var \SimpleXMLElement $child */
 			foreach ($children as $child) {
 				$name = $child->getName();
 				$counts[$name] = ($counts[$name] ?? 0) + 1;
 			}
 
-			/** @var SimpleXMLElement $child */
+			/** @var \SimpleXMLElement $child */
 			foreach ($children as $name => $child) {
 				$key = $name;
 

@@ -2,8 +2,6 @@
 
 namespace Sapling;
 
-use Throwable;
-
 /**
  * Writes a crash to PHP's error log as one line, with the line of your own code that led to it.
  *
@@ -21,7 +19,7 @@ final readonly class CrashLog
 	/**
 	 * Logs "{$what} failed: Class: message in file:line", plus "from" your code when Sapling or a package threw.
 	 */
-	public function write(string $what, Throwable $e): void
+	public function write(string $what, \Throwable $e): void
 	{
 		$class = $e::class;
 
@@ -38,7 +36,7 @@ final readonly class CrashLog
 		error_log("{$what} failed: {$class}: {$message} in {$where}");
 	}
 
-	private function firstAppLine(Throwable $e): string
+	private function firstAppLine(\Throwable $e): string
 	{
 		if ($this->inApp($e->getFile())) {
 			return '';

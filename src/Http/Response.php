@@ -2,12 +2,8 @@
 
 namespace Sapling\Http;
 
-use JsonException;
-use NoDiscard;
-use RuntimeException;
 use Sapling\Data;
 use Sapling\Value;
-use Throwable;
 
 /**
  * An HTTP response, with its status, headers and a body or a file.
@@ -46,7 +42,7 @@ final class Response
 	/**
 	 * A JSON response.
 	 *
-	 * @throws JsonException When the data can't be encoded.
+	 * @throws \JsonException When the data can't be encoded.
 	 */
 	public static function json(mixed $data, int $status = 200): self
 	{
@@ -66,12 +62,12 @@ final class Response
 	/**
 	 * A download of the file, under the file's name, or $name.
 	 *
-	 * @throws RuntimeException When the file is missing.
+	 * @throws \RuntimeException When the file is missing.
 	 */
 	public static function file(string $path, ?string $name = null): self
 	{
 		if (!is_file($path)) {
-			throw new RuntimeException("File not found: {$path}");
+			throw new \RuntimeException("File not found: {$path}");
 		}
 
 		$name ??= basename($path);
@@ -101,7 +97,7 @@ final class Response
 	/**
 	 * A 500 for a crash. In debug mode it's the debug page, otherwise a plain Internal Server Error.
 	 */
-	public static function fromCrash(Throwable $e, bool $debug, string $basePath = ''): self
+	public static function fromCrash(\Throwable $e, bool $debug, string $basePath = ''): self
 	{
 		if (!$debug) {
 			return self::text('Internal Server Error', 500);
@@ -115,7 +111,7 @@ final class Response
 	 *
 	 * @param string|list<string> $value
 	 */
-	#[NoDiscard('the original response is unchanged')]
+	#[\NoDiscard('the original response is unchanged')]
 	public function withHeader(string $name, string|array $value): self
 	{
 		$copy = clone $this;
@@ -153,8 +149,8 @@ final class Response
 	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
 	 * the body as it is.
 	 *
-	 * @throws JsonException When a JSON body is invalid.
-	 * @throws RuntimeException When an XML body is invalid.
+	 * @throws \JsonException When a JSON body is invalid.
+	 * @throws \RuntimeException When an XML body is invalid.
 	 */
 	public function data(string|int ...$keys): Value
 	{

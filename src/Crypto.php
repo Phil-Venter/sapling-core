@@ -2,9 +2,6 @@
 
 namespace Sapling;
 
-use InvalidArgumentException;
-use SensitiveParameter;
-
 /**
  * Encrypts secrets for storage with app_key, using XChaCha20-Poly1305.
  */
@@ -19,12 +16,12 @@ final readonly class Crypto
 	/**
 	 * Takes app_key, which is 32 random bytes, base64-encoded.
 	 */
-	public function __construct(#[SensitiveParameter] string $key)
+	public function __construct(#[\SensitiveParameter] string $key)
 	{
 		$decoded = base64_decode($key, true);
 
 		if ($decoded === false || strlen($decoded) !== self::KEY_BYTES) {
-			throw new InvalidArgumentException('app_key must be 32 bytes, base64-encoded');
+			throw new \InvalidArgumentException('app_key must be 32 bytes, base64-encoded');
 		}
 
 		$this->key = $decoded;
@@ -33,7 +30,7 @@ final readonly class Crypto
 	/**
 	 * Encrypts a secret for storage. Decrypting needs the same context, such as 'tenant:7:api_key'.
 	 */
-	public function encrypt(#[SensitiveParameter] string $secret, string $context): string
+	public function encrypt(#[\SensitiveParameter] string $secret, string $context): string
 	{
 		$nonce = random_bytes(self::NONCE_BYTES);
 		$cipher = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt($secret, $context, $nonce, $this->key);

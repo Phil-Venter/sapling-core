@@ -2,7 +2,6 @@
 
 namespace Sapling\Http\Middleware;
 
-use Closure;
 use Sapling\Http\Request;
 use Sapling\Http\Response;
 
@@ -32,9 +31,9 @@ final readonly class SecurityHeaders
 	/**
 	 * Adds the headers to the response, keeping any the action set.
 	 *
-	 * @param Closure(Request): Response $next
+	 * @param \Closure(Request): Response $next
 	 */
-	public function __invoke(Request $request, Closure $next): Response
+	public function __invoke(Request $request, \Closure $next): Response
 	{
 		$policy = [];
 

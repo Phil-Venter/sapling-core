@@ -2,9 +2,6 @@
 
 namespace Sapling;
 
-use LogicException;
-use RuntimeException;
-
 /**
  * The settings returned by config.php.
  */
@@ -20,7 +17,7 @@ final readonly class Config
 	/**
 	 * Runs config.php with $env, which holds .env and the real environment variables.
 	 *
-	 * @throws RuntimeException When a line in .env isn't KEY=value.
+	 * @throws \RuntimeException When a line in .env isn't KEY=value.
 	 */
 	public static function load(string $configFile, string $envFile): self
 	{
@@ -34,7 +31,7 @@ final readonly class Config
 
 	/**
 	 * @return array<string, string>
-	 * @throws RuntimeException
+	 * @throws \RuntimeException
 	 */
 	private static function readEnv(string $file): array
 	{
@@ -59,7 +56,7 @@ final readonly class Config
 
 			if (!str_contains($line, '=')) {
 				$number = $index + 1;
-				throw new RuntimeException("Expected KEY=value in {$file} on line {$number}");
+				throw new \RuntimeException("Expected KEY=value in {$file} on line {$number}");
 			}
 
 			$parts = explode('=', $line, 2);
@@ -96,6 +93,6 @@ final readonly class Config
 			return $default;
 		}
 
-		throw new LogicException("Missing config key: {$key}");
+		throw new \LogicException("Missing config key: {$key}");
 	}
 }

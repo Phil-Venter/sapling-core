@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Sapling;
 
-use Closure;
-use LogicException;
-use ReflectionClass;
-use ReflectionNamedType;
-use ReflectionParameter;
-
 /**
  * Holds shared objects, and builds classes from the types of their constructor parameters.
  */
@@ -18,7 +12,7 @@ final class Container
 	/** @var array<string, object> */
 	private array $instances = [];
 
-	/** @var array<string, Closure(self): object> */
+	/** @var array<string, \Closure(self): object> */
 	private array $factories = [];
 
 	/**
@@ -28,7 +22,7 @@ final class Container
 	{
 		unset($this->instances[$id], $this->factories[$id]);
 
-		if ($value instanceof Closure) {
+		if ($value instanceof \Closure) {
 			$this->factories[$id] = $value;
 
 			return;
@@ -66,7 +60,7 @@ final class Container
 	/** @param class-string $id */
 	private function build(string $id): object
 	{
-		$reflection = new ReflectionClass($id);
+		$reflection = new \ReflectionClass($id);
 		$parameters = $reflection->getConstructor()?->getParameters() ?? [];
 		$arguments = [];
 
@@ -79,7 +73,7 @@ final class Container
 		return new $id(...$arguments);
 	}
 
-	private function argument(ReflectionParameter $parameter, string $id): mixed
+	private function argument(\ReflectionParameter $parameter, string $id): mixed
 	{
 		$attribute = $parameter->getAttributes(Attributes\Config::class)[0] ?? null;
 
@@ -96,7 +90,7 @@ final class Container
 
 		$type = $parameter->getType();
 
-		if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+		if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
 			return $this->get($type->getName());
 		}
 
@@ -104,6 +98,6 @@ final class Container
 			return $parameter->getDefaultValue();
 		}
 
-		throw new LogicException("Cannot autowire \${$parameter->getName()} in {$id}");
+		throw new \LogicException("Cannot autowire \${$parameter->getName()} in {$id}");
 	}
 }

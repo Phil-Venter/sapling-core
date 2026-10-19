@@ -2,11 +2,9 @@
 
 namespace Sapling\Cli\Commands;
 
-use PDOException;
 use Sapling\App;
 use Sapling\Cli\Console;
 use Sapling\Db;
-use Throwable;
 
 /**
  * Runs new database/migrations/*.sql files in name order, each in a transaction, and records them.
@@ -24,8 +22,8 @@ final readonly class RunMigrations
 	/**
 	 * Runs the migrations that haven't run yet.
 	 *
-	 * @throws PDOException When a migration's SQL fails. Its transaction is rolled back.
-	 * @throws Throwable
+	 * @throws \PDOException When a migration's SQL fails. Its transaction is rolled back.
+	 * @throws \Throwable
 	 */
 	public function __invoke(Console $console): int
 	{
@@ -60,7 +58,7 @@ final readonly class RunMigrations
 			}
 
 			$this->db->transaction(
-				/** @throws PDOException */
+				/** @throws \PDOException */
 				function (Db $db) use ($sql, $name): void {
 					$db->pdo->exec($sql);
 					$db->run('INSERT INTO migrations (name, ran_at) VALUES (?, ?)', [$name, gmdate('Y-m-d H:i:s')]);

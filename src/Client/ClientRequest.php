@@ -2,7 +2,6 @@
 
 namespace Sapling\Client;
 
-use JsonException;
 use Sapling\Data;
 
 /**
@@ -34,7 +33,7 @@ final readonly class ClientRequest
 	 * A request with $data as JSON, where [] sends [] and new stdClass() sends {}. Without data, there's no body.
 	 *
 	 * @param array<string, string> $headers
-	 * @throws JsonException When $data can't be encoded.
+	 * @throws \JsonException When $data can't be encoded.
 	 */
 	public static function json(string $method, string $url, mixed $data = null, array $headers = []): self
 	{

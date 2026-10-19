@@ -2,10 +2,6 @@
 
 namespace Sapling;
 
-use LogicException;
-use RuntimeException;
-use Throwable;
-
 /**
  * Renders plain PHP templates, with partials and components.
  */
@@ -40,8 +36,8 @@ final class Template
 	 * Renders {$template}.{$suffix}. Inside a template, it prints a partial, as in render('_nav').
 	 *
 	 * @param array<string, mixed> $data
-	 * @throws RuntimeException When the template file is missing.
-	 * @throws Throwable Anything the template throws.
+	 * @throws \RuntimeException When the template file is missing.
+	 * @throws \Throwable Anything the template throws.
 	 */
 	public function render(string $template, array $data = []): string
 	{
@@ -62,7 +58,7 @@ final class Template
 
 			// A partial's end() can't close what its page opened, or the output lands in the wrong place.
 			if (count($this->open) < $opened) {
-				throw new LogicException("end() in {$template} closes a component or slot it didn't open");
+				throw new \LogicException("end() in {$template} closes a component or slot it didn't open");
 			}
 
 			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
@@ -70,9 +66,9 @@ final class Template
 
 			if ($unclosed !== null) {
 				$kind = ucfirst($unclosed['kind']);
-				throw new LogicException("{$kind} {$unclosed['name']} in {$template} has no end()");
+				throw new \LogicException("{$kind} {$unclosed['name']} in {$template} has no end()");
 			}
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			while (ob_get_level() > $level) {
 				ob_end_clean();
 			}
@@ -119,15 +115,15 @@ final class Template
 	/**
 	 * Closes the last slot() or component(). Closing a component prints it.
 	 *
-	 * @throws RuntimeException When a component's template file is missing.
-	 * @throws Throwable Anything a component's template throws.
+	 * @throws \RuntimeException When a component's template file is missing.
+	 * @throws \Throwable Anything a component's template throws.
 	 */
 	public function end(): void
 	{
 		$open = array_pop($this->open);
 
 		if ($open === null) {
-			throw new LogicException('end() without an open slot() or component()');
+			throw new \LogicException('end() without an open slot() or component()');
 		}
 
 		$content = (string) ob_get_clean();
@@ -176,7 +172,7 @@ final class Template
 		$this->prefixes[$prefix] = rtrim($dir, '/\\');
 	}
 
-	/** @throws RuntimeException */
+	/** @throws \RuntimeException */
 	private function file(string $template): string
 	{
 		$dir = $this->dir;
@@ -188,7 +184,7 @@ final class Template
 			$name = $parts[1] ?? '';
 
 			if (!array_key_exists($prefix, $this->prefixes)) {
-				throw new LogicException("Unknown template prefix {$prefix} in {$template}");
+				throw new \LogicException("Unknown template prefix {$prefix} in {$template}");
 			}
 
 			$dir = $this->prefixes[$prefix];
@@ -197,7 +193,7 @@ final class Template
 		$file = "{$dir}/{$name}.{$this->suffix}";
 
 		if (!is_file($file)) {
-			throw new RuntimeException("Template not found: {$file}");
+			throw new \RuntimeException("Template not found: {$file}");
 		}
 
 		return $file;
@@ -211,6 +207,6 @@ final class Template
 			}
 		}
 
-		throw new LogicException('slot() outside a component()');
+		throw new \LogicException('slot() outside a component()');
 	}
 }

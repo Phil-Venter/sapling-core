@@ -2,13 +2,10 @@
 
 namespace Sapling\Http;
 
-use RuntimeException;
-use Throwable;
-
 /**
  * Becomes a response with its status, message and headers. abort() throws one.
  */
-final class HttpException extends RuntimeException
+final class HttpException extends \RuntimeException
 {
 	private const array PHRASES = [
 		400 => 'Bad Request',
@@ -30,10 +27,10 @@ final class HttpException extends RuntimeException
 	 * @param array<string, string> $headers
 	 */
 	public function __construct(
-		public readonly int $status,
-		string $message = '',
+		public readonly int   $status,
+		string                $message = '',
 		public readonly array $headers = [],
-		?Throwable $previous = null,
+		?\Throwable           $previous = null,
 	) {
 		if ($message === '') {
 			$message = self::PHRASES[$status] ?? 'Error';

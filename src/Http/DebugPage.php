@@ -2,9 +2,6 @@
 
 namespace Sapling\Http;
 
-use ReflectionClass;
-use Throwable;
-
 /**
  * The page shown for a crash in debug mode.
  *
@@ -15,7 +12,7 @@ final class DebugPage
 	/**
 	 * The code around the error, and a trace that folds the frames outside your app.
 	 */
-	public static function render(Throwable $e, string $root): string
+	public static function render(\Throwable $e, string $root): string
 	{
 		$root = rtrim($root, '/\\');
 		$title = self::e($e::class);
@@ -54,7 +51,7 @@ final class DebugPage
 			HTML;
 	}
 
-	private static function exceptionHtml(Throwable $e, string $root, string $label): string
+	private static function exceptionHtml(\Throwable $e, string $root, string $label): string
 	{
 		$class = self::e($label . $e::class);
 		$message = self::e($e->getMessage());
@@ -100,7 +97,7 @@ final class DebugPage
 		return "<pre>{$html}</pre>";
 	}
 
-	private static function trace(Throwable $e, string $root): string
+	private static function trace(\Throwable $e, string $root): string
 	{
 		$html = '';
 		$hidden = [];
@@ -173,7 +170,7 @@ final class DebugPage
 			return '';
 		}
 
-		return (string) new ReflectionClass($class)->getFileName();
+		return (string) new \ReflectionClass($class)->getFileName();
 	}
 
 	private static function closureFile(string $function): string

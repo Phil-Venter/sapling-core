@@ -2,9 +2,6 @@
 
 namespace Sapling\Client;
 
-use CurlHandle;
-use RuntimeException;
-
 /**
  * Sends ClientRequests to other HTTP services through curl.
  */
@@ -18,7 +15,7 @@ final readonly class HttpClient
 	/**
 	 * Sends a request and returns the reply, following redirects for GET and HEAD.
 	 *
-	 * @throws RuntimeException When the connection fails or times out. An error status is a normal reply.
+	 * @throws \RuntimeException When the connection fails or times out. An error status is a normal reply.
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{
@@ -26,7 +23,7 @@ final readonly class HttpClient
 		$content = curl_exec($handle);
 
 		if (!is_string($content)) {
-			throw new RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
+			throw new \RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
 		}
 
 		return $this->response($handle, $content);
@@ -38,7 +35,7 @@ final readonly class HttpClient
 	 * @template K of array-key
 	 * @param array<K, ClientRequest> $requests
 	 * @return array<K, ClientResponse>
-	 * @throws RuntimeException When a connection fails or times out, after every request has finished.
+	 * @throws \RuntimeException When a connection fails or times out, after every request has finished.
 	 */
 	public function sendAll(array $requests): array
 	{
@@ -70,7 +67,7 @@ final readonly class HttpClient
 
 		foreach ($pairs as $key => [$request, $handle]) {
 			if (curl_errno($handle) !== 0) {
-				throw new RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
+				throw new \RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
 			}
 
 			$responses[$key] = $this->response($handle, (string) curl_multi_getcontent($handle));
@@ -79,7 +76,7 @@ final readonly class HttpClient
 		return $responses;
 	}
 
-	private function handle(ClientRequest $request): CurlHandle
+	private function handle(ClientRequest $request): \CurlHandle
 	{
 		$lines = [];
 
@@ -126,7 +123,7 @@ final readonly class HttpClient
 		return $handle;
 	}
 
-	private function response(CurlHandle $handle, string $content): ClientResponse
+	private function response(\CurlHandle $handle, string $content): ClientResponse
 	{
 		$size = (int) curl_getinfo($handle, CURLINFO_HEADER_SIZE);
 		$status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);

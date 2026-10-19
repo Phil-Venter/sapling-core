@@ -2,8 +2,6 @@
 
 namespace Sapling\Client;
 
-use JsonException;
-use RuntimeException;
 use Sapling\Data;
 use Sapling\Value;
 
@@ -39,8 +37,8 @@ final readonly class ClientResponse
 	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
 	 * the body as it is.
 	 *
-	 * @throws JsonException When a JSON body is invalid.
-	 * @throws RuntimeException When an XML body is invalid.
+	 * @throws \JsonException When a JSON body is invalid.
+	 * @throws \RuntimeException When an XML body is invalid.
 	 */
 	public function data(string|int ...$keys): Value
 	{

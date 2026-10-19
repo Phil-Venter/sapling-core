@@ -2,8 +2,6 @@
 
 namespace Sapling\Http\Middleware;
 
-use Closure;
-use InvalidArgumentException;
 use Sapling\Http\Request;
 use Sapling\Http\Response;
 
@@ -24,7 +22,7 @@ final readonly class Cors
 		$this->anyOrigin = in_array('*', $origins, true);
 
 		if ($this->anyOrigin && $allowCredentials) {
-			throw new InvalidArgumentException('cors_credentials needs cors_origins to list sites, not *');
+			throw new \InvalidArgumentException('cors_credentials needs cors_origins to list sites, not *');
 		}
 
 		foreach ($origins as $origin) {
@@ -33,7 +31,7 @@ final readonly class Cors
 			}
 
 			if (preg_match('#^https?://([a-z0-9.-]+|\[[0-9a-f:]+\])(:[0-9]{1,5})?$#', $origin) !== 1) {
-				throw new InvalidArgumentException(
+				throw new \InvalidArgumentException(
 					"cors_origins needs scheme://host[:port] in lowercase, got {$origin}",
 				);
 			}
@@ -43,9 +41,9 @@ final readonly class Cors
 	/**
 	 * Answers a preflight, or adds the CORS headers to the response.
 	 *
-	 * @param Closure(Request): Response $next
+	 * @param \Closure(Request): Response $next
 	 */
-	public function __invoke(Request $request, Closure $next): Response
+	public function __invoke(Request $request, \Closure $next): Response
 	{
 		$origin = $request->header('origin')->string();
 		$method = $request->header('access-control-request-method')->string();

@@ -2,9 +2,6 @@
 
 namespace Sapling\Http;
 
-use Generator;
-use LogicException;
-
 /**
  * Matches a method and path to a route. Routes live in a tree with a level per path segment, and a fixed segment is
  * tried before a :param at every level, so /notes/new wins over /notes/:id.
@@ -47,11 +44,11 @@ final class Router
 
 			// Either mistake would otherwise pass silently, with a lost value or an unreachable name.
 			if (in_array($param, $params, true)) {
-				throw new LogicException("Route {$method} {$path} uses :{$param} twice");
+				throw new \LogicException("Route {$method} {$path} uses :{$param} twice");
 			}
 
 			if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $param) !== 1) {
-				throw new LogicException("Route {$method} {$path}: {$segment} isn't a parameter name");
+				throw new \LogicException("Route {$method} {$path}: {$segment} isn't a parameter name");
 			}
 
 			$params[] = $param;
@@ -64,7 +61,7 @@ final class Router
 			$first = is_object($taken) ? $taken::class : $taken;
 			$second = is_object($action) ? $action::class : $action;
 
-			throw new LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
+			throw new \LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
 		}
 
 		// @mago-expect analysis:ambiguous-object-property-access
@@ -138,9 +135,9 @@ final class Router
 	/**
 	 * @param list<string> $segments
 	 * @param list<string> $values
-	 * @return Generator<array{object, list<string>}>
+	 * @return \Generator<array{object, list<string>}>
 	 */
-	private function walk(object $node, array $segments, array $values = []): Generator
+	private function walk(object $node, array $segments, array $values = []): \Generator
 	{
 		if ($segments === []) {
 			yield [$node, $values];
@@ -165,9 +162,9 @@ final class Router
 
 	/**
 	 * @param list<string> $segments
-	 * @return Generator<array{method: string, path: string, action: string}>
+	 * @return \Generator<array{method: string, path: string, action: string}>
 	 */
-	private function routesBelow(object $node, array $segments = []): Generator
+	private function routesBelow(object $node, array $segments = []): \Generator
 	{
 		// @mago-expect analysis:ambiguous-object-property-access
 		// @mago-expect analysis:invalid-iterator

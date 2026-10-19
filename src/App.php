@@ -5,15 +5,6 @@ declare(strict_types=1);
 
 namespace Sapling;
 
-use Closure;
-use DateInvalidTimeZoneException;
-use DateTimeZone;
-use ErrorException;
-use FilesystemIterator;
-use LogicException;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use ReflectionClass;
 use Sapling\Attributes\Command;
 use Sapling\Attributes\Middleware;
 use Sapling\Attributes\Route;
@@ -32,9 +23,6 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 use Sapling\Http\Router;
 use Sapling\Http\Session;
-use SplFileInfo;
-use Throwable;
-use UnexpectedValueException;
 
 /**
  * Holds the container, routes, commands and middleware, and answers requests or runs commands.
@@ -82,7 +70,7 @@ final class App
 	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders, Cors,
 	 * Csrf and the migrations commands.
 	 *
-	 * @throws DateInvalidTimeZoneException When the timezone setting isn't a known timezone.
+	 * @throws \DateInvalidTimeZoneException When the timezone setting isn't a known timezone.
 	 */
 	public static function boot(string $basePath, Config $config): self
 	{
@@ -90,7 +78,7 @@ final class App
 		$timezone = $config->get('timezone', null);
 
 		if ($timezone !== null) {
-			$zone = new DateTimeZone($timezone);
+			$zone = new \DateTimeZone($timezone);
 			date_default_timezone_set($zone->getName());
 		}
 
@@ -129,17 +117,17 @@ final class App
 	 * attributes, skipping classes without them. The namespace needs no trailing backslash, as in
 	 * scan(__DIR__ . '/app', 'App').
 	 *
-	 * @throws UnexpectedValueException When the folder doesn't exist.
+	 * @throws \UnexpectedValueException When the folder doesn't exist.
 	 */
 	public function scan(string $dir, string $namespace): void
 	{
 		$dir = rtrim($dir, '/\\');
 		$namespace = rtrim($namespace, '\\') . '\\';
 		$classes = [];
-		$directory = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
+		$directory = new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS);
 
-		/** @var SplFileInfo $file */
-		foreach (new RecursiveIteratorIterator($directory) as $file) {
+		/** @var \SplFileInfo $file */
+		foreach (new \RecursiveIteratorIterator($directory) as $file) {
 			$name = $file->getBasename('.php');
 			$first = substr($name, 0, 1);
 
@@ -168,7 +156,7 @@ final class App
 	{
 		// scan() skips a class with nothing to register, but naming one here is a mistake.
 		if (!$this->register($class)) {
-			throw new LogicException("{$class} has no #[Route] or #[Command] to add");
+			throw new \LogicException("{$class} has no #[Route] or #[Command] to add");
 		}
 	}
 
@@ -237,7 +225,7 @@ final class App
 
 		try {
 			$response = $this->pipeline($middleware, $this->dispatch(...))($request);
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
 
 			return Response::fromCrash($e, $this->debug, $this->basePath);
@@ -285,7 +273,7 @@ final class App
 			$console->error($e->getMessage());
 
 			return Console::FAILURE;
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			// Without an error_log file, the log is this terminal, which gets the full error below.
 			if (ini_get('error_log') !== '') {
 				new CrashLog($this->basePath)->write("command {$name}", $e);
@@ -317,7 +305,7 @@ final class App
 	 */
 	private function register(string $class): bool
 	{
-		$reflection = new ReflectionClass($class);
+		$reflection = new \ReflectionClass($class);
 		$routes = $reflection->getAttributes(Route::class);
 		$commands = $reflection->getAttributes(Command::class);
 		$middleware = [];
@@ -358,17 +346,17 @@ final class App
 
 	/**
 	 * @param list<class-string|object> $middleware
-	 * @param Closure(Request): Response $next
-	 * @return Closure(Request): Response
+	 * @param \Closure(Request): Response $next
+	 * @return \Closure(Request): Response
 	 */
-	private function pipeline(array $middleware, Closure $next): Closure
+	private function pipeline(array $middleware, \Closure $next): \Closure
 	{
 		$next = $this->answerErrors($next);
 
 		foreach (array_reverse($middleware) as $layer) {
 			$inner = $next;
 			$next = $this->answerErrors(function (Request $request) use ($layer, $inner): Response {
-				/** @var callable(Request, Closure): Response $middleware */
+				/** @var callable(Request, \Closure): Response $middleware */
 				$middleware = $this->resolve($layer);
 
 				return $middleware($request, $inner);
@@ -379,10 +367,10 @@ final class App
 	}
 
 	/**
-	 * @param Closure(Request): Response $step
-	 * @return Closure(Request): Response
+	 * @param \Closure(Request): Response $step
+	 * @return \Closure(Request): Response
 	 */
-	private function answerErrors(Closure $step): Closure
+	private function answerErrors(\Closure $step): \Closure
 	{
 		return function (Request $request) use ($step): Response {
 			try {
@@ -426,6 +414,6 @@ final class App
 			return false;
 		}
 
-		throw new ErrorException($message, 0, $severity, $file, $line);
+		throw new \ErrorException($message, 0, $severity, $file, $line);
 	}
 }

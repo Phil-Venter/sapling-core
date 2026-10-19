@@ -2,9 +2,6 @@
 
 namespace Sapling;
 
-use BackedEnum;
-use Stringable;
-
 /**
  * A value from outside the app, such as a form field, query parameter, cookie or command-line option, read as the
  * type you need. A value that's missing, or can't be read as that type, gives the default.
@@ -43,7 +40,7 @@ final readonly class Value
 			return (string) $value;
 		}
 
-		if ($value instanceof Stringable) {
+		if ($value instanceof \Stringable) {
 			return (string) $value;
 		}
 
@@ -143,7 +140,7 @@ final readonly class Value
 	// A backed enum reads as its value.
 	private function plain(): mixed
 	{
-		if ($this->raw instanceof BackedEnum) {
+		if ($this->raw instanceof \BackedEnum) {
 			return $this->raw->value;
 		}
 

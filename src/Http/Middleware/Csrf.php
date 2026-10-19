@@ -2,7 +2,6 @@
 
 namespace Sapling\Http\Middleware;
 
-use Closure;
 use Sapling\Http\HttpException;
 use Sapling\Http\Request;
 use Sapling\Http\Response;
@@ -25,10 +24,10 @@ final readonly class Csrf
 	/**
 	 * Lets the request through unless it's a cross-site write.
 	 *
-	 * @param Closure(Request): Response $next
+	 * @param \Closure(Request): Response $next
 	 * @throws HttpException 403 for a write a browser sent from another site.
 	 */
-	public function __invoke(Request $request, Closure $next): Response
+	public function __invoke(Request $request, \Closure $next): Response
 	{
 		if (!in_array($request->method, self::WRITES, true) || $this->allowed($request)) {
 			return $next($request);

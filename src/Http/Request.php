@@ -2,8 +2,6 @@
 
 namespace Sapling\Http;
 
-use JsonException;
-use RuntimeException;
 use Sapling\Data;
 use Sapling\Value;
 
@@ -205,7 +203,7 @@ final class Request
 
 		try {
 			return Data::decode($this->body, $type);
-		} catch (JsonException|RuntimeException $e) {
+		} catch (\JsonException|\RuntimeException $e) {
 			throw new HttpException(400, 'The request body is invalid', previous: $e);
 		}
 	}
