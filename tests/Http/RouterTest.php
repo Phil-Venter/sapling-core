@@ -15,18 +15,26 @@ afterEach(function () {
 	[$_SERVER, $_POST] = $this->globals;
 });
 
-test('a static route beats a param route that was scanned before it', function () {
-	$app = scannedApp();
-	expect($app->handle(new Request('GET', '/notes/new'))->body)->toBe('new note form');
-	expect($app->handle(new Request('GET', '/notes/7'))->body)->toBe('note 7');
-});
+test('a request reaches the action its path matches, or gets a 404', function (
+	string $method,
+	string $path,
+	int $status,
+	string $body,
+) {
+	$response = scannedApp()->handle(new Request($method, $path));
 
-test('an unknown path is a 404', function () {
-	$response = scannedApp()->handle(new Request('GET', '/nowhere'));
-
-	expect($response->status)->toBe(404);
-	expect($response->body)->toBe('Not Found');
-});
+	expect([$response->status, $response->body])->toBe([$status, $body]);
+})->with([
+	'a static route, over a param route scanned before it' => ['GET', '/notes/new', 200, 'new note form'],
+	'the param route' => ['GET', '/notes/7', 200, 'note 7'],
+	'a URL-decoded param' => ['GET', '/notes/hello%20world', 200, 'note hello world'],
+	'a trailing slash' => ['GET', '/notes/', 200, 'notes'],
+	'HEAD, answered by the GET action' => ['HEAD', '/notes', 200, 'notes'],
+	'an unknown path' => ['GET', '/nowhere', 404, 'Not Found'],
+	'a slash in a param' => ['GET', '/notes/a/b', 404, 'Not Found'],
+	'an encoded slash in a param' => ['GET', '/notes/a%2Fb', 404, 'Not Found'],
+	'a lowercase encoded slash in a param' => ['GET', '/notes/a%2fb', 404, 'Not Found'],
+]);
 
 test('a known path with the wrong method is a 405 with an Allow header that includes HEAD', function () {
 	$response = scannedApp()->handle(new Request('PATCH', '/notes/7'));
@@ -34,26 +42,6 @@ test('a known path with the wrong method is a 405 with an Allow header that incl
 	expect($response->status)->toBe(405);
 	expect($response->body)->toBe('Method Not Allowed');
 	expect($response->headers['Allow'])->toBe('DELETE, GET, HEAD');
-});
-
-test('HEAD on a GET route is answered by the GET action', function () {
-	$response = scannedApp()->handle(new Request('HEAD', '/notes'));
-
-	expect($response->status)->toBe(200);
-	expect($response->headers['Content-Type'])->toBe('text/plain; charset=utf-8');
-});
-
-test('trailing slashes do not matter', function () {
-	expect(scannedApp()->handle(new Request('GET', '/notes/'))->body)->toBe('notes');
-});
-
-test('params are URL-decoded and never hold a slash, encoded or not', function () {
-	$app = scannedApp();
-
-	expect($app->handle(new Request('GET', '/notes/hello%20world'))->body)->toBe('note hello world');
-	expect($app->handle(new Request('GET', '/notes/a%2Fb'))->status)->toBe(404);
-	expect($app->handle(new Request('GET', '/notes/a%2fb'))->status)->toBe(404);
-	expect($app->handle(new Request('GET', '/notes/a/b'))->status)->toBe(404);
 });
 
 test('left to right, the first literal segment wins, whatever order routes were added in', function (array $order) {

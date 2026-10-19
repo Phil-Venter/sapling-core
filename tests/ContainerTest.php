@@ -43,26 +43,18 @@ test('an unresolvable scalar parameter names the class and the parameter', funct
 		->toThrow(LogicException::class, 'Cannot autowire $name in ' . NeedsName::class);
 });
 
-test('#[Config] fills a parameter; a default covers a missing key', function () {
-	$container = new Container();
-	$container->set(Config::class, new Config(['greeting' => 'hi']));
-	$settings = $container->get(Settings::class);
+test('#[Config] fills a parameter and a default covers a missing key, while a wrong type or a missing key throws', function () {
+	$settings = function (array $config): Settings {
+		$container = new Container();
+		$container->set(Config::class, new Config($config));
 
-	expect($settings->greeting)->toBe('hi');
-	expect($settings->retries)->toBe(3);
-});
+		return $container->get(Settings::class);
+	};
+	$filled = $settings(['greeting' => 'hi']);
 
-test('#[Config] refuses a setting of the wrong type instead of converting it', function () {
-	$container = new Container();
-	$container->set(Config::class, new Config(['greeting' => 'hi', 'retries' => '5']));
-
-	expect(fn() => $container->get(Settings::class))
+	expect($filled->greeting)->toBe('hi');
+	expect($filled->retries)->toBe(3);
+	expect(fn() => $settings(['greeting' => 'hi', 'retries' => '5']))
 		->toThrow(TypeError::class, 'Argument #2 ($retries) must be of type int, string given');
-});
-
-test('#[Config] without a default throws on a missing key', function () {
-	$container = new Container();
-	$container->set(Config::class, new Config([]));
-
-	expect(fn() => $container->get(Settings::class))->toThrow(LogicException::class, 'Missing config key: greeting');
+	expect(fn() => $settings([]))->toThrow(LogicException::class, 'Missing config key: greeting');
 });

@@ -111,6 +111,31 @@ final readonly class Console
 	}
 
 	/**
+	 * Asks a question and reads the answer from standard input, as in ask('Delete 3 notes? (yes/no)')->bool(). A blank
+	 * answer, or the end of input, gives an empty Value, so the reader's default applies.
+	 */
+	public function ask(string $question): Value
+	{
+		echo $question, ' ';
+		$line = fgets(STDIN);
+
+		// At the end of input, such as after Ctrl+D, the cursor is still after the question.
+		if ($line === false) {
+			echo PHP_EOL;
+
+			return new Value(null);
+		}
+
+		$answer = trim($line);
+
+		if ($answer === '') {
+			return new Value(null);
+		}
+
+		return new Value($answer);
+	}
+
+	/**
 	 * Prints a line to standard output.
 	 */
 	public function line(string $text = ''): void

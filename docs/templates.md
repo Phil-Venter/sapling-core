@@ -8,6 +8,7 @@
     - [Named slots](#named-slots)
 - [Layouts](#layouts)
 - [Inline scripts and styles](#inline-scripts-and-styles)
+- [Plain text](#plain-text)
 - [Sharing data with every template](#sharing-data-with-every-template)
 - [Templates next to their classes](#templates-next-to-their-classes)
 - [When something is wrong](#when-something-is-wrong)
@@ -149,6 +150,19 @@ A layout can wrap itself in another the same way, such as an admin layout inside
 ## Inline scripts and styles
 
 `<style>` blocks and `style` attributes work in any template, but [`SecurityHeaders`](middleware.md#security-headers) blocks an inline `<script>`. Put scripts in a file under `public/` and load them with `<script src>`.
+
+## Plain text
+
+A template can render plain text as well as HTML, such as a command's output or the text part of an email. PHP drops the newline straight after a closing `?>`. A browser never shows the difference, but in plain text two lines run together. A line that prints a value needs its newline inside the tag, while lines that hold only `foreach` or `if` need nothing:
+
+```php
+<?php foreach ($notes as $note): ?>
+<?= $note['title'], "\n" ?>
+<?php endforeach ?>
+Total: <?= count($notes), "\n" ?>
+```
+
+Leave out `e()` in plain text, or `O'Brien` prints as `O&#039;Brien`.
 
 ## Sharing data with every template
 

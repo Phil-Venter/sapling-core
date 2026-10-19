@@ -8,6 +8,7 @@
 - [Sending requests at once](#sending-requests-at-once)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
+- [Caching replies](#caching-replies)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
 - [Method reference](#method-reference)
 
@@ -61,7 +62,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 
 ## Sending requests at once
 
-`sendAll()` sends several requests at once and returns the replies in order. A page that needs several services then waits only for the slowest:
+`sendAll()` sends several requests at once and returns the replies under the same keys. A page that needs several services then waits only for the slowest:
 
 ```php
 [$weather, $news] = $this->http->sendAll([
@@ -70,7 +71,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 ]);
 ```
 
-A failed connection throws after the other requests finish, and names the request.
+`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. A failed connection throws after the other requests finish, and names the request.
 
 ## Reading the reply
 
@@ -98,6 +99,61 @@ if ($reply->status !== 200) {
 }
 ```
 
+## Caching replies
+
+Sapling doesn't cache replies, since only your app knows which ones can be kept and for how long. A small class around `HttpClient` can keep them in the database. This one keeps successful GET replies for a day:
+
+```php
+final readonly class CachedHttp
+{
+    public function __construct(private Db $db, private HttpClient $http) {}
+
+    public function get(string $url): ClientResponse
+    {
+        $sql = <<<SQL
+            SELECT body, headers
+            FROM http_cache
+            WHERE url = ?
+            AND cached_at > ?
+            SQL;
+
+        $row = $this->db->one($sql, [$url, time() - 86400]);
+
+        if ($row !== null) {
+            return new ClientResponse($row['body'], 200, Data::fromJson($row['headers']));
+        }
+
+        $reply = $this->http->send(new ClientRequest('GET', $url));
+
+        if ($reply->status !== 200) {
+            return $reply;
+        }
+
+        $sql = <<<SQL
+            INSERT OR REPLACE INTO http_cache (url, body, headers, cached_at)
+            VALUES (?, ?, ?, ?)
+            SQL;
+
+        $this->db->run($sql, [$url, $reply->body, Data::toJson($reply->headers), time()]);
+
+        return $reply;
+    }
+}
+```
+
+It needs a table, created in a [migration](database.md#migrations):
+
+```sql
+CREATE TABLE http_cache (
+    url TEXT PRIMARY KEY,
+    body TEXT NOT NULL,
+    headers TEXT NOT NULL,
+    cached_at INTEGER NOT NULL
+);
+```
+
+Only 200 replies are kept, so a 404 or an outage isn't remembered for a day. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
+
 ## Timeouts, redirects and TLS
 
 A request gives up after 30 seconds. When a visitor waits on it, register a client with a shorter timeout in `bootstrap.php`:
@@ -116,7 +172,7 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 | Method | What it does |
 | --- | --- |
 | `send($request)` | Sends a `ClientRequest` and returns the reply as a `ClientResponse` |
-| `sendAll($requests)` | Sends a list of `ClientRequest`s at once and returns their replies in the same order |
+| `sendAll($requests)` | Sends `ClientRequest`s at once and returns their replies under the same keys |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
 | `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
@@ -126,4 +182,4 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 | `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body |
 | `$reply->header($name)` | Returns a header, ignoring case, as a `Value`. A header sent more than once is a list |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
-| `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests |
+| `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests or from a cache |

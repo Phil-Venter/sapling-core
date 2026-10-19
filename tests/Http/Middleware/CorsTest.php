@@ -24,18 +24,20 @@ test('Cors refuses credentials with a * origin, which would let any site read si
 		->toThrow(InvalidArgumentException::class, 'cors_credentials needs cors_origins to list sites, not *');
 });
 
-test('Cors sends credentials for a listed origin, and adds to an existing Vary', function () {
+test('Cors sends credentials for a listed origin, and adds to an existing Vary whatever its case', function (string $vary) {
 	$cors = new Cors(['https://app.example'], allowCredentials: true);
-	$next = fn(Request $request) => new Response('ok', 200, ['Vary' => 'Accept-Encoding']);
+	$next = fn(Request $request) => new Response('ok', 200, [$vary => 'Accept-Encoding']);
 
 	$response = $cors(new Request('GET', '/notes', headers: ['Origin' => 'https://app.example']), $next);
 
-	expect($response->headers)->toMatchArray([
-		'Access-Control-Allow-Origin' => 'https://app.example',
-		'Access-Control-Allow-Credentials' => 'true',
-		'Vary' => 'Accept-Encoding, Origin',
-	]);
-});
+	expect($response->headers)
+		->toMatchArray([
+			'Access-Control-Allow-Origin' => 'https://app.example',
+			'Access-Control-Allow-Credentials' => 'true',
+			'Vary' => 'Accept-Encoding, Origin',
+		])
+		->not->toHaveKey('vary');
+})->with(['Vary', 'vary']);
 
 test('Cors refuses origins that could never match, when the app starts', function (
 	array $origins,
@@ -53,26 +55,30 @@ test('Cors refuses origins that could never match, when the app starts', functio
 	'no scheme' => [['app.example'], false, 'needs scheme://host[:port] in lowercase'],
 ]);
 
-test('Cors adds Vary: Origin to every response when the answer depends on the origin', function (array $headers) {
+test('Cors varies on Origin whenever its answer depends on it, and never with *', function (
+	array $origins,
+	array $headers,
+	?string $allowed,
+	?string $vary,
+) {
 	$app = scannedApp();
-	$app->middleware(new Cors(['https://app.example']));
+	$app->middleware(new Cors($origins));
 
-	expect($app->handle(new Request('GET', '/notes', headers: $headers))->headers['Vary'])->toBe('Origin');
+	$response = $app->handle(new Request('GET', '/notes', headers: $headers));
+
+	expect($response->headers['Access-Control-Allow-Origin'] ?? null)->toBe($allowed);
+	expect($response->headers['Vary'] ?? null)->toBe($vary);
 })->with([
-	'no Origin' => [[]],
-	'an unlisted Origin' => [['Origin' => 'https://evil.example']],
-	'a listed Origin' => [['Origin' => 'https://app.example']],
+	'no Origin' => [['https://app.example'], [], null, 'Origin'],
+	'an unlisted Origin' => [['https://app.example'], ['Origin' => 'https://evil.example'], null, 'Origin'],
+	'a listed Origin' => [
+		['https://app.example'],
+		['Origin' => 'https://app.example'],
+		'https://app.example',
+		'Origin',
+	],
+	'*, where every site gets the same answer' => [['*'], ['Origin' => 'https://any.example'], '*', null],
 ]);
-
-test('Cors leaves Vary alone with *, where every site gets the same answer', function () {
-	$app = scannedApp();
-	$app->middleware(new Cors(['*']));
-
-	$response = $app->handle(new Request('GET', '/notes', headers: ['Origin' => 'https://any.example']));
-
-	expect($response->headers['Access-Control-Allow-Origin'])->toBe('*');
-	expect($response->headers)->not->toHaveKey('Vary');
-});
 
 test('a preflight varies on what it echoes, and only names headers that were asked for', function () {
 	$app = scannedApp();
@@ -125,13 +131,4 @@ test('an allowed site can read an HttpException, such as a 404, and other caller
 	]);
 	expect([$other->status, $other->body])->toBe([404, 'Not Found']);
 	expect($other->headers)->not->toHaveKey('Access-Control-Allow-Origin');
-});
-
-test('Cors finds an existing Vary whatever its case', function () {
-	$cors = new Cors(['https://app.example']);
-	$request = new Request('GET', '/notes', headers: ['Origin' => 'https://app.example']);
-
-	$response = $cors($request, fn() => new Response('ok', 200, ['vary' => 'Accept-Encoding']));
-
-	expect($response->headers)->toMatchArray(['Vary' => 'Accept-Encoding, Origin'])->not->toHaveKey('vary');
 });

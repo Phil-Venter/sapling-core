@@ -45,7 +45,8 @@ $days = $console->option('days')->int(30);
 $count = $db->value($sql)->int();
 ```
 
-A `Value` isn't a string, so `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`. Call `string()` first.
+> [!WARNING]
+> A `Value` isn't a string. `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
 
 ### Strings
 

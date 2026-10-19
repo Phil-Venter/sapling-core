@@ -29,29 +29,23 @@ function nextRequest(): Session
 	return new Session();
 }
 
-test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS, with strict mode on', function () {
-	$_SERVER['HTTPS'] = 'on';
+test('the cookie is HttpOnly and SameSite=Lax with strict mode on, and Secure only over HTTPS', function (
+	array $server,
+	bool $secure,
+) {
+	unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
+	$_SERVER = [...$_SERVER, ...$server];
 	new Session()->get('anything');
 
-	expect(session_get_cookie_params())->httponly->toBeTrue()->secure->toBeTrue()->samesite->toBe('Lax');
+	expect(session_get_cookie_params())->httponly->toBeTrue()->samesite->toBe('Lax')->secure->toBe($secure);
 	expect(ini_get('session.use_strict_mode'))->toBe('1');
-});
-
-test('the cookie is Secure behind a TLS proxy that sends X-Forwarded-Proto', function () {
-	unset($_SERVER['HTTPS']);
-	$_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
-	new Session()->get('anything');
-
-	expect(session_get_cookie_params()['secure'])->toBeTrue();
-});
-
-test('the cookie is not Secure over plain HTTP', function (?string $https) {
-	$_SERVER['HTTPS'] = $https;
-	$_SERVER['HTTP_X_FORWARDED_PROTO'] = 'http';
-	new Session()->get('anything');
-
-	expect(session_get_cookie_params()['secure'])->toBeFalse();
-})->with(['off' => 'off', 'empty' => '', 'missing' => null]);
+})->with([
+	'HTTPS' => [['HTTPS' => 'on'], true],
+	'behind a TLS proxy' => [['HTTP_X_FORWARDED_PROTO' => 'https'], true],
+	'HTTPS off' => [['HTTPS' => 'off', 'HTTP_X_FORWARDED_PROTO' => 'http'], false],
+	'HTTPS empty' => [['HTTPS' => '', 'HTTP_X_FORWARDED_PROTO' => 'http'], false],
+	'plain HTTP' => [['HTTP_X_FORWARDED_PROTO' => 'http'], false],
+]);
 
 test('get() and getFlash() take a path of keys, as Value::get() does', function () {
 	$session = new Session();

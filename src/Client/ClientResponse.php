@@ -16,7 +16,7 @@ final readonly class ClientResponse
 	public array $headers;
 
 	/**
-	 * A reply built by hand, for tests. HttpClient builds the real ones.
+	 * A reply built by hand, for tests or from a cache. HttpClient builds the real ones.
 	 *
 	 * @param array<string, string|list<string>> $headers
 	 */

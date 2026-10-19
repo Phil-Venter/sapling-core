@@ -35,3 +35,14 @@ test('every word after -- is an argument, even one that starts with dashes', fun
 	expect($console->arg(2)->string())->toBe('--x=1');
 	expect($console->flag('not-a-flag'))->toBeFalse();
 });
+
+test('ask() prints the question and reads the trimmed answer, and a blank answer or no input is empty', function (
+	string $input,
+	string $output,
+) {
+	expect(runConsole(['hello'], input: $input)['stdout'])->toBe($output);
+})->with([
+	'an answer' => ["  Ann \n", "Name? Hello Ann.\n"],
+	'a blank answer' => ["\n", "Name? Hello nobody.\n"],
+	'the end of input, which ends the line' => ['', "Name? \nHello nobody.\n"],
+]);

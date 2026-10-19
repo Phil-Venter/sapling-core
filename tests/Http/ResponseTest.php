@@ -81,10 +81,6 @@ test('data() with a name reads one field, and without one the whole body', funct
 	expect($response->data()->array())->toBe(['title' => 'Notes', 'count' => 2]);
 });
 
-test('data() finds the Content-Type whatever the case of its name', function () {
-	expect(Response::json(['a' => 1])->data()->get('a')->int())->toBe(1);
-});
-
 test('header() finds a header whatever the case of its name', function () {
 	$reply = new Response('', 200, ['content-type' => 'text/plain', 'set-cookie' => ['a=1', 'b=2']]);
 

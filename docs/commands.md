@@ -6,6 +6,7 @@
 - [Input](#input)
     - [Arguments](#arguments)
     - [Options and flags](#options-and-flags)
+    - [Asking a question](#asking-a-question)
 - [Output and exit codes](#output-and-exit-codes)
 - [Adding commands in code](#adding-commands-in-code)
 - [Built-in commands](#built-in-commands)
@@ -102,6 +103,18 @@ An option that's missing or isn't of the type you read gives the default, so `--
 > [!WARNING]
 > Options need `=`. Written as `--days 7`, the value would be lost, so `option('days')` throws a `UsageException` instead. `flag('force')` throws the same way when given `--force=yes`.
 
+### Asking a question
+
+`ask()` prints a question and returns the answer as a `Value`. A blank answer gives the default you read it with, so pressing Enter here keeps the notes:
+
+```php
+if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
+    return Console::SUCCESS;
+}
+```
+
+Without a terminal, such as under cron, standard input is usually empty, so every answer is blank. Read answers with a safe default, or skip the question when `stream_isatty(STDIN)` is false.
+
 ## Output and exit codes
 
 `line()` prints to standard output and `error()` to standard error:
@@ -153,6 +166,7 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `arg($index)` | Returns the argument at `$index` after the command name, counting from 0, as a `Value` |
 | `option($name)` | Returns the value of `--name=value`, as a `Value` |
 | `flag($name)` | Returns whether `--name` was given |
+| `ask($question)` | Prints `$question` and returns the answer as a `Value`. A blank answer, or the end of input, is an empty `Value` |
 | `line($text = '')` | Prints a line to standard output |
 | `error($text)` | Prints a line to standard error |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |

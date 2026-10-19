@@ -79,13 +79,10 @@ test('a Value wrapped in another is unwrapped, so wrapping twice changes nothing
 	expect($twice->string())->toBe('Ann');
 });
 
-test('get() without a key gives the same value', function () {
-	expect(new Value(['a' => 1])->get()->array())->toBe(['a' => 1]);
-});
-
-test('get() reads a key inside an array, and anything else gives an empty Value', function () {
+test('get() reads a key inside an array, no key gives the same value, and anything else gives an empty Value', function () {
 	$address = new Value(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 
+	expect($address->get()->array())->toBe(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 	expect($address->get('city')->string())->toBe('Cape Town');
 	expect($address->get('lines')->get(0)->string())->toBe('1 Main Road');
 	expect($address->get('lines', 0)->string())->toBe('1 Main Road');

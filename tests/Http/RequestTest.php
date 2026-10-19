@@ -74,7 +74,7 @@ test('query() without a name gives the whole query string', function () {
 
 test('POST _method may switch only to PUT, PATCH or DELETE', function (
 	string $method,
-	string $override,
+	string|array $override,
 	string $expected,
 ) {
 	$_SERVER['REQUEST_METHOD'] = $method;
@@ -86,12 +86,13 @@ test('POST _method may switch only to PUT, PATCH or DELETE', function (
 	expect($request->method)->toBe($expected);
 	expect($request->data('body')->string())->toBe('kept');
 })->with([
-	['POST', 'delete',  'DELETE'],
-	['POST', 'PUT',     'PUT'],
-	['POST', 'patch',   'PATCH'],
-	['POST', 'GET',     'POST'],
+	['POST', 'delete', 'DELETE'],
+	['POST', 'PUT', 'PUT'],
+	['POST', 'patch', 'PATCH'],
+	['POST', 'GET', 'POST'],
 	['POST', 'OPTIONS', 'POST'],
-	['GET',  'DELETE',  'GET'],
+	['GET', 'DELETE', 'GET'],
+	'an array, ignored without a warning' => ['POST', ['DELETE'], 'POST'],
 ]);
 
 test('data() reads a field as the type asked for, and a crafted array never reaches a string', function () {
@@ -101,14 +102,6 @@ test('data() reads a field as the type asked for, and a crafted array never reac
 	expect($request->data('tags')->array())->toBe(['a']);
 	expect($request->data('count')->int())->toBe(3);
 	expect($request->data('missing')->raw)->toBeNull();
-});
-
-test('an array _method is ignored instead of raising a warning', function () {
-	$_SERVER['REQUEST_METHOD'] = 'POST';
-	$_SERVER['REQUEST_URI'] = '/notes/7';
-	$_POST = ['_method' => ['DELETE']];
-
-	expect(Request::fromGlobals()->method)->toBe('POST');
 });
 
 test('a JSON body becomes input, alongside query, headers, cookies and params', function () {

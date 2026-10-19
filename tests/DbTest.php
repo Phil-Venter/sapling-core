@@ -57,9 +57,14 @@ test('all(), one() and value() read rows as arrays', function () {
 	expect($this->db->value('SELECT count(*) FROM notes')->int())->toBe(2);
 });
 
-test('transaction() commits and returns what the closure returns', function () {
-	$id = $this->db->transaction(function (Db $db) {
+test('transaction() commits and returns what the closure returns, even after a statement committed by itself', function (bool $committed) {
+	$id = $this->db->transaction(function (Db $db) use ($committed) {
 		$db->run("INSERT INTO notes (body) VALUES ('kept')");
+
+		// MySQL commits by itself after a statement such as CREATE TABLE.
+		if ($committed) {
+			$db->pdo->commit();
+		}
 
 		return $db->lastId();
 	});
@@ -67,7 +72,7 @@ test('transaction() commits and returns what the closure returns', function () {
 	expect($id)->toBe('1');
 	expect($this->db->value('SELECT body FROM notes')->string())->toBe('kept');
 	expect($this->db->pdo->inTransaction())->toBeFalse();
-});
+})->with(['a plain transaction' => false, 'a statement that committed by itself' => true]);
 
 test('transaction() rolls back and rethrows', function () {
 	$failing = fn() => $this->db->transaction(function (Db $db) {
@@ -79,16 +84,4 @@ test('transaction() rolls back and rethrows', function () {
 	expect($failing)->toThrow(RuntimeException::class, 'stop');
 	expect($this->db->value('SELECT count(*) FROM notes')->int())->toBe(0);
 	expect($this->db->pdo->inTransaction())->toBeFalse();
-});
-
-test('transaction() copes when a statement already committed, as MySQL does after CREATE TABLE', function () {
-	$id = $this->db->transaction(function (Db $db) {
-		$db->run("INSERT INTO notes (body) VALUES ('kept')");
-		$db->pdo->commit();
-
-		return $db->lastId();
-	});
-
-	expect($id)->toBe('1');
-	expect($this->db->value('SELECT body FROM notes')->string())->toBe('kept');
 });

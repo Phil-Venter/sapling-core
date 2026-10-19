@@ -33,10 +33,11 @@ final readonly class HttpClient
 	}
 
 	/**
-	 * Sends the requests at once and returns their replies in order.
+	 * Sends the requests at once and returns their replies under the same keys.
 	 *
-	 * @param list<ClientRequest> $requests
-	 * @return list<ClientResponse>
+	 * @template K of array-key
+	 * @param array<K, ClientRequest> $requests
+	 * @return array<K, ClientResponse>
 	 * @throws RuntimeException When a connection fails or times out, after every request has finished.
 	 */
 	public function sendAll(array $requests): array
@@ -44,9 +45,9 @@ final readonly class HttpClient
 		$multi = curl_multi_init();
 		$pairs = [];
 
-		foreach ($requests as $request) {
+		foreach ($requests as $key => $request) {
 			$handle = $this->handle($request);
-			$pairs[] = [$request, $handle];
+			$pairs[$key] = [$request, $handle];
 			curl_multi_add_handle($multi, $handle);
 		}
 
@@ -67,12 +68,12 @@ final readonly class HttpClient
 
 		$responses = [];
 
-		foreach ($pairs as [$request, $handle]) {
+		foreach ($pairs as $key => [$request, $handle]) {
 			if (curl_errno($handle) !== 0) {
 				throw new RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
 			}
 
-			$responses[] = $this->response($handle, (string) curl_multi_getcontent($handle));
+			$responses[$key] = $this->response($handle, (string) curl_multi_getcontent($handle));
 		}
 
 		return $responses;

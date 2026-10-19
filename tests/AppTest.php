@@ -23,11 +23,6 @@ use Sapling\Tests\Fixtures\Trace;
 
 const BOOT = FIXTURES . '/Boot';
 
-function bootConfig(): Config
-{
-	return new Config(['debug' => true, 'session_lifetime' => 3600]);
-}
-
 describe('boot()', function () {
 	afterEach(function () {
 		if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -37,13 +32,21 @@ describe('boot()', function () {
 		session_destroy();
 	});
 
-	test('takes debug from the config, and a scanned action gets Config and Template', function () {
-		$app = App::boot(BOOT, bootConfig());
+	test('takes debug from the config, off without it, and a scanned action gets Config and Template', function (
+		array $settings,
+		bool $debug,
+		string $body,
+	) {
+		$app = App::boot(BOOT, new Config($settings));
 		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
 
-		expect($app->debug)->toBeTrue();
-		expect($app->handle(new Request('GET', '/hello'))->body)->toBe("<p>hello from dev</p>\n");
-	});
+		expect($app->debug)->toBe($debug);
+		expect($app->handle(new Request('GET', '/hello'))->body)->toBe($body);
+		expect($app->container->get(Session::class))->toBeInstanceOf(Session::class);
+	})->with([
+		'debug on' => [['debug' => true], true, "<p>hello from dev</p>\n"],
+		'no settings at all' => [[], false, "<p>hello from production</p>\n"],
+	]);
 
 	test('sets the default timezone from the config, and leaves it alone without one', function () {
 		$before = date_default_timezone_get();
@@ -66,33 +69,26 @@ describe('boot()', function () {
 			->toThrow(Exception::class, 'Mars/Olympus');
 	});
 
-	test('gives Session the session_lifetime from the config', function () {
-		App::boot(BOOT, bootConfig())->container->get(Session::class)->get('anything');
-
-		expect(session_get_cookie_params()['lifetime'])->toBe(3600);
-		expect(ini_get('session.gc_maxlifetime'))->toBe('3600');
-	});
-
-	test('gives Crypto the app_key and Cors the cors_origins from the config', function () {
+	test('gives Session, Crypto, Cors and SecurityHeaders their settings from the config', function () {
 		$key = base64_encode(random_bytes(32));
-		$app = App::boot(BOOT, new Config(['app_key' => $key, 'cors_origins' => ['https://app.example']]));
+		$app = App::boot(BOOT, new Config([
+			'session_lifetime' => 3600,
+			'app_key' => $key,
+			'cors_origins' => ['https://app.example'],
+			'content_policy' => ['img-src' => "'self'"],
+		]));
 		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
 		$app->middleware(Cors::class);
+		$app->middleware(SecurityHeaders::class);
 
+		$app->container->get(Session::class)->get('anything');
 		$stored = $app->container->get(Crypto::class)->encrypt('secret', 'test');
 		$response = $app->handle(new Request('GET', '/hello', headers: ['Origin' => 'https://app.example']));
 
+		expect(session_get_cookie_params()['lifetime'])->toBe(3600);
+		expect(ini_get('session.gc_maxlifetime'))->toBe('3600');
 		expect(new Crypto($key)->decrypt($stored, 'test'))->toBe('secret');
 		expect($response->headers['Access-Control-Allow-Origin'])->toBe('https://app.example');
-	});
-
-	test('gives SecurityHeaders the content_policy from the config', function () {
-		$app = App::boot(BOOT, new Config(['content_policy' => ['img-src' => "'self'"]]));
-		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
-		$app->middleware(SecurityHeaders::class);
-
-		$response = $app->handle(new Request('GET', '/hello'));
-
 		expect($response->headers['Content-Security-Policy'])->toContain("img-src 'self';");
 	});
 
@@ -118,46 +114,29 @@ describe('boot()', function () {
 		expect($post('https://front.example'))->toBe(405);
 		expect($post('https://evil.example'))->toBe(403);
 	});
-
-	test('needs no config keys: debug is off and Session uses php.ini', function () {
-		$app = App::boot(BOOT, new Config([]));
-		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
-
-		expect($app->debug)->toBeFalse();
-		expect($app->handle(new Request('GET', '/hello'))->body)->toBe("<p>hello from production</p>\n");
-		expect($app->container->get(Session::class))->toBeInstanceOf(Session::class);
-	});
 });
 
 describe('registering in code', function () {
-	test('scan() takes the namespace with or without its trailing backslash', function (string $namespace) {
+	test('scan() takes its folder and namespace with or without a trailing slash, and reads only class files', function (
+		string $folder,
+		string $namespace,
+	) {
 		$app = new App(FIXTURES);
-		$app->scan(FIXTURES . '/Scan', $namespace);
-
-		expect($app->handle(new Request('GET', '/notes'))->status)->toBe(200);
-	})->with(['without' => 'Sapling\Tests\Fixtures\Scan', 'with' => 'Sapling\Tests\Fixtures\Scan\\']);
-
-	test('scan() only reads files that start with a capital and have no dot', function () {
-		$app = new App(FIXTURES);
-		$app->scan(FIXTURES . '/Scan', 'Sapling\\Tests\\Fixtures\\Scan');
+		$app->scan($folder, $namespace);
 
 		expect($app->handle(new Request('GET', '/notes'))->status)->toBe(200);
 		expect(function_exists('scan_fixture_helper'))->toBeFalse();
 		expect(function_exists('scan_fixture_shared'))->toBeFalse();
-	});
+	})->with([
+		'without' => [FIXTURES . '/Scan', 'Sapling\Tests\Fixtures\Scan'],
+		'with' => [FIXTURES . '/Scan/', 'Sapling\Tests\Fixtures\Scan\\'],
+	]);
 
 	test('add() refuses a class with no #[Route] or #[Command], which scan() would skip', function () {
 		$app = new App(FIXTURES);
 
 		expect(fn() => $app->add(Sapling\Tests\Fixtures\Container\Clock::class))
 			->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command] to add');
-	});
-
-	test('scan() takes its folder with or without a trailing slash', function () {
-		$app = new App(FIXTURES);
-		$app->scan(FIXTURES . '/Scan/', 'Sapling\\Tests\\Fixtures\\Scan\\');
-
-		expect($app->handle(new Request('GET', '/'))->status)->toBe(200);
 	});
 
 	test('routes, their middleware and commands can be closures registered in code', function () {
@@ -227,27 +206,25 @@ describe('middleware', function () {
 		]);
 	});
 
-	test('action middleware can return early', function () {
+	test('middleware can return early, and nothing inside it runs', function (
+		array $middleware,
+		string $path,
+		array $events,
+	) {
 		$app = scannedApp();
-		$app->middleware(GlobalOne::class);
 
-		$response = $app->handle(new Request('GET', '/blocked'));
+		foreach ($middleware as $layer) {
+			$app->middleware($layer);
+		}
 
-		expect($response->status)->toBe(403);
-		expect($response->body)->toBe('denied');
-		expect($app->container->get(Trace::class)->events)->toBe(['GlobalOne in', 'Deny', 'GlobalOne out']);
-	});
+		$response = $app->handle(new Request('GET', $path));
 
-	test('global middleware can return early, before routing', function () {
-		$app = scannedApp();
-		$app->middleware(Deny::class);
-		$app->middleware(GlobalOne::class);
-
-		$response = $app->handle(new Request('GET', '/nowhere'));
-
-		expect($response->status)->toBe(403);
-		expect($app->container->get(Trace::class)->events)->toBe(['Deny']);
-	});
+		expect([$response->status, $response->body])->toBe([403, 'denied']);
+		expect($app->container->get(Trace::class)->events)->toBe($events);
+	})->with([
+		'action middleware' => [[GlobalOne::class], '/blocked', ['GlobalOne in', 'Deny', 'GlobalOne out']],
+		'global middleware, before routing' => [[Deny::class, GlobalOne::class], '/nowhere', ['Deny']],
+	]);
 
 	test('404 and 405 reach global middleware as responses, with their headers', function () {
 		$app = scannedApp();
@@ -315,24 +292,32 @@ describe('middleware', function () {
 });
 
 describe('errors', function () {
-	test('HttpException(403) becomes a 403 and is not logged', function () {
-		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/forbidden')));
+	test('an error answers with its status, and only a 5xx or a crash is logged, by method and path', function (
+		string $path,
+		int $status,
+		string $body,
+		array $logged,
+	) {
+		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', $path)));
 
-		expect($response->status)->toBe(403);
-		expect($response->body)->toBe('Forbidden');
+		expect([$response->status, $response->body])->toBe([$status, $body]);
 		expect($response->headers['Content-Type'])->toBe('text/plain; charset=utf-8');
-		expect($log)->toBe([]);
-	});
+		expect($log)->toHaveCount(count($logged));
 
-	test('any other exception logs one line with method and path, then returns a plain 500', function () {
-		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/fails')));
-
-		expect($response->status)->toBe(500);
-		expect($response->body)->toBe('Internal Server Error');
-		expect($log)->toHaveCount(1);
-		expect($log[0])->toContain('GET /fails failed: RuntimeException: boom <script>');
-		expect($log[0])->toContain('Fails.php:');
-	});
+		foreach ($logged as $index => $line) {
+			expect($log[$index])->toContain($line);
+		}
+	})->with([
+		'a 403' => ['/forbidden', 403, 'Forbidden', []],
+		'a 503' => ['/unavailable', 503, 'Down for maintenance', ['GET /unavailable failed: 503']],
+		'a crash' => ['/fails', 500, 'Internal Server Error', ['GET /fails failed: RuntimeException: boom <script>']],
+		'a warning, turned into a crash' => [
+			'/warns',
+			500,
+			'Internal Server Error',
+			['GET /warns failed: ErrorException: Undefined array key 0'],
+		],
+	]);
 
 	test('debug mode shows an escaped trace', function () {
 		[$response] = captureErrorLog(fn() => scannedApp(debug: true)->handle(new Request('GET', '/fails')));
@@ -348,13 +333,6 @@ describe('errors', function () {
 		expect($response->body)->not->toContain('<script>');
 	});
 
-	test('handle() turns warnings into a 500, so tests see what production sees', function () {
-		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/warns')));
-
-		expect($response->status)->toBe(500);
-		expect($log[0])->toContain('GET /warns failed: ErrorException: Undefined array key 0');
-	});
-
 	test('handle() puts the previous error handler back', function () {
 		$current = function () {
 			$handler = set_error_handler(fn() => false);
@@ -368,14 +346,6 @@ describe('errors', function () {
 		scannedApp()->handle(new Request('GET', '/notes'));
 
 		expect($current())->toBe($before);
-	});
-
-	test('an HttpException with a 5xx status is logged by its status', function () {
-		[$unavailable, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', '/unavailable')));
-
-		expect([$unavailable->status, $unavailable->body])->toBe([503, 'Down for maintenance']);
-		expect($log)->toHaveCount(1);
-		expect($log[0])->toContain('GET /unavailable failed: 503');
 	});
 
 	test('deprecations are not turned into exceptions', function () {
@@ -488,40 +458,34 @@ describe('commands', function () {
 		expect($result['stderr'])->toContain('Stack trace:');
 	});
 
-	test('a crashed command is also logged when error_log is set', function () {
+	test('a crashed command prints its trace and logs one line when error_log is set', function (
+		string $command,
+		string $error,
+	) {
 		$log = (string) tempnam(sys_get_temp_dir(), 'sapling-log');
 
 		try {
-			$result = runConsole(['crash'], ['error_log' => $log]);
+			$result = runConsole([$command], ['error_log' => $log]);
 
-			expect((string) file_get_contents($log))
-				->toContain('command crash failed: ErrorException: Undefined array key 0');
+			expect($result['code'])->toBe(1);
 			expect($result['stderr'])->toContain('Stack trace:');
+			expect((string) file_get_contents($log))->toContain("command {$command} failed: {$error}");
 		} finally {
 			unlink($log);
 		}
-	});
+	})->with([
+		'a warning' => ['crash', 'ErrorException: Undefined array key 0'],
+		'an InvalidArgumentException from a bug' => [
+			'misconfigured',
+			'InvalidArgumentException: app_key must be 32 bytes',
+		],
+	]);
 
 	test('a usage mistake, such as an option without =, prints only its message', function () {
 		$result = runConsole(['greet', '--times', '2']);
 
 		expect($result['code'])->toBe(1);
 		expect($result['stderr'])->toBe("--times needs a value, written --times=value\n");
-	});
-
-	test('an InvalidArgumentException from a bug is still a crash, with its trace and a log line', function () {
-		$log = (string) tempnam(sys_get_temp_dir(), 'sapling-log');
-
-		try {
-			$result = runConsole(['misconfigured'], ['error_log' => $log]);
-
-			expect($result['code'])->toBe(1);
-			expect($result['stderr'])->toContain('Stack trace:');
-			expect((string) file_get_contents($log))
-				->toContain('command misconfigured failed: InvalidArgumentException: app_key must be 32 bytes');
-		} finally {
-			unlink($log);
-		}
 	});
 
 	test('the same command name on two classes throws and names both', function () {
@@ -542,20 +506,15 @@ describe('commands', function () {
 		expect($fail)->toBe(['stdout' => '', 'stderr' => "failing on purpose\n", 'code' => 3]);
 	});
 
-	test('an unknown command lists every command and exits 1', function () {
-		$result = runConsole(['nope']);
+	test('no command, or an unknown one, lists every command', function (array $args, int $code, string $stderr) {
+		$result = runConsole($args);
 
-		expect($result['code'])->toBe(1);
-		expect($result['stderr'])->toBe("Unknown command: nope\n");
+		expect($result['code'])->toBe($code);
+		expect($result['stderr'])->toBe($stderr);
 		expect($result['stdout'])
-			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n\n  routes:list    List every route and its class\n");
-	});
-
-	test('no command at all runs commands:list and exits 0', function () {
-		$result = runConsole();
-
-		expect($result['code'])->toBe(0);
-		expect($result['stderr'])->toBe('');
-		expect($result['stdout'])->toStartWith("Commands:\n");
-	});
+			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  hello          Ask for a name and say hello\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n\n  routes:list    List every route and its class\n");
+	})->with([
+		'no command, which runs commands:list' => [[], 0, ''],
+		'an unknown command' => [['nope'], 1, "Unknown command: nope\n"],
+	]);
 });

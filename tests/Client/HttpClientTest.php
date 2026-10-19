@@ -83,14 +83,15 @@ test('only http and https are allowed, so a file:// URL is refused', function ()
 		->toThrow(RuntimeException::class, 'GET file:///etc/hosts failed:');
 });
 
-test('sendAll() returns the responses in the order of the requests', function () {
-	[$listed, $echo] = $this->client->sendAll([
-		new ClientRequest('GET', serverUrl('/notes')),
-		ClientRequest::json('PUT', serverUrl('/echo/7'), ['name' => 'Ann']),
+test('sendAll() returns the replies in order, under the keys of the requests', function () {
+	$replies = $this->client->sendAll([
+		'listed' => new ClientRequest('GET', serverUrl('/notes')),
+		'echo' => ClientRequest::json('PUT', serverUrl('/echo/7'), ['name' => 'Ann']),
 	]);
 
-	expect($listed->body)->toBe('notes');
-	expect($echo->data()->get('name')->string())->toBe('Ann');
+	expect(array_keys($replies))->toBe(['listed', 'echo']);
+	expect($replies['listed']->body)->toBe('notes');
+	expect($replies['echo']->data()->get('name')->string())->toBe('Ann');
 });
 
 test('sendAll() throws for a failed connection, naming the request', function () {
