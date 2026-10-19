@@ -18,13 +18,13 @@ final readonly class NewMigration
 	public function __construct(private App $app) {}
 
 	/**
-	 * Creates the migration named by the first argument.
+	 * Creates the migration named by the arguments, so add notes and "add notes" both give add_notes.
 	 *
 	 * @throws UsageException When the name has nothing usable in it.
 	 */
 	public function __invoke(Console $console): int
 	{
-		$name = strtolower($console->arg(0)->string());
+		$name = strtolower(implode(' ', $console->args));
 		$name = trim((string) preg_replace('/[^a-z0-9]+/', '_', $name), '_');
 
 		if ($name === '') {

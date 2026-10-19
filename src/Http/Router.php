@@ -19,8 +19,8 @@ final class Router
 	}
 
 	/**
-	 * Adds a route. The action is a class name, an object or a closure. Throws LogicException when the method and
-	 * path are already taken.
+	 * Adds a route. The action is a class name, an object or a closure. Throws a LogicException when the method and
+	 * path are already taken, or a :param name is used twice or isn't a plain name.
 	 *
 	 * @param class-string|object $action
 	 * @param list<class-string|object> $middleware
@@ -42,7 +42,7 @@ final class Router
 
 			$param = substr($segment, 1);
 
-			// Either mistake would otherwise pass silently, with a lost value or an unreachable name.
+			// Either mistake would otherwise go unnoticed, with a lost value or an unreachable name.
 			if (in_array($param, $params, true)) {
 				throw new \LogicException("Route {$method} {$path} uses :{$param} twice");
 			}
@@ -77,7 +77,6 @@ final class Router
 	public function match(string $method, string $path): array
 	{
 		$allowed = [];
-
 		$segments = explode('/', trim($path, '/'));
 
 		foreach ($this->walk($this->tree, $segments) as [$node, $values]) {

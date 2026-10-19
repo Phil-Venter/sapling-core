@@ -16,8 +16,6 @@ final readonly class Db
 	{
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-
-		// Emulated prepares quote every value, so LIMIT ? fails on MySQL.
 		$pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
 	}
 
@@ -124,7 +122,6 @@ final readonly class Db
 	 */
 	public function transaction(\Closure $fn): mixed
 	{
-		// On SQLite, IMMEDIATE takes the write lock now, so the transaction waits for it like any other write.
 		match ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME)) {
 			'sqlite' => $this->pdo->exec('BEGIN IMMEDIATE'),
 			default => $this->pdo->beginTransaction(),

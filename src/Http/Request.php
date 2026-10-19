@@ -124,8 +124,9 @@ final class Request
 		$remote = $_SERVER['REMOTE_ADDR'] ?? '';
 		$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
 		$any = in_array('*', $trusted, true);
+		$fromProxy = $any || in_array($remote, $trusted, true);
 
-		if (!is_string($forwarded) || !$any && !in_array($remote, $trusted, true)) {
+		if (!is_string($forwarded) || !$fromProxy) {
 			return $remote;
 		}
 

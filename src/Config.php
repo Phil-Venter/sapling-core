@@ -40,7 +40,6 @@ final readonly class Config
 		}
 
 		$env = [];
-
 		$lines = file($file);
 
 		if ($lines === false) {

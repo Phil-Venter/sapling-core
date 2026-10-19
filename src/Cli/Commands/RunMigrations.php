@@ -17,6 +17,14 @@ final readonly class RunMigrations
 
 	public const string DIR = 'database/migrations';
 
+	/** Creates the table that records which migrations have run, unless it exists. */
+	public const string CREATE_TABLE = <<<SQL
+			CREATE TABLE IF NOT EXISTS migrations (
+				name VARCHAR(255) PRIMARY KEY,
+				ran_at VARCHAR(19) NOT NULL
+			)
+		SQL;
+
 	public function __construct(private App $app, private Db $db) {}
 
 	/**
@@ -27,14 +35,7 @@ final readonly class RunMigrations
 	 */
 	public function __invoke(Console $console): int
 	{
-		$sql = <<<SQL
-				CREATE TABLE IF NOT EXISTS migrations (
-					name VARCHAR(255) PRIMARY KEY,
-					ran_at VARCHAR(19) NOT NULL
-				)
-			SQL;
-
-		$this->db->run($sql);
+		$this->db->run(self::CREATE_TABLE);
 		$files = glob($this->app->path(self::DIR . '/*.sql'));
 		$ran = 0;
 
@@ -51,7 +52,6 @@ final readonly class RunMigrations
 
 			$sql = (string) file_get_contents($file);
 
-			// Recording an empty file would skip it forever, even after it's filled in.
 			if (trim($sql) === '') {
 				$console->line("Skipped {$name}, it's empty");
 				continue;

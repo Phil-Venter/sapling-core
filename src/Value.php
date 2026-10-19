@@ -112,8 +112,8 @@ final readonly class Value
 	}
 
 	/**
-	 * Each item of an array as a Value, under its key, as in foreach ($value->items() as $item). Anything
-	 * that isn't an array gives [].
+	 * Each item of an array as a Value, under its key, as in foreach ($value->items() as $item). Anything that isn't
+	 * an array gives [].
 	 *
 	 * @return array<array-key, self>
 	 */
@@ -123,8 +123,8 @@ final readonly class Value
 	}
 
 	/**
-	 * A key of an array or a public property of an object, and more keys read deeper, as in
-	 * get('address', 'city')->string(). A missing key gives an empty Value, and no key gives this Value.
+	 * A key of an array or a public property of an object, and more keys read deeper, as in get('address',
+	 * 'city')->string(). A missing key gives an empty Value, and no key gives this Value.
 	 */
 	public function get(string|int ...$keys): self
 	{
@@ -137,7 +137,6 @@ final readonly class Value
 		return $value;
 	}
 
-	// A backed enum reads as its value.
 	private function plain(): mixed
 	{
 		if ($this->raw instanceof \BackedEnum) {

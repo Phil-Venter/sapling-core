@@ -30,19 +30,37 @@ test('an option without =value, or a flag with one, throws rather than giving th
 test('every word after -- is an argument, even one that starts with dashes', function () {
 	$console = new Console(['bin/console', 'notes:add', 'first', '--', '--not-a-flag', '--x=1']);
 
-	expect($console->arg(0)->string())->toBe('first');
+	expect($console->args)->toBe(['first', '--not-a-flag', '--x=1']);
 	expect($console->arg(1)->string())->toBe('--not-a-flag');
-	expect($console->arg(2)->string())->toBe('--x=1');
 	expect($console->flag('not-a-flag'))->toBeFalse();
 });
 
 test('ask() prints the question and reads the trimmed answer, and a blank answer or no input is empty', function (
 	string $input,
-	string $output,
+	?string $answer,
+	string $printed,
 ) {
-	expect(runConsole(['hello'], input: $input)['stdout'])->toBe($output);
+	$answers = fopen('php://memory', 'r+');
+	fwrite($answers, $input);
+	rewind($answers);
+	$console = new Console(['bin/console', 'notes:prune'], $answers);
+
+	ob_start();
+	$value = $console->ask('Delete them?');
+
+	expect(ob_get_clean())->toBe($printed);
+	expect($value->raw)->toBe($answer);
 })->with([
-	'an answer' => ["  Ann \n", "Name? Hello Ann.\n"],
-	'a blank answer' => ["\n", "Name? Hello nobody.\n"],
-	'the end of input, which ends the line' => ['', "Name? \nHello nobody.\n"],
+	'an answer' => ["  yes \n", 'yes', 'Delete them? '],
+	'a blank answer' => ["\n", null, 'Delete them? '],
+	'the end of input, which ends the line' => ['', null, "Delete them? \n"],
 ]);
+
+test('table() lines up columns by characters, leaves no trailing spaces, and prints an empty row as a blank line', function () {
+	$console = new Console(['bin/console', 'cafes:list']);
+
+	ob_start();
+	$console->table([['Café', 'open'], ['Bar', 'closed'], [], ['Diner', 'open']]);
+
+	expect(ob_get_clean())->toBe("Café   open\nBar    closed\n\nDiner  open\n");
+});

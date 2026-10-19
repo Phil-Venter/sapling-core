@@ -57,10 +57,13 @@ test('repeated headers come back as a list', function () {
 	]);
 });
 
-test('a 404 is a response, but a failed connection throws', function () {
-	expect($this->client->send(new ClientRequest('GET', serverUrl('/nowhere')))->status)->toBe(404);
-	expect(fn() => new HttpClient(timeout: 2)->send(new ClientRequest('GET', 'http://127.0.0.1:1/')))
-		->toThrow(RuntimeException::class, 'GET http://127.0.0.1:1/ failed:');
+test('a 404 is a reply, and a failed connection is a reply with status 0 and the error as its body', function () {
+	$missing = $this->client->send(new ClientRequest('GET', serverUrl('/nowhere')));
+	$down = new HttpClient(timeout: 2)->send(new ClientRequest('GET', 'http://127.0.0.1:1/'));
+
+	expect($missing->status)->toBe(404);
+	expect($down->status)->toBe(0);
+	expect($down->body)->toStartWith('GET http://127.0.0.1:1/ failed:');
 });
 
 test('a PUT without a body still says its length is 0, since some servers refuse it otherwise', function () {
@@ -79,8 +82,10 @@ test('a body with no Content-Type of its own goes without one, rather than label
 });
 
 test('only http and https are allowed, so a file:// URL is refused', function () {
-	expect(fn() => $this->client->send(new ClientRequest('GET', 'file:///etc/hosts')))
-		->toThrow(RuntimeException::class, 'GET file:///etc/hosts failed:');
+	$reply = $this->client->send(new ClientRequest('GET', 'file:///etc/hosts'));
+
+	expect($reply->status)->toBe(0);
+	expect($reply->body)->toStartWith('GET file:///etc/hosts failed:');
 });
 
 test('sendAll() returns the replies in order, under the keys of the requests', function () {
@@ -94,9 +99,22 @@ test('sendAll() returns the replies in order, under the keys of the requests', f
 	expect($replies['echo']->data()->get('name')->string())->toBe('Ann');
 });
 
-test('sendAll() throws for a failed connection, naming the request', function () {
-	$requests = [new ClientRequest('GET', serverUrl('/notes')), new ClientRequest('GET', 'http://127.0.0.1:1/')];
+test('sendAll() queues requests past its six connections to one host, and answers every one', function () {
+	$requests = array_fill(0, 20, new ClientRequest('GET', serverUrl('/notes')));
 
-	expect(fn() => new HttpClient(timeout: 2)->sendAll($requests))
-		->toThrow(RuntimeException::class, 'GET http://127.0.0.1:1/ failed:');
+	$replies = $this->client->sendAll($requests);
+
+	expect($replies)->toHaveCount(20);
+	expect(array_unique(array_map(fn($reply) => $reply->body, $replies)))->toBe(['notes']);
+});
+
+test('sendAll() returns a failed connection as status 0 with the error, and keeps the other replies', function () {
+	$replies = new HttpClient(timeout: 2)->sendAll([
+		'listed' => new ClientRequest('GET', serverUrl('/notes')),
+		'down' => new ClientRequest('GET', 'http://127.0.0.1:1/'),
+	]);
+
+	expect($replies['listed']->body)->toBe('notes');
+	expect($replies['down']->status)->toBe(0);
+	expect($replies['down']->body)->toStartWith('GET http://127.0.0.1:1/ failed:');
 });

@@ -49,7 +49,6 @@ final readonly class SecurityHeaders
 			'Content-Security-Policy' => implode('; ', $policy),
 		];
 
-		// A header the action set wins, so one page can have its own policy.
 		foreach ($headers as $name => $value) {
 			if ($response->header($name)->raw !== null) {
 				continue;

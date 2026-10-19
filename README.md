@@ -1,6 +1,8 @@
 # Sapling
 
-Sapling is a small PHP framework. Each action or command is one class in one file, and an attribute on the class says where it lives. It has no runtime dependencies and about 2,300 lines of code.
+Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies, and its core is about 2,300 lines of code, so you can read the whole thing in a day.
+
+Each action or command is one class in one file, with an attribute that declares its route or command name:
 
 ```php
 #[Route('GET', '/ping')]
@@ -62,11 +64,11 @@ Serve it with `php -S localhost:8080 app.php`, and run its commands with `php ap
 
 ## Why Sapling
 
-I like Symfony, Laravel and Slim, and I use them, but they're too much for the proofs of concept, one-off projects and slapped-together internal tools I keep building. There's a lot of dogma and ceremony in them that those projects don't need.
+I like Symfony, Laravel and Slim, and I use them, but they're too much for the prototypes, one-off projects and slapped-together internal tools I keep building. There's a lot of dogma and ceremony in them that those projects don't need.
 
 So I've been fiddling with my own micro frameworks since early 2023, and Sapling is roughly my tenth. Most of the earlier ones went one of two ways. Some were quick experiments I never came back to. The rest got too clever, with interfaces nobody needed, a template compiler, a pile of global helpers, or packages and a build step just to boot.
 
-Sapling keeps the parts that worked and drops the rest. You can read the whole core in a day.
+Sapling keeps the parts that worked and drops the rest.
 
 ## How Sapling thinks
 

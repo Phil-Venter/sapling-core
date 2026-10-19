@@ -60,7 +60,7 @@ final class Data
 	public static function toXml(array $data, string $root = 'root'): string
 	{
 		if ($data !== [] && array_is_list($data)) {
-			throw new \InvalidArgumentException('An XML document has one root element, so toXml() needs keys, not a list');
+			throw new \InvalidArgumentException('toXml() needs keys, not a list, for its one root element');
 		}
 
 		$writer = new \XMLWriter();
@@ -126,7 +126,6 @@ final class Data
 
 	private static function writeElement(\XMLWriter $writer, string $name, mixed $value): void
 	{
-		// So an empty list becomes an empty element instead of vanishing.
 		if (is_array($value) && $value !== [] && array_is_list($value)) {
 			foreach ($value as $item) {
 				self::writeElement($writer, $name, $item);

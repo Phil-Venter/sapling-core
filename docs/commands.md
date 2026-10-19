@@ -88,6 +88,13 @@ $email = $console->arg(0)->string();        // ann@example.com
 $role = $console->arg(1)->string('member'); // member
 ```
 
+`$console->args` holds every argument as a list of strings, so a name typed without quotes can be joined back together:
+
+```php
+// php bin/console users:find Ann Smith
+$name = implode(' ', $console->args); // Ann Smith
+```
+
 ### Options and flags
 
 `option()` also returns a `Value`, while `flag()` says whether the flag was given:
@@ -113,7 +120,17 @@ if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
 }
 ```
 
-Without a terminal, such as under cron, standard input is usually empty, so every answer is blank. Read answers with a safe default, or skip the question when `stream_isatty(STDIN)` is false.
+Without a terminal, such as under cron, every answer is blank. Read answers with a safe default, or skip the question when `stream_isatty(STDIN)` is false.
+
+To test a command that asks, give `Console` its answers as a stream and run it with `$app->runCommand()`:
+
+```php
+$answers = fopen('php://memory', 'r+');
+fwrite($answers, "yes\n");
+rewind($answers);
+
+$code = $app->runCommand(new Console(['bin/console', 'notes:prune'], $answers));
+```
 
 ## Output and exit codes
 
@@ -122,6 +139,15 @@ Without a terminal, such as under cron, standard input is usually empty, so ever
 ```php
 $console->line("Deleted {$deleted} notes.");
 $console->error('No such user.');
+```
+
+`table()` prints rows as columns, lined up two spaces apart. An empty row prints a blank line:
+
+```php
+$console->table([
+    ['ann@example.com', 'admin'],
+    ['bob@example.com', 'member'],
+]);
 ```
 
 Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws prints the error and exits with 1. It's also logged when `error_log` is set, such as to a file or `syslog`. Without it, PHP's log is the terminal.
@@ -157,6 +183,7 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `commands:list` | Lists every command, grouped by the part of the name before the colon |
 | `routes:list` | Lists every route and the class that answers it |
 | `migrations:run` | Runs new migrations, see [database](database.md#running-migrations) |
+| `migrations:list` | Lists every migration and when it ran, see [database](database.md#checking-what-has-run) |
 | `migrations:new <name>` | Creates an empty migration named by the UTC time, see [database](database.md#creating-a-migration) |
 
 ## Method reference
@@ -168,8 +195,11 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `flag($name)` | Returns whether `--name` was given |
 | `ask($question)` | Prints `$question` and returns the answer as a `Value`. A blank answer, or the end of input, is an empty `Value` |
 | `line($text = '')` | Prints a line to standard output |
+| `table($rows)` | Prints a list of rows as lined-up columns. An empty row prints a blank line |
 | `error($text)` | Prints a line to standard error |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
 | `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
+| `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as tests do |
 | `$console->command` | The command name |
+| `$console->args` | Every argument after the command name, as a list of strings |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |

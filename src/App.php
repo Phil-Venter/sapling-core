@@ -10,6 +10,7 @@ use Sapling\Attributes\Middleware;
 use Sapling\Attributes\Route;
 use Sapling\Cli\CommandList;
 use Sapling\Cli\Commands\ListCommands;
+use Sapling\Cli\Commands\ListMigrations;
 use Sapling\Cli\Commands\ListRoutes;
 use Sapling\Cli\Commands\NewMigration;
 use Sapling\Cli\Commands\RunMigrations;
@@ -45,8 +46,8 @@ final class App
 	private array $trustedProxies = [];
 
 	/**
-	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build an app from
-	 * its config.
+	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build
+	 * an app from its config.
 	 */
 	public function __construct(public readonly string $basePath, public readonly bool $debug = false)
 	{
@@ -67,8 +68,8 @@ final class App
 	}
 
 	/**
-	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders, Cors,
-	 * Csrf and the migrations commands.
+	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders,
+	 * Cors, Csrf and the migrations commands.
 	 *
 	 * @throws \DateInvalidTimeZoneException When the timezone setting isn't a known timezone.
 	 */
@@ -82,22 +83,20 @@ final class App
 			date_default_timezone_set($zone->getName());
 		}
 
-		$app->container->set(Config::class, $config);
-		$app->container->set(Crypto::class, fn(): Crypto => new Crypto($config->get('app_key')));
-		$app->container->set(Session::class, fn(): Session => new Session($config->get('session_lifetime', 0)));
-
-		$app->container->set(Cors::class, function () use ($config): Cors {
-			$trusted = $config->get('cors_origins', []);
-			$creds = $config->get('cors_credentials', false);
-
-			return new Cors($trusted, $creds);
-		});
-
 		$app->trustedProxies = $config->get('trusted_proxies', []);
+
+		$app->container->set(Config::class, $config);
+		$app->container->set(Session::class, fn(): Session => new Session($config->get('session_lifetime', 0)));
+		$app->container->set(Crypto::class, fn(): Crypto => new Crypto($config->get('app_key')));
 
 		$app->container->set(
 			SecurityHeaders::class,
 			fn(): SecurityHeaders => new SecurityHeaders($config->get('content_policy', [])),
+		);
+
+		$app->container->set(
+			Cors::class,
+			fn(): Cors => new Cors($config->get('cors_origins', []), $config->get('cors_credentials', false)),
 		);
 
 		$app->container->set(Csrf::class, function () use ($config): Csrf {
@@ -108,6 +107,7 @@ final class App
 
 		$app->commands->add(NewMigration::NAME, NewMigration::class, NewMigration::DESCRIPTION);
 		$app->commands->add(RunMigrations::NAME, RunMigrations::class, RunMigrations::DESCRIPTION);
+		$app->commands->add(ListMigrations::NAME, ListMigrations::class, ListMigrations::DESCRIPTION);
 
 		return $app;
 	}
@@ -131,7 +131,6 @@ final class App
 			$name = $file->getBasename('.php');
 			$first = substr($name, 0, 1);
 
-			// Only a capital and no dot make a class file, so helpers.php and _nav.tmpl.php are skipped.
 			if ($file->getExtension() !== 'php' || !ctype_upper($first) || str_contains($name, '.')) {
 				continue;
 			}
@@ -202,7 +201,6 @@ final class App
 		$request = Request::fromGlobals($this->trustedProxies);
 		$response = $this->handle($request);
 
-		// HEAD gets the headers and no body, so a download isn't read for nothing.
 		$response->send(body: $request->method !== 'HEAD');
 	}
 
@@ -269,12 +267,10 @@ final class App
 
 			return $command($console);
 		} catch (UsageException $e) {
-			// A usage mistake, such as --days 7, needs its message, not a trace.
 			$console->error($e->getMessage());
 
 			return Console::FAILURE;
 		} catch (\Throwable $e) {
-			// Without an error_log file, the log is this terminal, which gets the full error below.
 			if (ini_get('error_log') !== '') {
 				new CrashLog($this->basePath)->write("command {$name}", $e);
 			}
@@ -380,7 +376,6 @@ final class App
 				$handler = $this->resolve($this->errorHandler);
 				$response = $handler($e, $request);
 
-				// So a handler can't lose them, such as Allow on a 405. Its own headers win.
 				foreach ($e->headers as $name => $value) {
 					if ($response->header($name)->raw !== null) {
 						continue;

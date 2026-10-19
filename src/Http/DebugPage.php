@@ -76,11 +76,12 @@ final class DebugPage
 		}
 
 		$lines = file($file, FILE_IGNORE_NEW_LINES);
-		$html = '';
 
 		if ($lines === false) {
 			return '';
 		}
+
+		$html = '';
 
 		for ($number = max(1, $line - 5); $number <= min(count($lines), $line + 5); $number++) {
 			$text = self::e(sprintf('%4d  %s', $number, $lines[$number - 1] ?? ''));

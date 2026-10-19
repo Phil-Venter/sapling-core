@@ -132,7 +132,7 @@ To loosen the policy, set `content_policy` in `config.php`. Each directive repla
 
 `Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
 
-Scripts and servers send neither header, so their requests pass. A request with neither header is still refused when it carries the session cookie, since that's what a forged browser request looks like. Sites listed in `cors_origins` may write too.
+Scripts and servers send neither header, so their requests pass. A request with neither header but with the session cookie is refused. It could be a forged request from a browser too old to send either header. Sites listed in `cors_origins` may write too.
 
 > [!NOTE]
 > Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write. A form on a subdomain is same-site but not same-origin, so list the subdomain in `cors_origins`.

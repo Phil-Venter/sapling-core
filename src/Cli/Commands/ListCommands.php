@@ -21,26 +21,24 @@ final readonly class ListCommands
 	 */
 	public function __invoke(Console $console): int
 	{
-		$commands = $this->commands->all();
-		$width = 0;
-
-		foreach (array_keys($commands) as $name) {
-			$width = max($width, strlen($name));
-		}
-
-		$console->line('Commands:');
+		$rows = [];
 		$previous = null;
 
-		foreach ($commands as $name => $command) {
+		foreach ($this->commands->all() as $name => $command) {
 			$domain = strstr($name, ':', true);
 
 			if ($previous !== null && $domain !== $previous) {
-				$console->line();
+				$rows[] = [];
 			}
 
 			$previous = $domain;
-			$console->line('  ' . str_pad($name, $width) . '  ' . $command['description']);
+
+			// The empty first column indents each command by the gap between columns.
+			$rows[] = ['', $name, $command['description']];
 		}
+
+		$console->line('Commands:');
+		$console->table($rows);
 
 		return Console::SUCCESS;
 	}

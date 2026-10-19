@@ -8,6 +8,7 @@
 - [Sending requests at once](#sending-requests-at-once)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
+- [Retrying a request](#retrying-a-request)
 - [Caching replies](#caching-replies)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
 - [Method reference](#method-reference)
@@ -71,7 +72,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 ]);
 ```
 
-`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. A failed connection throws after the other requests finish, and names the request.
+`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A list of 1,000 URLs can't flood one service. A failed connection comes back with status 0, as from `send()`, so the other replies aren't lost.
 
 ## Reading the reply
 
@@ -89,7 +90,7 @@ $retryAfter = $reply->header('Retry-After')->int(60);
 
 ### Errors
 
-A 404 or a 500 from the other service is still a normal reply. Only a failed connection or a timeout throws a `RuntimeException`, so check the status before using the data:
+A 404 or a 500 from the other service is still a normal reply. So is a connection that fails or times out, with status 0 and the error as its body. Check the status before using the data:
 
 ```php
 if ($reply->status !== 200) {
@@ -98,6 +99,34 @@ if ($reply->status !== 200) {
     return Response::text('The forecast is unavailable.', 503);
 }
 ```
+
+## Retrying a request
+
+`HttpClient` sends each request once. Whether a request is safe to repeat, and how long someone can wait for it, depends on the request, so retrying is up to your app. Retry only requests that change nothing, such as a GET, and keep retries out of pages a visitor is waiting for.
+
+This function tries a GET up to 3 times, waiting 1 second and then 2, when the connection fails or the service answers 429, 502, 503 or 504:
+
+```php
+function fetch(HttpClient $http, string $url, int $tries = 3): ClientResponse
+{
+    $delay = 1;
+
+    for ($try = 1; $try < $tries; $try++) {
+        $reply = $http->send(new ClientRequest('GET', $url));
+
+        if (!in_array($reply->status, [0, 429, 502, 503, 504], true)) {
+            return $reply;
+        }
+
+        sleep($delay);
+        $delay *= 2;
+    }
+
+    return $http->send(new ClientRequest('GET', $url));
+}
+```
+
+The last try returns its reply, whatever its status.
 
 ## Caching replies
 
@@ -171,7 +200,7 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 
 | Method | What it does |
 | --- | --- |
-| `send($request)` | Sends a `ClientRequest` and returns the reply as a `ClientResponse` |
+| `send($request)` | Sends a `ClientRequest` and returns the reply as a `ClientResponse`. A failed connection comes back as status 0, with the error as its body |
 | `sendAll($requests)` | Sends `ClientRequest`s at once and returns their replies under the same keys |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
 | `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |

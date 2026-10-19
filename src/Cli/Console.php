@@ -17,8 +17,8 @@ final readonly class Console
 
 	public string $command;
 
-	/** @var list<string> */
-	private array $args;
+	/** @var list<string> Every argument after the command, in order, including those after --. */
+	public array $args;
 
 	/** @var array<string, string> */
 	private array $options;
@@ -26,13 +26,17 @@ final readonly class Console
 	/** @var array<string, true> */
 	private array $flags;
 
+	/** @var resource|null */
+	private mixed $input;
+
 	/**
 	 * Reads argv. The first word is the command, --name=value is an option, --name is a flag and the rest are
-	 * arguments, as is every word after --.
+	 * arguments, as is every word after --. ask() reads from standard input, unless a test passes a stream of answers.
 	 *
 	 * @param list<string> $argv
+	 * @param resource|null $input
 	 */
-	public function __construct(array $argv)
+	public function __construct(array $argv, mixed $input = null)
 	{
 		$command = '';
 		$args = [];
@@ -71,6 +75,7 @@ final readonly class Console
 		$this->args = [...$args, ...$literal];
 		$this->options = $options;
 		$this->flags = $flags;
+		$this->input = $input;
 	}
 
 	/**
@@ -88,7 +93,6 @@ final readonly class Console
 	 */
 	public function option(string $name): Value
 	{
-		// --days 7 would otherwise give the default.
 		if (array_key_exists($name, $this->flags)) {
 			throw new UsageException("--{$name} needs a value, written --{$name}=value");
 		}
@@ -117,7 +121,7 @@ final readonly class Console
 	public function ask(string $question): Value
 	{
 		echo $question, ' ';
-		$line = fgets(STDIN);
+		$line = fgets($this->input ?? STDIN);
 
 		// At the end of input, such as after Ctrl+D, the cursor is still after the question.
 		if ($line === false) {
@@ -133,6 +137,41 @@ final readonly class Console
 		}
 
 		return new Value($answer);
+	}
+
+	/**
+	 * Prints rows as columns, lined up and two spaces apart. An empty row prints a blank line.
+	 *
+	 * @param list<list<string>> $rows
+	 */
+	public function table(array $rows): void
+	{
+		$widths = [];
+
+		foreach ($rows as $row) {
+			foreach ($row as $column => $cell) {
+				// Characters, not bytes, so é takes one column. PCRE counts them without needing mbstring.
+				$widths[$column] = max($widths[$column] ?? 0, (int) preg_match_all('/./su', $cell));
+			}
+		}
+
+		foreach ($rows as $row) {
+			$last = array_key_last($row);
+			$cells = [];
+
+			foreach ($row as $column => $cell) {
+				// The last cell isn't padded, so no line ends in spaces.
+				if ($column === $last) {
+					$cells[] = $cell;
+					continue;
+				}
+
+				$padding = ($widths[$column] ?? 0) - (int) preg_match_all('/./su', $cell);
+				$cells[] = $cell . str_repeat(' ', max(0, $padding));
+			}
+
+			$this->line(implode('  ', $cells));
+		}
 	}
 
 	/**

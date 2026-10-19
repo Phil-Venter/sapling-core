@@ -24,24 +24,15 @@ final readonly class ListRoutes
 	public function __invoke(Console $console): int
 	{
 		$routes = $this->router->all();
-		$methodWidth = 0;
-		$pathWidth = 0;
-
-		foreach ($routes as $route) {
-			$methodWidth = max($methodWidth, strlen($route['method']));
-			$pathWidth = max($pathWidth, strlen($route['path']));
-		}
-
 		usort($routes, $this->byPathThenMethod(...));
 
+		$rows = [];
+
 		foreach ($routes as $route) {
-			$console->line(sprintf(
-				"%-{$methodWidth}s  %-{$pathWidth}s  %s",
-				$route['method'],
-				$route['path'],
-				$route['action'],
-			));
+			$rows[] = [$route['method'], $route['path'], $route['action']];
 		}
+
+		$console->table($rows);
 
 		return Console::SUCCESS;
 	}

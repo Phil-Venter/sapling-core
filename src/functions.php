@@ -78,7 +78,6 @@ if (!function_exists('blank')) {
 	 */
 	function blank(mixed $value): bool
 	{
-		// A Value is an object, so it would never look blank.
 		if ($value instanceof Sapling\Value) {
 			throw new LogicException('blank() needs a typed value, such as $value->string(), not a Value');
 		}
@@ -109,6 +108,7 @@ if (!function_exists('datetime')) {
 		}
 
 		$zone = $timezone ?? date_default_timezone_get();
+
 		if (is_string($zone)) {
 			$zone = new DateTimeZone($zone);
 		}

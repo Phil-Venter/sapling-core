@@ -13,34 +13,35 @@ final readonly class HttpClient
 	public function __construct(private int $timeout = 30) {}
 
 	/**
-	 * Sends a request and returns the reply, following redirects for GET and HEAD.
-	 *
-	 * @throws \RuntimeException When the connection fails or times out. An error status is a normal reply.
+	 * Sends a request and returns the reply, following redirects for GET and HEAD. An error status is a normal reply,
+	 * and a connection that fails or times out comes back with status 0 and the error as its body.
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{
 		$handle = $this->handle($request);
 		$content = curl_exec($handle);
 
-		if (!is_string($content)) {
-			throw new \RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
+		if (curl_errno($handle) !== 0) {
+			return $this->failure($request, $handle);
 		}
 
-		return $this->response($handle, $content);
+		return $this->response($handle, (string) $content);
 	}
 
 	/**
-	 * Sends the requests at once and returns their replies under the same keys.
+	 * Sends the requests at once and returns their replies under the same keys. A failed connection comes back with
+	 * status 0, as from send(), so one failure doesn't lose the other replies.
 	 *
 	 * @template K of array-key
 	 * @param array<K, ClientRequest> $requests
 	 * @return array<K, ClientResponse>
-	 * @throws \RuntimeException When a connection fails or times out, after every request has finished.
 	 */
 	public function sendAll(array $requests): array
 	{
 		$multi = curl_multi_init();
 		$pairs = [];
+
+		curl_multi_setopt($multi, CURLMOPT_MAX_HOST_CONNECTIONS, 6);
 
 		foreach ($requests as $key => $request) {
 			$handle = $this->handle($request);
@@ -67,7 +68,8 @@ final readonly class HttpClient
 
 		foreach ($pairs as $key => [$request, $handle]) {
 			if (curl_errno($handle) !== 0) {
-				throw new \RuntimeException("{$request->method} {$request->url} failed: " . curl_error($handle));
+				$responses[$key] = $this->failure($request, $handle);
+				continue;
 			}
 
 			$responses[$key] = $this->response($handle, (string) curl_multi_getcontent($handle));
@@ -78,14 +80,14 @@ final readonly class HttpClient
 
 	private function handle(ClientRequest $request): \CurlHandle
 	{
-		$lines = [];
-
 		$headers = $request->headers;
 
 		// curl labels a string body as a form when it has no type, and an empty header line stops it.
 		if (is_string($request->body) && !array_key_exists('content-type', $headers)) {
 			$headers['content-type'] = '';
 		}
+
+		$lines = [];
 
 		foreach ($headers as $name => $value) {
 			$lines[] = "{$name}: {$value}";
@@ -103,8 +105,7 @@ final readonly class HttpClient
 			CURLOPT_NOBODY => $request->method === 'HEAD',
 			CURLOPT_FOLLOWLOCATION => in_array($request->method, ['GET', 'HEAD'], true),
 			CURLOPT_MAXREDIRS => 5,
-			// So a URL that came from a visitor can't read files or reach other protocols. Not the _STR options, which
-			// need libcurl 7.85, newer than Ubuntu 22.04 has.
+			// Not the _STR options, which need libcurl 7.85, newer than Ubuntu 22.04 has.
 			CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 			CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 		]);
@@ -121,6 +122,13 @@ final readonly class HttpClient
 		}
 
 		return $handle;
+	}
+
+	private function failure(ClientRequest $request, \CurlHandle $handle): ClientResponse
+	{
+		$error = "{$request->method} {$request->url} failed: " . curl_error($handle);
+
+		return new ClientResponse($error, 0, []);
 	}
 
 	private function response(\CurlHandle $handle, string $content): ClientResponse
@@ -145,7 +153,6 @@ final readonly class HttpClient
 
 		$headers = [];
 
-		// A header sent once is a string, and one sent more than once a list.
 		foreach ($received as $name => $values) {
 			if (count($values) === 1) {
 				$values = $values[0];

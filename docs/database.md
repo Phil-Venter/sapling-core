@@ -12,6 +12,7 @@
 - [Migrations](#migrations)
     - [Creating a migration](#creating-a-migration)
     - [Running migrations](#running-migrations)
+    - [Checking what has run](#checking-what-has-run)
 - [Using PDO directly](#using-pdo-directly)
 - [Method reference](#method-reference)
 
@@ -159,7 +160,7 @@ Each schema change is a migration, a plain SQL file in `database/migrations/`, a
 ### Creating a migration
 
 ```sh
-php bin/console migrations:new "add notes"
+php bin/console migrations:new add notes
 ```
 
 This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort correctly too.
@@ -174,6 +175,19 @@ This runs the files that haven't run yet, in name order and each in its own tran
 
 > [!NOTE]
 > MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.
+
+### Checking what has run
+
+After a deploy, `migrations:list` shows when each file ran, or that it's still pending:
+
+```sh
+php bin/console migrations:list
+```
+
+```text
+20261012093000-add_notes.sql  ran 2026-10-12 09:31:04 UTC
+20261019112938-add_tags.sql   pending
+```
 
 ## Using PDO directly
 

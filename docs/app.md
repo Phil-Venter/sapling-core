@@ -55,7 +55,7 @@ return $app;
 - `app_key` is passed to [`Crypto`](encryption.md), `content_policy` to [`SecurityHeaders`](middleware.md#security-headers), and the `cors_*` settings to [`Cors` and `Csrf`](middleware.md).
 - `trusted_proxies` lists the proxies whose `X-Forwarded-For` gives [`$request->ip`](requests.md#accessing-the-request).
 
-It also adds the `migrations:run` and `migrations:new` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` and `routes:list` commands.
+It also adds the `migrations:new`, `migrations:run` and `migrations:list` commands. Every app, booted or not, has [templates](templates.md) from `views/` and the `commands:list` and `routes:list` commands.
 
 ## Running the app
 

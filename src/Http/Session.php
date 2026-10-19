@@ -85,11 +85,7 @@ final class Session
 	{
 		$this->start();
 		$_SESSION = [];
-
-		$cookie = session_get_cookie_params();
-		unset($cookie['lifetime']);
-		setcookie((string) session_name(), '', ['expires' => 1, ...$cookie]);
-
+		$this->sendCookie('', 1);
 		session_destroy();
 		$this->started = false;
 		$this->flash = [];
@@ -123,16 +119,19 @@ final class Session
 		$kept = ($_COOKIE[(string) session_name()] ?? null) === session_id();
 
 		if ($this->lifetime > 0 && $kept) {
-			$cookie = session_get_cookie_params();
-			unset($cookie['lifetime']);
-			setcookie((string) session_name(), (string) session_id(), [
-				'expires' => time() + $this->lifetime,
-				...$cookie,
-			]);
+			$this->sendCookie((string) session_id(), time() + $this->lifetime);
 		}
 
 		$this->started = true;
 		$this->flash = $_SESSION[self::FLASH] ?? [];
 		unset($_SESSION[self::FLASH]);
+	}
+
+	// The cookie's path, domain and flags as session_start() set them, with its own expiry.
+	private function sendCookie(string $id, int $expires): void
+	{
+		$cookie = session_get_cookie_params();
+		unset($cookie['lifetime']);
+		setcookie((string) session_name(), $id, ['expires' => $expires, ...$cookie]);
 	}
 }
