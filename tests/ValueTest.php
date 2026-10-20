@@ -1,5 +1,7 @@
 <?php
 
+use Sapling\Tests\Fixtures\Filter;
+use Sapling\Tests\Fixtures\Priority;
 use Sapling\Value;
 
 test('string() reads strings, numbers and Stringable objects, and gives the default for the rest', function (
@@ -56,10 +58,27 @@ test('bool() reads the usual words for true and false', function (mixed $value, 
 	'an array' => [['1'], true],
 ]);
 
-test('array() takes arrays only, and $raw holds the value as it arrived', function () {
-	expect(new Value(['a', 'b'])->array())->toBe(['a', 'b']);
-	expect(new Value('a')->array(['default']))->toBe(['default']);
-	expect(new Value(null)->array())->toBe([]);
+test('enum() reads the case with the value, and gives the default for anything else', function (
+	mixed $value,
+	BackedEnum $default,
+	BackedEnum $expected,
+) {
+	expect(new Value($value)->enum($default))->toBe($expected);
+})->with([
+	'a string' => ['open', Filter::All, Filter::Open],
+	'an empty string' => ['', Filter::Open, Filter::All],
+	'missing, with a case for an empty string' => [null, Filter::Open, Filter::Open],
+	'an array' => [['open'], Filter::All, Filter::All],
+	'a numeric string' => ['1', Priority::Low, Priority::High],
+	'no such case' => ['7', Priority::Low, Priority::Low],
+	'text, with a case for 0' => ['abc', Priority::High, Priority::High],
+	'missing, with a case for 0' => [null, Priority::High, Priority::High],
+]);
+
+test('rawArray() takes arrays only, and $raw holds the value as it arrived', function () {
+	expect(new Value(['a', 'b'])->rawArray())->toBe(['a', 'b']);
+	expect(new Value('a')->rawArray(['default']))->toBe(['default']);
+	expect(new Value(null)->rawArray())->toBe([]);
 	expect(new Value(['a'])->raw)->toBe(['a']);
 	expect(new Value(null)->raw)->toBeNull();
 });
@@ -82,7 +101,7 @@ test('a Value wrapped in another is unwrapped, so wrapping twice changes nothing
 test('get() reads a key inside an array, no key gives the same value, and anything else gives an empty Value', function () {
 	$address = new Value(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 
-	expect($address->get()->array())->toBe(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
+	expect($address->get()->rawArray())->toBe(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 	expect($address->get('city')->string())->toBe('Cape Town');
 	expect($address->get('lines')->get(0)->string())->toBe('1 Main Road');
 	expect($address->get('lines', 0)->string())->toBe('1 Main Road');
@@ -118,9 +137,9 @@ test('get() reads an object\'s public properties, never its private ones', funct
 });
 
 test('a backed enum reads as its value', function () {
-	$high = new Value(Sapling\Tests\Fixtures\Priority::High);
+	$high = new Value(Priority::High);
 
 	expect($high->int())->toBe(1);
 	expect($high->string())->toBe('1');
-	expect($high->raw)->toBe(Sapling\Tests\Fixtures\Priority::High);
+	expect($high->raw)->toBe(Priority::High);
 });

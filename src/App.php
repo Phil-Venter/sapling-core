@@ -335,9 +335,7 @@ final class App
 			return $handler($request);
 		};
 
-		$run = $this->pipeline($route['middleware'], $action);
-
-		return $run($request);
+		return $this->pipeline($route['middleware'], $action)($request);
 	}
 
 	/**

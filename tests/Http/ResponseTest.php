@@ -78,13 +78,13 @@ test('data() with a name reads one field, and without one the whole body', funct
 	$response = Response::json(['title' => 'Notes', 'count' => 2]);
 
 	expect($response->data('title')->string())->toBe('Notes');
-	expect($response->data()->array())->toBe(['title' => 'Notes', 'count' => 2]);
+	expect($response->data()->rawArray())->toBe(['title' => 'Notes', 'count' => 2]);
 });
 
 test('header() finds a header whatever the case of its name', function () {
 	$reply = new Response('', 200, ['content-type' => 'text/plain', 'set-cookie' => ['a=1', 'b=2']]);
 
 	expect($reply->header('Content-Type')->string())->toBe('text/plain');
-	expect($reply->header('Set-Cookie')->array())->toBe(['a=1', 'b=2']);
+	expect($reply->header('Set-Cookie')->rawArray())->toBe(['a=1', 'b=2']);
 	expect($reply->header('X-Missing')->raw)->toBeNull();
 });

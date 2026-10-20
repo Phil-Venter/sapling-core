@@ -134,7 +134,17 @@ final class DebugPage
 	/** @param array{function: string, line?: int, file?: string, class?: string, type?: string} $frame */
 	private static function fromApp(array $frame, string $root): bool
 	{
-		$files = [$frame['file'] ?? '', self::classFile($frame['class'] ?? ''), self::closureFile($frame['function'])];
+		$files = [$frame['file'] ?? ''];
+		$class = $frame['class'] ?? '';
+		$match = [];
+
+		if (class_exists($class, false)) {
+			$files[] = (string) new \ReflectionClass($class)->getFileName();
+		}
+
+		if (preg_match('/^\{closure:(.+):\d+\}$/', $frame['function'], $match) === 1) {
+			$files[] = $match[1] ?? '';
+		}
 
 		foreach ($files as $file) {
 			if (str_starts_with($file, "{$root}/") && !str_starts_with($file, "{$root}/vendor/")) {
@@ -163,26 +173,6 @@ final class DebugPage
 		$inner = '<div>' . implode('</div><div>', $lines) . '</div>';
 
 		return "<details class=\"vendor\"><summary>{$count} frames</summary>{$inner}</details>";
-	}
-
-	private static function classFile(string $class): string
-	{
-		if (!class_exists($class, false)) {
-			return '';
-		}
-
-		return (string) new \ReflectionClass($class)->getFileName();
-	}
-
-	private static function closureFile(string $function): string
-	{
-		$match = [];
-
-		if (preg_match('/^\{closure:(.+):\d+\}$/', $function, $match) !== 1) {
-			return '';
-		}
-
-		return $match[1] ?? '';
 	}
 
 	private static function relative(string $file, string $root): string

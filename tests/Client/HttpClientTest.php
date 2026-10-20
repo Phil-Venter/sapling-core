@@ -22,7 +22,7 @@ test('send() returns status, lowercased headers and body', function () {
 test('a string body goes as it is with the Content-Type you pass, and data() decodes the reply', function () {
 	$headers = ['X-Test' => 'header value', 'Content-Type' => 'application/json'];
 	$request = new ClientRequest('PUT', serverUrl('/echo/7?q=search'), Data::toJson(['name' => 'Ann']), $headers);
-	$echo = $this->client->send($request)->data()->array();
+	$echo = $this->client->send($request)->data()->rawArray();
 
 	expect($echo)->toMatchArray([
 		'method' => 'PUT',

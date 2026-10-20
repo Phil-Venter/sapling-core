@@ -63,13 +63,13 @@ test('the readers take a path of keys, as Value::get() does', function () {
 	expect($request->query('filter', 'status')->string())->toBe('open');
 	expect($request->data('address', 'city')->string())->toBe('Cape Town');
 	expect($request->cookie('prefs', 'theme')->string())->toBe('dark');
-	expect($request->param()->array())->toBe(['id' => '7']);
+	expect($request->param()->rawArray())->toBe(['id' => '7']);
 });
 
 test('query() without a name gives the whole query string', function () {
 	$request = new Request('GET', '/notes', query: ['page' => '2', 'tag' => 'php']);
 
-	expect($request->query()->array())->toBe(['page' => '2', 'tag' => 'php']);
+	expect($request->query()->rawArray())->toBe(['page' => '2', 'tag' => 'php']);
 });
 
 test('POST _method may switch only to PUT, PATCH or DELETE', function (
@@ -99,7 +99,7 @@ test('data() reads a field as the type asked for, and a crafted array never reac
 	$request = new Request('POST', '/notes', input: ['body' => ['x'], 'tags' => ['a'], 'count' => '3']);
 
 	expect($request->data('body')->string('fallback'))->toBe('fallback');
-	expect($request->data('tags')->array())->toBe(['a']);
+	expect($request->data('tags')->rawArray())->toBe(['a']);
 	expect($request->data('count')->int())->toBe(3);
 	expect($request->data('missing')->raw)->toBeNull();
 });
@@ -135,9 +135,9 @@ test('data() is the whole body, and form fields PHP has already read win over it
 	$text = new Request('PUT', '/x', headers: ['Content-Type' => 'text/plain'], body: 'hello');
 	$posted = new Request('POST', '/x', input: ['a' => '1'], headers: ['Content-Type' => 'multipart/form-data']);
 
-	expect($json->data()->array())->toBe([1, 2]);
+	expect($json->data()->rawArray())->toBe([1, 2]);
 	expect($text->data()->string())->toBe('hello');
-	expect($posted->data()->array())->toBe(['a' => '1']);
+	expect($posted->data()->rawArray())->toBe(['a' => '1']);
 });
 
 test('a broken body is a 400 when an action reads a field', function (string $type, string $body) {

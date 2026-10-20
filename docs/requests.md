@@ -89,13 +89,13 @@ $id = $request->param('id')->int();
 
 ```php
 $search = $request->query('q')->string();
-$tags = $request->query('tags')->array();   // ?tags[]=php&tags[]=sql
+$page = $request->query('page')->int(1);
 ```
 
 Without a name, `query()` gives the whole query string. A link to the next page can then keep the filters:
 
 ```php
-$next = '/notes?' . Data::toForm([...$request->query()->array(), 'page' => $page + 1]);
+$next = '/notes?' . Data::toForm([...$request->query()->rawArray(), 'page' => $page + 1]);
 ```
 
 ### Body fields
@@ -118,7 +118,7 @@ The body is decoded by its `Content-Type` the first time you read it. That inclu
 Without a name, `data()` returns the whole decoded body, for when you need more than one field, such as a JSON list or a SOAP envelope:
 
 ```php
-$items = $request->data()->array();   // a JSON list
+$items = $request->data()->items();   // each item of a JSON list as a Value
 $price = $request->data()->get('soap:Body', 'Price')->string();
 ```
 
@@ -276,7 +276,7 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `Response::error($e)` | Returns plain text with an `HttpException`'s status and message, for an [error handler](errors.md#showing-your-own-error-page) |
 | `new Response($body, $status = 200, $headers = [])` | Returns any other response |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
-| `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `array()` |
+| `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
 | `send($body = true)` | Sends the response. `App::run()` calls it |
 | `$response->status`, `headers`, `body` | Read-only. `withHeader()` returns a copy with a new header |

@@ -49,18 +49,15 @@ final class Request
 	 */
 	public static function fromGlobals(array $trustedProxies = []): self
 	{
-		$headers = self::readHeaders();
-		$body = (string) file_get_contents('php://input');
-
 		return new self(
 			method: self::readMethod(),
 			path: self::readPath(),
 			query: $_GET,
 			input: $_POST,
-			headers: $headers,
+			headers: self::readHeaders(),
 			cookies: $_COOKIE,
 			files: $_FILES,
-			body: $body,
+			body: (string) file_get_contents('php://input'),
 			ip: self::readIp($trustedProxies),
 		);
 	}

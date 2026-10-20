@@ -13,5 +13,5 @@ test('data() reads a field, and goes by the first Content-Type when the service 
 	$reply = new ClientResponse('{"saved":true}', 200, ['content-type' => ['application/json', 'text/plain']]);
 
 	expect($reply->data('saved')->bool())->toBeTrue();
-	expect($reply->data()->array())->toBe(['saved' => true]);
+	expect($reply->data()->rawArray())->toBe(['saved' => true]);
 });

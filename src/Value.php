@@ -17,9 +17,7 @@ final readonly class Value
 	public function __construct(mixed $raw)
 	{
 		if ($raw instanceof self) {
-			$this->raw = $raw->raw;
-
-			return;
+			$raw = $raw->raw;
 		}
 
 		$this->raw = $raw;
@@ -30,21 +28,7 @@ final readonly class Value
 	 */
 	public function string(string $default = ''): string
 	{
-		$value = $this->plain();
-
-		if (is_string($value)) {
-			return $value;
-		}
-
-		if (is_int($value) || is_float($value)) {
-			return (string) $value;
-		}
-
-		if ($value instanceof \Stringable) {
-			return (string) $value;
-		}
-
-		return $default;
+		return $this->text() ?? $default;
 	}
 
 	/**
@@ -81,10 +65,8 @@ final readonly class Value
 	 */
 	public function bool(bool $default = false): bool
 	{
-		$value = $this->plain();
-
-		if (is_bool($value)) {
-			return $value;
+		if (is_bool($this->raw)) {
+			return $this->raw;
 		}
 
 		$bool = $this->filter(FILTER_VALIDATE_BOOL);
@@ -97,12 +79,38 @@ final readonly class Value
 	}
 
 	/**
-	 * The value as an array, as sent by tags[]=a, or the default when it isn't one.
+	 * The case of the default's enum with this value, so enum(Sort::Newest) reads 'oldest' as Sort::Oldest, and anything
+	 * else as Sort::Newest. An int-backed enum reads the value as int() does.
+	 *
+	 * @template T of \BackedEnum
+	 * @param T $default
+	 * @return T
+	 */
+	public function enum(\BackedEnum $default): \BackedEnum
+	{
+		$value = $this->text();
+
+		if (is_int($default->value)) {
+			$value = $this->filter(FILTER_VALIDATE_INT);
+		}
+
+		if (!is_int($value) && !is_string($value)) {
+			return $default;
+		}
+
+		/** @var T|null $case */
+		$case = $default::tryFrom($value);
+
+		return $case ?? $default;
+	}
+
+	/**
+	 * The array as it arrived, with its items unchecked, or the default when it isn't one.
 	 *
 	 * @param array<array-key, mixed> $default
 	 * @return array<array-key, mixed>
 	 */
-	public function array(array $default = []): array
+	public function rawArray(array $default = []): array
 	{
 		if (!is_array($this->raw)) {
 			return $default;
@@ -119,55 +127,53 @@ final readonly class Value
 	 */
 	public function items(): array
 	{
-		return array_map(fn(mixed $item): self => new self($item), $this->array());
+		return array_map(fn(mixed $item): self => new self($item), $this->rawArray());
 	}
 
 	/**
 	 * A key of an array or a public property of an object, and more keys read deeper, as in get('address',
-	 * 'city')->string(). A missing key gives an empty Value, and no key gives this Value.
+	 * 'city')->string(). A missing key gives an empty Value, and no key gives the same value.
 	 */
 	public function get(string|int ...$keys): self
 	{
-		$value = $this;
+		$value = $this->raw;
 
 		foreach ($keys as $key) {
-			$value = $value->child($key);
+			if (is_object($value)) {
+				$value = get_object_vars($value);
+			}
+
+			if (!is_array($value)) {
+				return new self(null);
+			}
+
+			$value = $value[$key] ?? null;
 		}
 
-		return $value;
+		return new self($value);
 	}
 
-	private function plain(): mixed
+	private function text(): ?string
 	{
 		if ($this->raw instanceof \BackedEnum) {
-			return $this->raw->value;
+			return (string) $this->raw->value;
 		}
 
-		return $this->raw;
+		if (is_string($this->raw) || is_int($this->raw) || is_float($this->raw) || $this->raw instanceof \Stringable) {
+			return (string) $this->raw;
+		}
+
+		return null;
 	}
 
-	// An array or null is never a valid number or boolean, and filter_var() would turn true into 1.
 	private function filter(int $filter): int|float|bool|null
 	{
-		$value = $this->plain();
+		$text = $this->text();
 
-		if (!is_string($value) && !is_int($value) && !is_float($value)) {
+		if ($text === null) {
 			return null;
 		}
 
-		return filter_var($value, $filter, FILTER_NULL_ON_FAILURE);
-	}
-
-	private function child(string|int $key): self
-	{
-		if (is_object($this->raw)) {
-			return new self(get_object_vars($this->raw)[$key] ?? null);
-		}
-
-		if (is_array($this->raw)) {
-			return new self($this->raw[$key] ?? null);
-		}
-
-		return new self(null);
+		return filter_var($text, $filter, FILTER_NULL_ON_FAILURE);
 	}
 }

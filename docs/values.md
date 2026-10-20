@@ -76,13 +76,13 @@ $remember = $request->data('remember')->bool();
 
 ### Arrays
 
-`array()` returns an array, such as the list `tags[]=php&tags[]=sql` sends, or the default for anything else:
+`items()` returns each item of an array as a `Value`, under its key, so each item is read like any other value. The list `tags[]=php&tags[]=sql` sends becomes a list of strings:
 
 ```php
-$tags = $request->query('tags')->array();
+$tags = array_map(fn(Value $tag): string => $tag->string(), $request->query('tags')->items());
 ```
 
-`items()` returns each item as a `Value` instead, under its key, for reading a list of records or a map of settings:
+A list of records or a map of settings is read the same way:
 
 ```php
 foreach ($reply->data('items')->items() as $item) {
@@ -92,17 +92,18 @@ foreach ($reply->data('items')->items() as $item) {
 
 Anything that isn't an array gives `[]`.
 
+`rawArray()` returns the array as it arrived, or the default for anything else. Its items aren't checked, so a visitor's `tags[][]=x` puts an array where you expect a string. Use it to pass an array on whole, such as [keeping the filters](requests.md#the-query-string) in a link to the next page.
+
 ### Enums
 
-To read a case of a backed enum, pass the typed value to the enum's `tryFrom()`, and give the default with `??`:
+`enum()` reads a case of a backed enum. Pass the case to fall back on, and a value that matches no case gives it:
 
 ```php
-$sort = Sort::tryFrom($request->query('sort')->string()) ?? Sort::Newest;
-$priority = Priority::tryFrom($request->query('priority')->int(-1)) ?? Priority::Normal;
+$sort = $request->query('sort')->enum(Sort::Newest);
+$priority = $request->query('priority')->enum(Priority::Normal);
 ```
 
-> [!WARNING]
-> For an int-backed enum, give `int()` a default that isn't a case, such as `-1`. Its usual default of `0` would match a case whose value is 0.
+An int-backed enum reads the value as `int()` does, so `'2'` gives the case whose value is 2.
 
 ## Nested data
 
@@ -151,7 +152,8 @@ $port = $settings->get('server', 'port')->int(8080);
 | `int($default = 0)` | A whole number, so `'12'` is 12, while `'12abc'` and `'1.5'` give the default |
 | `float($default = 0.0)` | A number, so `'1.5'` is 1.5 |
 | `bool($default = false)` | `true` for `'1'`, `'true'`, `'on'` and `'yes'`, and `false` for `'0'`, `'false'`, `'off'`, `'no'` and `''` |
-| `array($default = [])` | An array, as sent by `tags[]=a` |
+| `enum($default)` | The case of the default's enum with this value, or the default when no case has it |
 | `items()` | Each item of an array as a `Value`, under its key, or `[]` when it isn't an array |
+| `rawArray($default = [])` | The array as it arrived, with its items unchecked, or the default for anything else |
 | `get(...$keys)` | An array key or public property, as a `Value`. More keys read deeper, and no key gives the same value |
 | `$value->raw` | The value as it arrived, or `null` when it's missing. Read-only |

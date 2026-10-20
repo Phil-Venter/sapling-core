@@ -131,7 +131,7 @@ final class Response
 
 	/**
 	 * A header, ignoring the case of its name, as in header('content-type')->string(). One set to a list, such as
-	 * several Set-Cookie values, is read with array().
+	 * several Set-Cookie values, is read with rawArray().
 	 */
 	public function header(string $name): Value
 	{
@@ -183,22 +183,11 @@ final class Response
 		}
 
 		if ($this->file !== null) {
-			$this->sendFile($this->file);
+			readfile($this->file);
 
 			return;
 		}
 
 		echo $this->body;
-	}
-
-	private function sendFile(string $path): void
-	{
-		$handle = fopen($path, 'rb');
-
-		while (!feof($handle)) {
-			echo fread($handle, 65_536);
-		}
-
-		fclose($handle);
 	}
 }
