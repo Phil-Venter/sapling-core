@@ -104,6 +104,6 @@ Inside your own classes, ask for it in the constructor instead, so the construct
 
 | Method | What it does |
 | --- | --- |
-| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces an earlier `set()` of the same class |
 | `get($class)` | Returns the shared instance of the class, building it the first time |
+| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces an earlier `set()` of the same class |
 | `#[Config($key)]` | Fills a constructor parameter from a setting |

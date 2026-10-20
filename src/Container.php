@@ -16,22 +16,6 @@ final class Container
 	private array $factories = [];
 
 	/**
-	 * Registers an object, or a closure that builds it the first time it's asked for.
-	 */
-	public function set(string $id, object $value): void
-	{
-		unset($this->instances[$id], $this->factories[$id]);
-
-		if ($value instanceof \Closure) {
-			$this->factories[$id] = $value;
-
-			return;
-		}
-
-		$this->instances[$id] = $value;
-	}
-
-	/**
 	 * The one shared instance of the class, built the first time. Constructor arguments come from their types,
 	 * #[Config] or their defaults.
 	 *
@@ -55,6 +39,22 @@ final class Container
 		$this->instances[$id] = $this->build($id);
 
 		return $this->instances[$id];
+	}
+
+	/**
+	 * Registers an object, or a closure that builds it the first time it's asked for.
+	 */
+	public function set(string $id, object $value): void
+	{
+		unset($this->instances[$id], $this->factories[$id]);
+
+		if ($value instanceof \Closure) {
+			$this->factories[$id] = $value;
+
+			return;
+		}
+
+		$this->instances[$id] = $value;
 	}
 
 	/** @param class-string $id */

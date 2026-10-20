@@ -50,15 +50,6 @@ final class Session
 	}
 
 	/**
-	 * Stores a value for the next request only.
-	 */
-	public function setFlash(string $key, mixed $value): void
-	{
-		$this->start();
-		$_SESSION[self::FLASH][$key] = $value;
-	}
-
-	/**
 	 * A value stored with setFlash() during the previous request, as in getFlash('notice')->string(). More keys read
 	 * deeper, as Value::get() does.
 	 */
@@ -67,6 +58,15 @@ final class Session
 		$this->start();
 
 		return new Value($this->flash)->get(...$keys);
+	}
+
+	/**
+	 * Stores a value for the next request only.
+	 */
+	public function setFlash(string $key, mixed $value): void
+	{
+		$this->start();
+		$_SESSION[self::FLASH][$key] = $value;
 	}
 
 	/**

@@ -195,8 +195,8 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `flag($name)` | Returns whether `--name` was given |
 | `ask($question)` | Prints `$question` and returns the answer as a `Value`. A blank answer, or the end of input, is an empty `Value` |
 | `line($text = '')` | Prints a line to standard output |
-| `table($rows)` | Prints a list of rows as lined-up columns. An empty row prints a blank line |
 | `error($text)` | Prints a line to standard error |
+| `table($rows)` | Prints a list of rows as lined-up columns. An empty row prints a blank line |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
 | `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
 | `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as tests do |

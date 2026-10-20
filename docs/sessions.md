@@ -110,7 +110,7 @@ The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind
 | `get(...$keys)` | Returns a value as a [`Value`](values.md), as in `get('user_id')->int()`. More keys read deeper |
 | `set($key, $value)` | Stores a value |
 | `forget($key)` | Removes a value |
-| `setFlash($key, $value)` | Stores a value that only the next request can read |
 | `getFlash(...$keys)` | Returns a value the previous request stored with `setFlash()`, as a `Value`. More keys read deeper |
+| `setFlash($key, $value)` | Stores a value that only the next request can read |
 | `regenerate()` | Gives the session a new id and keeps its data |
 | `destroy()` | Clears the data and the cookie. The next call starts a new session |

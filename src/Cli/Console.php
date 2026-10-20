@@ -140,6 +140,22 @@ final readonly class Console
 	}
 
 	/**
+	 * Prints a line to standard output.
+	 */
+	public function line(string $text = ''): void
+	{
+		echo $text, PHP_EOL;
+	}
+
+	/**
+	 * Prints a line to standard error.
+	 */
+	public function error(string $text): void
+	{
+		fwrite(STDERR, $text . PHP_EOL);
+	}
+
+	/**
 	 * Prints rows as columns, lined up and two spaces apart. An empty row prints a blank line.
 	 *
 	 * @param list<list<string>> $rows
@@ -172,21 +188,5 @@ final readonly class Console
 
 			$this->line(implode('  ', $cells));
 		}
-	}
-
-	/**
-	 * Prints a line to standard output.
-	 */
-	public function line(string $text = ''): void
-	{
-		echo $text, PHP_EOL;
-	}
-
-	/**
-	 * Prints a line to standard error.
-	 */
-	public function error(string $text): void
-	{
-		fwrite(STDERR, $text . PHP_EOL);
 	}
 }

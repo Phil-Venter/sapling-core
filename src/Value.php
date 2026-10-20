@@ -105,21 +105,6 @@ final readonly class Value
 	}
 
 	/**
-	 * The array as it arrived, with its items unchecked, or the default when it isn't one.
-	 *
-	 * @param array<array-key, mixed> $default
-	 * @return array<array-key, mixed>
-	 */
-	public function rawArray(array $default = []): array
-	{
-		if (!is_array($this->raw)) {
-			return $default;
-		}
-
-		return $this->raw;
-	}
-
-	/**
 	 * Each item of an array as a Value, under its key, as in foreach ($value->items() as $item). Anything that isn't
 	 * an array gives [].
 	 *
@@ -151,6 +136,21 @@ final readonly class Value
 		}
 
 		return new self($value);
+	}
+
+	/**
+	 * The array as it arrived, with its items unchecked, or the default when it isn't one.
+	 *
+	 * @param array<array-key, mixed> $default
+	 * @return array<array-key, mixed>
+	 */
+	public function rawArray(array $default = []): array
+	{
+		if (!is_array($this->raw)) {
+			return $default;
+		}
+
+		return $this->raw;
 	}
 
 	private function text(): ?string

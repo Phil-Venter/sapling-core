@@ -154,6 +154,6 @@ $port = $settings->get('server', 'port')->int(8080);
 | `bool($default = false)` | `true` for `'1'`, `'true'`, `'on'` and `'yes'`, and `false` for `'0'`, `'false'`, `'off'`, `'no'` and `''` |
 | `enum($default)` | The case of the default's enum with this value, or the default when no case has it |
 | `items()` | Each item of an array as a `Value`, under its key, or `[]` when it isn't an array |
-| `rawArray($default = [])` | The array as it arrived, with its items unchecked, or the default for anything else |
 | `get(...$keys)` | An array key or public property, as a `Value`. More keys read deeper, and no key gives the same value |
+| `rawArray($default = [])` | The array as it arrived, with its items unchecked, or the default for anything else |
 | `$value->raw` | The value as it arrived, or `null` when it's missing. Read-only |
