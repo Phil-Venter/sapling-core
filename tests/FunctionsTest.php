@@ -17,7 +17,7 @@ test('abort() and abort_if() throw HttpException', function () {
 	expect(abort_if(false, 403))->toBeNull();
 });
 
-test('attr() and attrs() escape, join lists, and leave out empty and false attributes', function () {
+test('attr() and attrs() escape values and leave out empty ones', function () {
 	expect(attr('title', '"><script>'))->toBe('title="&quot;&gt;&lt;script&gt;"');
 	expect(attr('class', ['col', '0', '', null]))->toBe('class="col 0"');
 	expect(attr('tabindex', 0))->toBe('tabindex="0"');
@@ -40,7 +40,7 @@ test('blank()', function (mixed $value, bool $blank) {
 	'an object' => [new stdClass(), false],
 ]);
 
-test('blank() refuses a Value, which would never look blank', function () {
+test('blank() refuses a Value', function () {
 	expect(fn() => blank(new Sapling\Value('')))->toThrow(LogicException::class, 'not a Value');
 });
 
@@ -65,7 +65,7 @@ test('datetime()', function (
 	],
 ]);
 
-test('datetime() refuses a blank string rather than giving the current time', function (string $blank) {
+test('datetime() refuses a blank string', function (string $blank) {
 	expect(fn() => datetime($blank))->toThrow(DateMalformedStringException::class, 'A blank string is not a date');
 })->with(['empty' => '', 'spaces' => '  ']);
 

@@ -36,7 +36,7 @@ test('a request reaches the action its path matches, or gets a 404', function (
 	'a lowercase encoded slash in a param' => ['GET', '/notes/a%2fb', 404, 'Not Found'],
 ]);
 
-test('a known path with the wrong method is a 405 with an Allow header that includes HEAD', function () {
+test('a wrong method is a 405 whose Allow header includes HEAD', function () {
 	$response = scannedApp()->handle(new Request('PATCH', '/notes/7'));
 
 	expect($response->status)->toBe(405);
@@ -44,7 +44,7 @@ test('a known path with the wrong method is a 405 with an Allow header that incl
 	expect($response->headers['Allow'])->toBe('DELETE, GET, HEAD');
 });
 
-test('left to right, the first literal segment wins, whatever order routes were added in', function (array $order) {
+test('the first fixed segment wins, whatever order routes were added in', function (array $order) {
 	$router = new Router();
 
 	foreach ($order as [$path, $action]) {
@@ -98,7 +98,7 @@ test('the same method and path on two classes throws at boot and names both', fu
 		);
 });
 
-test('all() reads every route back from the tree, with its own :param names and its action\'s class name', function () {
+test('all() lists every route with its own :param names', function () {
 	$router = new Router();
 	$router->add('GET', '/', 'Home');
 	$router->add('GET', '/notes/:id', 'ShowNote');

@@ -19,7 +19,7 @@ test('send() returns status, lowercased headers and body', function () {
 	expect($response->body)->toBe('notes');
 });
 
-test('a string body goes as it is with the Content-Type you pass, and data() decodes the reply', function () {
+test('send() passes a string body and its Content-Type as they are', function () {
 	$headers = ['X-Test' => 'header value', 'Content-Type' => 'application/json'];
 	$request = new ClientRequest('PUT', serverUrl('/echo/7?q=search'), Data::toJson(['name' => 'Ann']), $headers);
 	$echo = $this->client->send($request)->data()->rawArray();
@@ -34,7 +34,7 @@ test('a string body goes as it is with the Content-Type you pass, and data() dec
 	]);
 });
 
-test('a GET follows redirects and keeps only the final headers, and a POST gets the redirect back', function () {
+test('a GET follows redirects and a POST doesn\'t', function () {
 	$followed = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
 	$returned = $this->client->send(ClientRequest::form('POST', serverUrl('/notes'), ['body' => 'x']));
 
@@ -57,7 +57,7 @@ test('repeated headers come back as a list', function () {
 	]);
 });
 
-test('a 404 is a reply, and a failed connection is a reply with status 0 and the error as its body', function () {
+test('an error status or a failed connection is still a reply', function () {
 	$missing = $this->client->send(new ClientRequest('GET', serverUrl('/nowhere')));
 	$down = new HttpClient(timeout: 2)->send(new ClientRequest('GET', 'http://127.0.0.1:1/'));
 
@@ -66,13 +66,13 @@ test('a 404 is a reply, and a failed connection is a reply with status 0 and the
 	expect($down->body)->toStartWith('GET http://127.0.0.1:1/ failed:');
 });
 
-test('a PUT without a body still says its length is 0, since some servers refuse it otherwise', function () {
+test('a PUT without a body sends Content-Length: 0', function () {
 	$echo = $this->client->send(new ClientRequest('PUT', serverUrl('/echo/7')))->data();
 
 	expect($echo->get('content_length')->string())->toBe('0');
 });
 
-test('a body with no Content-Type of its own goes without one, rather than labelled as a form', function () {
+test('a body without a Content-Type is sent without one', function () {
 	$empty = $this->client->send(ClientRequest::json('PUT', serverUrl('/echo/7')))->data();
 	$raw = $this->client->send(new ClientRequest('PUT', serverUrl('/echo/7'), 'plain'))->data();
 
@@ -81,14 +81,14 @@ test('a body with no Content-Type of its own goes without one, rather than label
 	expect($raw->get('body')->string())->toBe('plain');
 });
 
-test('only http and https are allowed, so a file:// URL is refused', function () {
+test('only http and https URLs are allowed', function () {
 	$reply = $this->client->send(new ClientRequest('GET', 'file:///etc/hosts'));
 
 	expect($reply->status)->toBe(0);
 	expect($reply->body)->toStartWith('GET file:///etc/hosts failed:');
 });
 
-test('sendAll() returns the replies in order, under the keys of the requests', function () {
+test('sendAll() keeps the requests\' keys and order', function () {
 	$replies = $this->client->sendAll([
 		'listed' => new ClientRequest('GET', serverUrl('/notes')),
 		'echo' => ClientRequest::json('PUT', serverUrl('/echo/7'), ['name' => 'Ann']),
@@ -99,7 +99,7 @@ test('sendAll() returns the replies in order, under the keys of the requests', f
 	expect($replies['echo']->data()->get('name')->string())->toBe('Ann');
 });
 
-test('sendAll() queues requests past its six connections to one host, and answers every one', function () {
+test('sendAll() queues requests past six connections to one host', function () {
 	$requests = array_fill(0, 20, new ClientRequest('GET', serverUrl('/notes')));
 
 	$replies = $this->client->sendAll($requests);
@@ -108,7 +108,7 @@ test('sendAll() queues requests past its six connections to one host, and answer
 	expect(array_unique(array_map(fn($reply) => $reply->body, $replies)))->toBe(['notes']);
 });
 
-test('sendAll() returns a failed connection as status 0 with the error, and keeps the other replies', function () {
+test('sendAll() keeps the other replies when one connection fails', function () {
 	$replies = new HttpClient(timeout: 2)->sendAll([
 		'listed' => new ClientRequest('GET', serverUrl('/notes')),
 		'down' => new ClientRequest('GET', 'http://127.0.0.1:1/'),

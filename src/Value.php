@@ -11,8 +11,7 @@ final readonly class Value
 	public mixed $raw;
 
 	/**
-	 * Takes the data as it arrived, with null for a value that's missing. $raw holds it unchanged, except that a Value
-	 * passed in is unwrapped, so wrapping twice changes nothing.
+	 * Null means the value is missing. A Value passed in is unwrapped.
 	 */
 	public function __construct(mixed $raw)
 	{
@@ -24,7 +23,7 @@ final readonly class Value
 	}
 
 	/**
-	 * The value as a string. Numbers, Stringable objects and backed enums are cast, and a boolean gives the default.
+	 * Casts numbers, Stringable objects and backed enums. A boolean gives the default.
 	 */
 	public function string(string $default = ''): string
 	{
@@ -32,7 +31,7 @@ final readonly class Value
 	}
 
 	/**
-	 * The value as a whole number, so '12' is 12, while '12abc' and '1.5' give the default.
+	 * '12' is 12, while '12abc' and '1.5' give the default.
 	 */
 	public function int(int $default = 0): int
 	{
@@ -45,9 +44,6 @@ final readonly class Value
 		return $int;
 	}
 
-	/**
-	 * The value as a number, so '1.5' is 1.5 and 'abc' gives the default.
-	 */
 	public function float(float $default = 0.0): float
 	{
 		$float = $this->filter(FILTER_VALIDATE_FLOAT);
@@ -60,8 +56,7 @@ final readonly class Value
 	}
 
 	/**
-	 * The value as true or false. '1', 'true', 'on' and 'yes' are true, and '0', 'false', 'off', 'no' and '' are
-	 * false.
+	 * '1', 'true', 'on' and 'yes' are true, and '0', 'false', 'off', 'no' and '' are false.
 	 */
 	public function bool(bool $default = false): bool
 	{
@@ -79,8 +74,8 @@ final readonly class Value
 	}
 
 	/**
-	 * The case of the default's enum with this value, so enum(Sort::Newest) reads 'oldest' as Sort::Oldest, and anything
-	 * else as Sort::Newest. An int-backed enum reads the value as int() does.
+	 * The default picks the enum. enum(Sort::Newest) reads 'oldest' as Sort::Oldest and anything else as
+	 * Sort::Newest. An int-backed enum reads the value as int() does.
 	 *
 	 * @template T of \BackedEnum
 	 * @param T $default
@@ -105,8 +100,7 @@ final readonly class Value
 	}
 
 	/**
-	 * Each item of an array as a Value, under its key, as in foreach ($value->items() as $item). Anything that isn't
-	 * an array gives [].
+	 * Each item as a Value, under its key. Anything that isn't an array gives [].
 	 *
 	 * @return array<array-key, self>
 	 */
@@ -116,8 +110,7 @@ final readonly class Value
 	}
 
 	/**
-	 * A key of an array or a public property of an object, and more keys read deeper, as in get('address',
-	 * 'city')->string(). A missing key gives an empty Value, and no key gives the same value.
+	 * An array key or public property. More keys read deeper, and a missing one gives an empty Value.
 	 */
 	public function get(string|int ...$keys): self
 	{

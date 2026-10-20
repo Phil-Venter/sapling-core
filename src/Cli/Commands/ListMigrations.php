@@ -17,11 +17,7 @@ final readonly class ListMigrations
 
 	public function __construct(private App $app, private Db $db) {}
 
-	/**
-	 * Prints each migration file in name order, and when it ran, or that it's pending or empty.
-	 *
-	 * @throws \PDOException When the migrations table can't be created or read.
-	 */
+	/** @throws \PDOException When the migrations table can't be created or read. */
 	public function __invoke(Console $console): int
 	{
 		$this->db->run(RunMigrations::CREATE_TABLE);

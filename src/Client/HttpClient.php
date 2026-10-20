@@ -13,8 +13,8 @@ final readonly class HttpClient
 	public function __construct(private int $timeout = 30) {}
 
 	/**
-	 * Sends a request and returns the reply, following redirects for GET and HEAD. An error status is a normal reply,
-	 * and a connection that fails or times out comes back with status 0 and the error as its body.
+	 * Follows redirects for GET and HEAD. An error status is a normal reply. A connection that fails or times out
+	 * gives status 0, with the error as the body.
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{
@@ -29,8 +29,7 @@ final readonly class HttpClient
 	}
 
 	/**
-	 * Sends the requests at once and returns their replies under the same keys. A failed connection comes back with
-	 * status 0, as from send(), so one failure doesn't lose the other replies.
+	 * Sends them at once. Each reply keeps its request's key. A failed connection gives status 0, as with send().
 	 *
 	 * @template K of array-key
 	 * @param array<K, ClientRequest> $requests

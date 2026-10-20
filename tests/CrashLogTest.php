@@ -2,7 +2,7 @@
 
 use Sapling\CrashLog;
 
-test('a message with line breaks stays one log line, so it cannot forge another entry', function () {
+test('a message with line breaks stays one log line', function () {
 	$forged = new RuntimeException("boom\nGET /admin failed: nothing to see\r\nhere");
 
 	[, $log] = captureErrorLog(fn() => new CrashLog(FIXTURES)->write('GET /notes', $forged));

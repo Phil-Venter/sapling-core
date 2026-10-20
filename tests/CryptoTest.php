@@ -6,7 +6,7 @@ beforeEach(function () {
 	$this->crypto = new Crypto(base64_encode(random_bytes(32)));
 });
 
-test('a secret decrypts with the context it was encrypted with, and only that one', function () {
+test('a secret decrypts only with its own context', function () {
 	$stored = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
 
 	expect($this->crypto->decrypt($stored, 'tenant:7:evernote'))->toBe('evernote-key');

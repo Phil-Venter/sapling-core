@@ -9,7 +9,7 @@ namespace Sapling\Attributes;
 final readonly class Route
 {
 	/**
-	 * The method, such as GET, and the path, such as /notes/:id. Slashes at either end don't matter.
+	 * Slashes at either end of the path don't matter.
 	 */
 	public function __construct(public string $method, public string $path) {}
 }

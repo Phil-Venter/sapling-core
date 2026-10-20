@@ -17,7 +17,7 @@ afterEach(function () {
 	$_SERVER = $this->server;
 });
 
-test('load() hands config.php, and what it requires, the env file values as strings', function () {
+test('load() passes .env values to config.php as strings', function () {
 	$config = Config::load(CONFIG_FIXTURES . '/config.php', CONFIG_FIXTURES . '/test.env');
 
 	expect($config->get('env'))->toMatchArray([
@@ -37,7 +37,7 @@ test('load() hands config.php, and what it requires, the env file values as stri
 	expect($config->get('included'))->toBe('dev');
 });
 
-test('real environment variables come in through $env and win over the env file', function () {
+test('real environment variables win over the env file', function () {
 	putenv('APP_ENV=production');
 	$config = Config::load(CONFIG_FIXTURES . '/config.php', CONFIG_FIXTURES . '/test.env');
 	putenv('APP_ENV');
@@ -62,7 +62,7 @@ test('env file values never leak into getenv(), $_ENV or $_SERVER', function () 
 	expect(getenv('SAPLING_TEST_SERVER_ONLY'))->toBe('from the server');
 });
 
-test('get() returns a set key even when null, the default for a missing key, and throws without one', function () {
+test('get() tells a null setting from a missing one', function () {
 	$config = new Config(['debug' => true, 'nothing' => null]);
 
 	expect($config->get('debug', false))->toBeTrue();

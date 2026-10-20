@@ -33,6 +33,6 @@ test('migrations:list shows each file as ran, pending or empty, in name order', 
 	expect($output)->toMatch('/^001_notes\.sql  ran \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC\n002_tags\.sql   pending\n003_later\.sql  empty, so migrations:run skips it\n$/');
 });
 
-test('migrations:list says so when there are no migrations, before any has run', function () {
+test('migrations:list says so when there are no migrations', function () {
 	expect(runInApp($this->app, 'migrations:list'))->toBe([0, "No migrations in database/migrations.\n"]);
 });

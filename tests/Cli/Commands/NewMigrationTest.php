@@ -25,7 +25,7 @@ afterEach(function () {
 	}
 });
 
-test('migrations:new creates the folder and an empty file named by UTC time and its words in snake case', function () {
+test('migrations:new creates an empty file named by time and its words', function () {
 	[$code, $output] = runInApp($this->app, 'migrations:new', 'Add', 'notes-table!');
 	$files = glob("{$this->dir}/database/migrations/*");
 

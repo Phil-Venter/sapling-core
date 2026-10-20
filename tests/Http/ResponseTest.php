@@ -30,7 +30,7 @@ test('send() skips the body for 1xx, 204 and 304', function (int $status) {
 	expect(sentBody(new Response('should not appear', $status)))->toBe('');
 })->with([101, 204, 304]);
 
-test('send(body: false) never reads a file, for HEAD requests', function () {
+test('send(body: false) never reads a file', function () {
 	ob_start();
 	Response::file(FIXTURES . '/files/hello.txt')->send(body: false);
 

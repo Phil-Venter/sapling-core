@@ -22,7 +22,7 @@ final class Session
 	public function __construct(private int $lifetime = 0) {}
 
 	/**
-	 * A value from the session, as in get('user_id')->int(). More keys read deeper, as Value::get() does.
+	 * More keys read deeper, as Value::get() does.
 	 */
 	public function get(string|int ...$keys): Value
 	{
@@ -31,18 +31,12 @@ final class Session
 		return new Value($_SESSION)->get(...$keys);
 	}
 
-	/**
-	 * Stores a value in the session.
-	 */
 	public function set(string $key, mixed $value): void
 	{
 		$this->start();
 		$_SESSION[$key] = $value;
 	}
 
-	/**
-	 * Removes a value from the session.
-	 */
 	public function forget(string $key): void
 	{
 		$this->start();
@@ -50,8 +44,7 @@ final class Session
 	}
 
 	/**
-	 * A value stored with setFlash() during the previous request, as in getFlash('notice')->string(). More keys read
-	 * deeper, as Value::get() does.
+	 * A value setFlash() stored during the previous request. More keys read deeper, as Value::get() does.
 	 */
 	public function getFlash(string|int ...$keys): Value
 	{

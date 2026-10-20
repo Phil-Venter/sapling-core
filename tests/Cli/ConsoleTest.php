@@ -20,14 +20,14 @@ test('a missing option or argument gives the default', function () {
 	expect($console->arg(0)->raw)->toBeNull();
 });
 
-test('an option without =value, or a flag with one, throws rather than giving the default', function () {
+test('an option without =value, or a flag with one, throws', function () {
 	$console = new Console(['bin/console', 'notes:prune', '--days', '7', '--force=yes']);
 
 	expect(fn() => $console->option('days'))->toThrow(UsageException::class, '--days needs a value');
 	expect(fn() => $console->flag('force'))->toThrow(UsageException::class, '--force is a flag');
 });
 
-test('every word after -- is an argument, even one that starts with dashes', function () {
+test('every word after -- is an argument', function () {
 	$console = new Console(['bin/console', 'notes:add', 'first', '--', '--not-a-flag', '--x=1']);
 
 	expect($console->args)->toBe(['first', '--not-a-flag', '--x=1']);
@@ -35,7 +35,7 @@ test('every word after -- is an argument, even one that starts with dashes', fun
 	expect($console->flag('not-a-flag'))->toBeFalse();
 });
 
-test('ask() prints the question and reads the trimmed answer, and a blank answer or no input is empty', function (
+test('ask() prints the question and reads the trimmed answer', function (
 	string $input,
 	?string $answer,
 	string $printed,
@@ -56,7 +56,7 @@ test('ask() prints the question and reads the trimmed answer, and a blank answer
 	'the end of input, which ends the line' => ['', null, "Delete them? \n"],
 ]);
 
-test('table() lines up columns by characters, leaves no trailing spaces, and prints an empty row as a blank line', function () {
+test('table() lines up columns by characters', function () {
 	$console = new Console(['bin/console', 'cafes:list']);
 
 	ob_start();

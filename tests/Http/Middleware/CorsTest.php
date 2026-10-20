@@ -19,12 +19,12 @@ test('Cors answers preflights before routing, for allowed origins only', functio
 	expect($other->headers)->not->toHaveKey('Access-Control-Allow-Origin');
 });
 
-test('Cors refuses credentials with a * origin, which would let any site read signed-in responses', function () {
+test('Cors refuses credentials with a * origin', function () {
 	expect(fn() => new Cors(['*'], allowCredentials: true))
 		->toThrow(InvalidArgumentException::class, 'cors_credentials needs cors_origins to list sites, not *');
 });
 
-test('Cors sends credentials for a listed origin, and adds to an existing Vary whatever its case', function (string $vary) {
+test('Cors allows credentials and merges an existing Vary', function (string $vary) {
 	$cors = new Cors(['https://app.example'], allowCredentials: true);
 	$next = fn(Request $request) => new Response('ok', 200, [$vary => 'Accept-Encoding']);
 
@@ -55,7 +55,7 @@ test('Cors refuses origins that could never match, when the app starts', functio
 	'no scheme' => [['app.example'], false, 'needs scheme://host[:port] in lowercase'],
 ]);
 
-test('Cors varies on Origin whenever its answer depends on it, and never with *', function (
+test('Cors varies on Origin unless it allows *', function (
 	array $origins,
 	array $headers,
 	?string $allowed,
@@ -80,7 +80,7 @@ test('Cors varies on Origin whenever its answer depends on it, and never with *'
 	'*, where every site gets the same answer' => [['*'], ['Origin' => 'https://any.example'], '*', null],
 ]);
 
-test('a preflight varies on what it echoes, and only names headers that were asked for', function () {
+test('a preflight varies on the request headers it echoes', function () {
 	$app = scannedApp();
 	$app->middleware(new Cors(['https://app.example']));
 	$ask = fn(array $headers) => $app->handle(new Request('OPTIONS', '/echo/1', headers: [
@@ -117,7 +117,7 @@ test('an OPTIONS request that is not a preflight reaches the app', function () {
 	expect($response->status)->toBe(405);
 });
 
-test('an allowed site can read an HttpException, such as a 404, and other sites get it without CORS headers', function () {
+test('an HttpException gets CORS headers for allowed sites only', function () {
 	$app = scannedApp();
 	$app->middleware(new Cors(['https://app.example']));
 

@@ -3,8 +3,8 @@
 namespace Sapling\Http;
 
 /**
- * Matches a method and path to a route. Routes live in a tree with a level per path segment, and a fixed segment is
- * tried before a :param at every level, so /notes/new wins over /notes/:id.
+ * Matches a method and path to a route. A fixed segment wins over a :param at the same level, so /notes/new matches
+ * before /notes/:id.
  */
 final class Router
 {
@@ -19,8 +19,8 @@ final class Router
 	}
 
 	/**
-	 * Adds a route. The action is a class name, an object or a closure. Throws a LogicException when the method and
-	 * path are already taken, or a :param name is used twice or isn't a plain name.
+	 * Throws a LogicException when the method and path are already taken, or a :param name is used twice or isn't a
+	 * plain name.
 	 *
 	 * @param class-string|object $action
 	 * @param list<class-string|object> $middleware
@@ -68,8 +68,6 @@ final class Router
 	}
 
 	/**
-	 * The route for a method and path, with its :params.
-	 *
 	 * @return array{action: class-string|object, middleware: list<class-string|object>, params: array<string, string>}
 	 * @throws HttpException 404 for an unknown path, or 405 with an Allow header for the wrong method.
 	 */
@@ -109,7 +107,7 @@ final class Router
 	}
 
 	/**
-	 * Every route, read back from the tree, fixed segments first, with the class name of its action.
+	 * Fixed segments come first. Actions are listed by class name.
 	 *
 	 * @return list<array{method: string, path: string, action: string}>
 	 */

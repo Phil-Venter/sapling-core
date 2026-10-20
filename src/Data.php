@@ -20,7 +20,7 @@ final class Data
 	}
 
 	/**
-	 * Decodes JSON, with objects as arrays.
+	 * Objects become arrays.
 	 *
 	 * @throws \JsonException When the JSON is invalid.
 	 */
@@ -29,21 +29,13 @@ final class Data
 		return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
 	}
 
-	/**
-	 * A URL-encoded form body, the same format as a query string.
-	 *
-	 * @param array<array-key, mixed> $data
-	 */
+	/** @param array<array-key, mixed> $data */
 	public static function toForm(array $data): string
 	{
 		return http_build_query($data);
 	}
 
-	/**
-	 * Decodes a URL-encoded form body.
-	 *
-	 * @return array<array-key, mixed>
-	 */
+	/** @return array<array-key, mixed> */
 	public static function fromForm(string $form): array
 	{
 		$data = [];
@@ -52,11 +44,7 @@ final class Data
 		return $data;
 	}
 
-	/**
-	 * An XML document, with the data inside a root element.
-	 *
-	 * @param array<array-key, mixed> $data
-	 */
+	/** @param array<array-key, mixed> $data */
 	public static function toXml(array $data, string $root = 'root'): string
 	{
 		if ($data !== [] && array_is_list($data)) {
@@ -75,7 +63,7 @@ final class Data
 	}
 
 	/**
-	 * Decodes XML into arrays, or a string when the root only holds text.
+	 * A string when the root only holds text.
 	 *
 	 * @return array<string, mixed>|string
 	 * @throws \RuntimeException When the XML is invalid.

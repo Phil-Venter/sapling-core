@@ -2,7 +2,7 @@
 
 use Sapling\Data;
 
-test('toJson() leaves slashes and Unicode as they are, and fromJson() gives arrays', function () {
+test('JSON round-trips with slashes and Unicode as they are', function () {
 	$data = ['name' => 'Ann', 'tags' => ['a', 'b'], 'url' => 'https://example.com/ä'];
 
 	expect(Data::toJson($data))->toBe('{"name":"Ann","tags":["a","b"],"url":"https://example.com/ä"}');
@@ -24,7 +24,7 @@ test('XML round-trips: elements, repeated elements, attributes, text beside attr
 	expect(Data::fromXml($xml))->toBe($data);
 });
 
-test('XML values come back as strings, and booleans are written as true and false', function () {
+test('XML gives every value back as a string', function () {
 	expect(Data::fromXml(Data::toXml(['count' => 3, 'active' => true, 'note' => null])))->toBe([
 		'count' => '3',
 		'active' => 'true',
@@ -32,7 +32,7 @@ test('XML values come back as strings, and booleans are written as true and fals
 	]);
 });
 
-test('namespaced XML keeps its prefixes, so a SOAP reply is usable', function () {
+test('namespaced XML keeps its prefixes', function () {
 	$soap =
 		'<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>'
 		. '<GetPriceResponse><Price>1.90</Price></GetPriceResponse></soap:Body></soap:Envelope>';
@@ -51,11 +51,7 @@ test('broken JSON and XML throw', function () {
 	expect(fn() => Data::fromXml('<nope'))->toThrow(RuntimeException::class, 'Invalid XML:');
 });
 
-test('decode() picks the format by Content-Type, an empty body is null, and any other type gives the body', function (
-	string $type,
-	string $body,
-	mixed $data,
-) {
+test('decode() picks the format by Content-Type', function (string $type, string $body, mixed $data) {
 	expect(Data::decode($body, $type))->toBe($data);
 })->with([
 	'json' => ['application/json; charset=utf-8', '{"a":1}', ['a' => 1]],
@@ -68,7 +64,7 @@ test('decode() picks the format by Content-Type, an empty body is null, and any 
 	'no type' => ['', 'raw', 'raw'],
 ]);
 
-test('toXml() keeps one root element, writing an empty list as an empty element', function () {
+test('toXml() always writes one root element', function () {
 	expect(Data::toXml([]))->toContain('<root/>');
 	expect(Data::toXml(['tags' => []]))->toContain('<root><tags/></root>');
 	expect(fn() => Data::toXml(['a', 'b']))->toThrow(InvalidArgumentException::class, 'needs keys, not a list');

@@ -113,8 +113,7 @@ final class App
 	}
 
 	/**
-	 * Registers every class in the folder and its subfolders by its #[Route], #[Middleware] and #[Command]
-	 * attributes, skipping classes without them. The namespace needs no trailing backslash, as in
+	 * Registers each class in the folder and its subfolders that has a #[Route], #[Middleware] or #[Command], as in
 	 * scan(__DIR__ . '/app', 'App').
 	 *
 	 * @throws \UnexpectedValueException When the folder doesn't exist.
@@ -146,7 +145,7 @@ final class App
 	}
 
 	/**
-	 * Registers one class by its #[Route], #[Middleware] and #[Command] attributes.
+	 * Registers one class, as scan() does for a folder. Throws a LogicException when it has no #[Route] or #[Command].
 	 *
 	 * @param class-string $class
 	 */
@@ -158,8 +157,7 @@ final class App
 	}
 
 	/**
-	 * Adds middleware around every request, in the order added. With a prefix, it only runs for that path and the
-	 * paths below it.
+	 * Runs around every request, in the order added. A prefix limits it to that path and the paths below it.
 	 *
 	 * @param class-string|object $middleware
 	 */
@@ -175,8 +173,8 @@ final class App
 	}
 
 	/**
-	 * Sets what turns an HttpException, such as a 404 or abort(403), into a response. It's a class name, an object or a
-	 * closure, called with the exception and the request. The default answers in plain text.
+	 * Sets what turns an HttpException into a response. It's called with the exception and the request. The default
+	 * answers in plain text.
 	 *
 	 * @param class-string|object $handler
 	 */
@@ -236,7 +234,7 @@ final class App
 	}
 
 	/**
-	 * Runs a command and returns its exit code. An unknown command prints the list of commands and returns 1.
+	 * An unknown command prints the list of commands and returns 1.
 	 */
 	public function runCommand(Console $console): int
 	{
@@ -292,7 +290,7 @@ final class App
 	}
 
 	/**
-	 * Registers a class by its attributes, and says whether it had a route or a command.
+	 * Returns whether the class had a route or a command.
 	 *
 	 * @param class-string $class
 	 */

@@ -41,9 +41,8 @@ final class Request
 	}
 
 	/**
-	 * The current request, from PHP's globals. A POST with _method set to PUT, PATCH or DELETE becomes that
-	 * method. When the connection comes from one of $trustedProxies, or any with ['*'], the ip is the visitor's,
-	 * from X-Forwarded-For.
+	 * A POST with _method set to PUT, PATCH or DELETE becomes that method. When the connection comes from one of
+	 * $trustedProxies, or any with ['*'], the ip is the visitor's, from X-Forwarded-For.
 	 *
 	 * @param list<string> $trustedProxies
 	 */
@@ -144,7 +143,7 @@ final class Request
 	}
 
 	/**
-	 * A :name parameter from the route path, as in param('id')->int(). Without a name, every parameter.
+	 * A :name parameter from the route path. Without a name, every parameter.
 	 */
 	public function param(string|int ...$keys): Value
 	{
@@ -152,8 +151,7 @@ final class Request
 	}
 
 	/**
-	 * A query string value, read as the type you need, as in query('page')->int(1). More keys read deeper, as in
-	 * query('filter', 'status') for ?filter[status]=open, and no key gives the whole query string.
+	 * More keys read deeper, as in query('filter', 'status') for ?filter[status]=open.
 	 */
 	public function query(string|int ...$keys): Value
 	{
@@ -161,8 +159,8 @@ final class Request
 	}
 
 	/**
-	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('title')->string(). More
-	 * keys read deeper, and no key gives the whole body. It's decoded the first time it's read.
+	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read
+	 * deeper, as Value::get() does.
 	 *
 	 * @throws HttpException 400 when the body doesn't decode.
 	 */
@@ -177,7 +175,7 @@ final class Request
 	}
 
 	/**
-	 * A request header, ignoring the case of its name, as in header('accept')->string().
+	 * The name is case-insensitive.
 	 */
 	public function header(string $name): Value
 	{
@@ -185,8 +183,7 @@ final class Request
 	}
 
 	/**
-	 * A cookie, read as the type you need, as in cookie('theme')->string('light'). More keys read deeper, as in
-	 * cookie('prefs', 'theme') for prefs[theme]=dark.
+	 * More keys read deeper, as in cookie('prefs', 'theme') for prefs[theme]=dark.
 	 */
 	public function cookie(string|int ...$keys): Value
 	{

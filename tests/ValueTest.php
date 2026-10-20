@@ -4,10 +4,7 @@ use Sapling\Tests\Fixtures\Filter;
 use Sapling\Tests\Fixtures\Priority;
 use Sapling\Value;
 
-test('string() reads strings, numbers and Stringable objects, and gives the default for the rest', function (
-	mixed $value,
-	string $expected,
-) {
+test('string() casts numbers and Stringable objects', function (mixed $value, string $expected) {
 	expect(new Value($value)->string('default'))->toBe($expected);
 })->with([
 	'a string' => ['hi', 'hi'],
@@ -58,11 +55,7 @@ test('bool() reads the usual words for true and false', function (mixed $value, 
 	'an array' => [['1'], true],
 ]);
 
-test('enum() reads the case with the value, and gives the default for anything else', function (
-	mixed $value,
-	BackedEnum $default,
-	BackedEnum $expected,
-) {
+test('enum() finds the case by its value', function (mixed $value, BackedEnum $default, BackedEnum $expected) {
 	expect(new Value($value)->enum($default))->toBe($expected);
 })->with([
 	'a string' => ['open', Filter::All, Filter::Open],
@@ -75,15 +68,18 @@ test('enum() reads the case with the value, and gives the default for anything e
 	'missing, with a case for 0' => [null, Priority::High, Priority::High],
 ]);
 
-test('rawArray() takes arrays only, and $raw holds the value as it arrived', function () {
+test('rawArray() takes arrays only', function () {
 	expect(new Value(['a', 'b'])->rawArray())->toBe(['a', 'b']);
 	expect(new Value('a')->rawArray(['default']))->toBe(['default']);
 	expect(new Value(null)->rawArray())->toBe([]);
+});
+
+test('$raw holds the value as it arrived', function () {
 	expect(new Value(['a'])->raw)->toBe(['a']);
 	expect(new Value(null)->raw)->toBeNull();
 });
 
-test('items() wraps each item in a Value under its key, and gives [] for anything else', function () {
+test('items() wraps each item in a Value under its key', function () {
 	$items = new Value(['a' => ['sku' => 'pen'], 'b' => ['sku' => 'ink']])->items();
 
 	expect(array_keys($items))->toBe(['a', 'b']);
@@ -91,14 +87,14 @@ test('items() wraps each item in a Value under its key, and gives [] for anythin
 	expect(new Value('pen')->items())->toBe([]);
 });
 
-test('a Value wrapped in another is unwrapped, so wrapping twice changes nothing', function () {
+test('wrapping a Value twice changes nothing', function () {
 	$twice = new Value(new Value('Ann'));
 
 	expect($twice->raw)->toBe('Ann');
 	expect($twice->string())->toBe('Ann');
 });
 
-test('get() reads a key inside an array, no key gives the same value, and anything else gives an empty Value', function () {
+test('get() reads keys at any depth', function () {
 	$address = new Value(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
 
 	expect($address->get()->rawArray())->toBe(['city' => 'Cape Town', 'lines' => ['1 Main Road']]);
@@ -111,7 +107,7 @@ test('get() reads a key inside an array, no key gives the same value, and anythi
 	expect(new Value(null)->get('city')->string('none'))->toBe('none');
 });
 
-test('get() reads an object\'s public properties, never its private ones', function () {
+test('get() reads public properties only', function () {
 	$user = new class {
 		public string $name = 'Ann';
 

@@ -23,27 +23,17 @@ final class Response
 		public private(set) array  $headers = [],
 	) {}
 
-	/**
-	 * An HTML response.
-	 */
 	public static function html(string $html, int $status = 200): self
 	{
 		return new self($html, $status, ['Content-Type' => 'text/html; charset=utf-8']);
 	}
 
-	/**
-	 * A plain text response.
-	 */
 	public static function text(string $text, int $status = 200): self
 	{
 		return new self($text, $status, ['Content-Type' => 'text/plain; charset=utf-8']);
 	}
 
-	/**
-	 * A JSON response.
-	 *
-	 * @throws \JsonException When the data can't be encoded.
-	 */
+	/** @throws \JsonException When the data can't be encoded. */
 	public static function json(mixed $data, int $status = 200): self
 	{
 		$json = Data::toJson($data);
@@ -51,16 +41,13 @@ final class Response
 		return new self($json, $status, ['Content-Type' => 'application/json']);
 	}
 
-	/**
-	 * A redirect, 302 unless you pass another status.
-	 */
 	public static function redirect(string $url, int $status = 302): self
 	{
 		return new self('', $status, ['Location' => $url]);
 	}
 
 	/**
-	 * A download of the file, under the file's name, or $name.
+	 * A download, named after the file unless $name is given.
 	 *
 	 * @throws \RuntimeException When the file is missing.
 	 */
@@ -86,8 +73,7 @@ final class Response
 	}
 
 	/**
-	 * A plain text response with the error's status and message, as in return Response::error($e) from an error
-	 * handler. App adds its headers.
+	 * The error's status and message as plain text. App adds its headers.
 	 */
 	public static function error(HttpException $e): self
 	{
@@ -107,7 +93,7 @@ final class Response
 	}
 
 	/**
-	 * A copy with the header set, replacing any of the same name, ignoring case. The original is unchanged.
+	 * A copy with the header set, replacing any of the same name, ignoring case.
 	 *
 	 * @param string|list<string> $value
 	 */
@@ -130,8 +116,7 @@ final class Response
 	}
 
 	/**
-	 * A header, ignoring the case of its name, as in header('content-type')->string(). One set to a list, such as
-	 * several Set-Cookie values, is read with rawArray().
+	 * The name is case-insensitive. One set to a list, such as several Set-Cookie values, is read with rawArray().
 	 */
 	public function header(string $name): Value
 	{
@@ -145,9 +130,8 @@ final class Response
 	}
 
 	/**
-	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('name')->string(). More
-	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
-	 * the body as it is.
+	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read
+	 * deeper, as Value::get() does.
 	 *
 	 * @throws \JsonException When a JSON body is invalid.
 	 * @throws \RuntimeException When an XML body is invalid.
@@ -160,7 +144,7 @@ final class Response
 	}
 
 	/**
-	 * Sends the status, headers and body. With body: false, only the status and headers.
+	 * With body: false, only the status and headers.
 	 */
 	public function send(bool $body = true): void
 	{

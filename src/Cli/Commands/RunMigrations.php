@@ -18,7 +18,6 @@ final readonly class RunMigrations
 
 	public const string DIR = 'database/migrations';
 
-	/** Creates the table that records which migrations have run, unless it exists. */
 	public const string CREATE_TABLE = <<<SQL
 			CREATE TABLE IF NOT EXISTS migrations (
 				name VARCHAR(255) PRIMARY KEY,
@@ -29,8 +28,6 @@ final readonly class RunMigrations
 	public function __construct(private App $app, private Db $db) {}
 
 	/**
-	 * Runs the migrations that haven't run yet.
-	 *
 	 * @throws \PDOException When a migration's SQL fails. Its transaction is rolled back.
 	 * @throws \RuntimeException When a migration leaves a row whose foreign key points nowhere. It's rolled back too.
 	 * @throws \Throwable

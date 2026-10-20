@@ -21,7 +21,7 @@ test('json(), form(), xml() and text() encode the body and set its Content-Type'
 	'text' => [ClientRequest::text('PUT', '/', 'Ann'), 'Ann', 'text/plain; charset=utf-8'],
 ]);
 
-test('json() without data has no body or Content-Type, while [] and {} are sent as they are', function () {
+test('json() without data sends no body', function () {
 	$none = ClientRequest::json('PUT', '/');
 
 	expect([$none->body, $none->headers])->toBe(['', []]);
@@ -29,7 +29,7 @@ test('json() without data has no body or Content-Type, while [] and {} are sent 
 	expect(ClientRequest::json('PUT', '/', new stdClass())->body)->toBe('{}');
 });
 
-test('header names are lowercased, so one you pass replaces the Content-Type whatever its case', function () {
+test('a Content-Type you pass replaces the default, whatever its case', function () {
 	$request = ClientRequest::json('PUT', '/', ['name' => 'Ann'], ['Content-Type' => 'application/merge-patch+json']);
 
 	expect($request->headers)->toBe(['content-type' => 'application/merge-patch+json']);

@@ -78,7 +78,7 @@ final readonly class Config
 	}
 
 	/**
-	 * A setting. Without a default, a missing key throws.
+	 * Without a default, a missing key throws a LogicException.
 	 */
 	public function get(string $key, mixed $default = null): mixed
 	{

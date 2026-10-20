@@ -28,7 +28,7 @@ final readonly class Crypto
 	}
 
 	/**
-	 * Encrypts a secret for storage. Decrypting needs the same context, such as 'tenant:7:api_key'.
+	 * Decrypting needs the same context, such as 'tenant:7:api_key'.
 	 */
 	public function encrypt(#[\SensitiveParameter] string $secret, string $context): string
 	{

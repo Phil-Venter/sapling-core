@@ -22,8 +22,6 @@ final readonly class Csrf
 	public function __construct(private array $trustedOrigins = []) {}
 
 	/**
-	 * Lets the request through unless it's a cross-site write.
-	 *
 	 * @param \Closure(Request): Response $next
 	 * @throws HttpException 403 for a write a browser sent from another site.
 	 */

@@ -6,8 +6,8 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 /**
- * Sets the browser security headers and a content policy, unless the response already has them. The content_policy
- * setting's directives replace the defaults. Inline styles are allowed, and inline scripts aren't.
+ * Sets the browser security headers and a content policy, unless the response already has them. It allows inline
+ * styles but not inline scripts.
  */
 final readonly class SecurityHeaders
 {
@@ -22,17 +22,13 @@ final readonly class SecurityHeaders
 	];
 
 	/**
-	 * Directives to change, such as script-src. Each replaces the default of the same name.
+	 * The content_policy setting. Each directive replaces the default of the same name, such as script-src.
 	 *
 	 * @param array<string, string> $policy
 	 */
 	public function __construct(private array $policy = []) {}
 
-	/**
-	 * Adds the headers to the response, keeping any the action set.
-	 *
-	 * @param \Closure(Request): Response $next
-	 */
+	/** @param \Closure(Request): Response $next */
 	public function __invoke(Request $request, \Closure $next): Response
 	{
 		$policy = [];

@@ -9,15 +9,13 @@ use Sapling\Value;
  */
 final readonly class Console
 {
-	/** The exit code for a command that worked. */
 	public const int SUCCESS = 0;
 
-	/** The exit code for a command that failed. */
 	public const int FAILURE = 1;
 
 	public string $command;
 
-	/** @var list<string> Every argument after the command, in order, including those after --. */
+	/** @var list<string> */
 	public array $args;
 
 	/** @var array<string, string> */
@@ -30,8 +28,8 @@ final readonly class Console
 	private mixed $input;
 
 	/**
-	 * Reads argv. The first word is the command, --name=value is an option, --name is a flag and the rest are
-	 * arguments, as is every word after --. ask() reads from standard input, unless a test passes a stream of answers.
+	 * The first word is the command, --name=value is an option, --name is a flag and the rest are arguments, as is
+	 * every word after --. Tests can pass $input to stand in for standard input.
 	 *
 	 * @param list<string> $argv
 	 * @param resource|null $input
@@ -79,7 +77,7 @@ final readonly class Console
 	}
 
 	/**
-	 * The argument at $index after the command, counting from 0, as in arg(0)->string().
+	 * The argument at $index, counting from 0 after the command.
 	 */
 	public function arg(int $index): Value
 	{
@@ -87,7 +85,7 @@ final readonly class Console
 	}
 
 	/**
-	 * The value of --name=value, as in option('days')->int(30).
+	 * The value of --name=value.
 	 *
 	 * @throws UsageException When --name was given without =value, as in --days 7.
 	 */
@@ -115,8 +113,7 @@ final readonly class Console
 	}
 
 	/**
-	 * Asks a question and reads the answer from standard input, as in ask('Delete 3 notes? (yes/no)')->bool(). A blank
-	 * answer, or the end of input, gives an empty Value, so the reader's default applies.
+	 * A blank answer or the end of input gives an empty Value.
 	 */
 	public function ask(string $question): Value
 	{
@@ -139,9 +136,6 @@ final readonly class Console
 		return new Value($answer);
 	}
 
-	/**
-	 * Prints a line to standard output.
-	 */
 	public function line(string $text = ''): void
 	{
 		echo $text, PHP_EOL;

@@ -44,7 +44,7 @@ test('migrate runs new files in name order, once each', function () {
 	expect(array_column($names, 'name'))->toBe(['001_notes.sql', '002_tags.sql']);
 });
 
-test('an empty file is skipped, not recorded, so it runs once it has SQL in it', function () {
+test('an empty file is skipped and not recorded', function () {
 	($this->migration)('001_notes.sql', "\n");
 
 	$empty = runInApp($this->app, 'migrations:run');
@@ -55,7 +55,7 @@ test('an empty file is skipped, not recorded, so it runs once it has SQL in it',
 	expect($filled)->toBe([0, "Migrated 001_notes.sql\nRan 1 migration.\n"]);
 });
 
-test('a failing file rolls back with its migrations row, and earlier files stay', function () {
+test('a failing file rolls back without undoing earlier ones', function () {
 	($this->migration)('001_notes.sql', 'CREATE TABLE notes (id INTEGER PRIMARY KEY);');
 	($this->migration)('002_broken.sql', 'CREATE TABLE half (id INTEGER); THIS IS NOT SQL;');
 	$db = $this->app->container->get(Db::class);
@@ -74,7 +74,7 @@ test('a failing file rolls back with its migrations row, and earlier files stay'
 	expect($db->value("SELECT count(*) FROM sqlite_master WHERE name = 'notes'")->int())->toBe(1);
 });
 
-test('rebuilding a table keeps the rows that point at it, and foreign keys are back on after', function () {
+test('rebuilding a table keeps the rows that point at it', function () {
 	($this->migration)('001_users.sql', <<<SQL
 		CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);
 		CREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE);
@@ -95,7 +95,7 @@ test('rebuilding a table keeps the rows that point at it, and foreign keys are b
 	expect($db->value('PRAGMA foreign_keys')->int())->toBe(1);
 });
 
-test('a migration that leaves a row pointing nowhere rolls back, since deletes don\'t cascade while it runs', function () {
+test('a migration that leaves an orphaned row rolls back', function () {
 	($this->migration)('001_users.sql', <<<SQL
 		CREATE TABLE users (id INTEGER PRIMARY KEY);
 		CREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE);

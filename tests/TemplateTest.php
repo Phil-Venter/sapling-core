@@ -36,7 +36,7 @@ test('named slots do not leak into the next page', function () {
 	expect($this->view->render('untitled'))->toContain('<title>Default</title>');
 });
 
-test('an error inside a template closes its buffers and leaves no state behind', function () {
+test('an error inside a template leaves no buffers open', function () {
 	$level = ob_get_level();
 
 	expect(fn() => $this->view->render('broken'))->toThrow(RuntimeException::class, 'template failed');
@@ -44,7 +44,7 @@ test('an error inside a template closes its buffers and leaves no state behind',
 	expect($this->view->render('untitled'))->toContain('<title>Default</title>');
 });
 
-test('a misused component or slot throws instead of garbling the page', function () {
+test('a misused component or slot throws', function () {
 	$level = ob_get_level();
 
 	expect(fn() => $this->view->render('unclosed'))

@@ -8,7 +8,7 @@ beforeEach(function () {
 	$this->app = scannedApp();
 });
 
-test('directives passed to SecurityHeaders replace the defaults, and the rest stay', function () {
+test('a directive passed in replaces only its default', function () {
 	$policy = ['script-src' => "'self' https://unpkg.com", 'img-src' => "'self'", 'upgrade-insecure-requests' => ''];
 	$this->app->middleware(new SecurityHeaders($policy));
 
@@ -21,7 +21,7 @@ test('directives passed to SecurityHeaders replace the defaults, and the rest st
 	expect($headers['X-Frame-Options'])->toBe('DENY');
 });
 
-test('a header the action set itself is kept, so one page can have its own policy', function () {
+test('a header the action set is kept', function () {
 	$this->app->router->add('GET', '/own-policy', fn(): Response => Response::text('embed')->withHeader(
 		'Content-Security-Policy',
 		"frame-ancestors 'self'",

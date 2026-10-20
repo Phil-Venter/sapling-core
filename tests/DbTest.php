@@ -16,7 +16,7 @@ afterEach(function () {
 	rmdir($this->dir);
 });
 
-test('sqlite() turns on WAL, synchronous NORMAL, foreign keys, a busy timeout and a WAL size limit', function () {
+test('sqlite() sets its pragmas', function () {
 	expect($this->db->value('PRAGMA journal_mode')->string())->toBe('wal');
 	expect($this->db->value('PRAGMA synchronous')->int())->toBe(1);
 	expect($this->db->value('PRAGMA foreign_keys')->int())->toBe(1);
@@ -57,7 +57,7 @@ test('all(), one() and value() read rows as arrays', function () {
 	expect($this->db->value('SELECT count(*) FROM notes')->int())->toBe(2);
 });
 
-test('transaction() commits and returns what the closure returns, even after a statement committed by itself', function (bool $committed) {
+test('transaction() commits and returns the closure\'s result', function (bool $committed) {
 	$id = $this->db->transaction(function (Db $db) use ($committed) {
 		$db->run("INSERT INTO notes (body) VALUES ('kept')");
 

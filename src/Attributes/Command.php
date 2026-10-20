@@ -8,8 +8,5 @@ namespace Sapling\Attributes;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final readonly class Command
 {
-	/**
-	 * The name, such as notes:prune, and the description commands:list shows.
-	 */
 	public function __construct(public string $name, public string $description = '') {}
 }

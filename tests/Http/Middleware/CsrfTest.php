@@ -3,7 +3,7 @@
 use Sapling\Http\Middleware\Csrf;
 use Sapling\Http\Request;
 
-test('Csrf lets a write through from the same origin, a trusted site, or a client that is not a browser', function (
+test('Csrf lets same-origin, trusted and non-browser writes through', function (
 	string $method,
 	array $headers,
 	array $cookies,
@@ -56,7 +56,7 @@ test('Csrf lets a write through from the same origin, a trusted site, or a clien
 	'a trusted site' => ['POST', ['Sec-Fetch-Site' => 'cross-site', 'Origin' => 'https://front.example'], [], 302],
 ]);
 
-test('a refused write says why in its body, and checking never starts a session', function () {
+test('a refused write is a 403 that says why', function () {
 	$app = scannedApp();
 	$app->middleware(Csrf::class);
 

@@ -9,7 +9,7 @@ use Sapling\Tests\Fixtures\Container\Mailer;
 use Sapling\Tests\Fixtures\Container\NeedsName;
 use Sapling\Tests\Fixtures\Container\Settings;
 
-test('class-typed constructor parameters are autowired and scalars use their default', function () {
+test('constructor parameters are autowired by type', function () {
 	$mailer = new Container()->get(Mailer::class);
 
 	expect($mailer->clock)->toBeInstanceOf(Clock::class);
@@ -45,14 +45,14 @@ test('an unresolvable scalar parameter names the class and the parameter', funct
 		->toThrow(LogicException::class, 'Cannot autowire $name in ' . NeedsName::class);
 });
 
-test('classes that need each other name the loop, instead of recursing until PHP runs out of stack', function () {
+test('a circular dependency throws and names the loop', function () {
 	$loop = Chicken::class . ' -> ' . Egg::class . ' -> ' . Chicken::class;
 
 	expect(fn() => new Container()->get(Chicken::class))
 		->toThrow(LogicException::class, "Circular dependency: {$loop}");
 });
 
-test('#[Config] fills a parameter and a default covers a missing key, while a wrong type or a missing key throws', function () {
+test('#[Config] fills a parameter from the config', function () {
 	$settings = function (array $config): Settings {
 		$container = new Container();
 		$container->set(Config::class, new Config($config));

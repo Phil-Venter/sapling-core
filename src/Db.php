@@ -8,7 +8,7 @@ namespace Sapling;
 final readonly class Db
 {
 	/**
-	 * Wraps a PDO connection and sets it to throw on errors, fetch rows as arrays and use real prepared statements.
+	 * Sets the connection to throw on errors, fetch rows as arrays and use real prepared statements.
 	 *
 	 * @throws \PDOException
 	 */
@@ -42,8 +42,6 @@ final readonly class Db
 	}
 
 	/**
-	 * Every row the query returns.
-	 *
 	 * @param array<array-key, mixed> $params
 	 * @return list<array<string, mixed>>
 	 * @throws \PDOException When the query fails.
@@ -54,8 +52,6 @@ final readonly class Db
 	}
 
 	/**
-	 * The first row, or null.
-	 *
 	 * @param array<array-key, mixed> $params
 	 * @return array<string, mixed>|null
 	 * @throws \PDOException When the query fails.
@@ -72,8 +68,7 @@ final readonly class Db
 	}
 
 	/**
-	 * The first column of the first row, as in value('SELECT count(*) FROM notes')->int(). No row gives an empty
-	 * Value.
+	 * The first column of the first row. No row gives an empty Value.
 	 *
 	 * @param array<array-key, mixed> $params
 	 * @throws \PDOException When the query fails.
@@ -91,7 +86,7 @@ final readonly class Db
 	}
 
 	/**
-	 * Runs a statement and returns the number of rows it changed.
+	 * Returns the number of rows changed.
 	 *
 	 * @param array<array-key, mixed> $params
 	 * @throws \PDOException When the statement fails.
@@ -101,19 +96,13 @@ final readonly class Db
 		return $this->query($sql, $params)->rowCount();
 	}
 
-	/**
-	 * The id of the last inserted row.
-	 *
-	 * @throws \PDOException
-	 */
+	/** @throws \PDOException */
 	public function lastId(): string
 	{
 		return (string) $this->pdo->lastInsertId();
 	}
 
 	/**
-	 * Runs the closure in a transaction and returns its result.
-	 *
 	 * @template T
 	 * @param \Closure(self): T $fn
 	 * @return T

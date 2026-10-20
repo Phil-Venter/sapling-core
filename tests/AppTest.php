@@ -32,11 +32,7 @@ describe('boot()', function () {
 		session_destroy();
 	});
 
-	test('takes debug from the config, off without it, and a scanned action gets Config and Template', function (
-		array $settings,
-		bool $debug,
-		string $body,
-	) {
+	test('takes debug from the config and wires the container', function (array $settings, bool $debug, string $body) {
 		$app = App::boot(BOOT, new Config($settings));
 		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
 
@@ -48,7 +44,7 @@ describe('boot()', function () {
 		'no settings at all' => [[], false, "<p>hello from production</p>\n"],
 	]);
 
-	test('sets the default timezone from the config, and leaves it alone without one', function () {
+	test('sets the default timezone from the config', function () {
 		$before = date_default_timezone_get();
 
 		try {
@@ -92,7 +88,7 @@ describe('boot()', function () {
 		expect($response->headers['Content-Security-Policy'])->toContain("img-src 'self';");
 	});
 
-	test('refuses a string where a setting must be true or false, since "false" would read as on', function (string $key) {
+	test('refuses a string where a setting must be a bool', function (string $key) {
 		expect(
 			fn() => App::boot(BOOT, new Config([
 				$key => 'false',
@@ -117,10 +113,7 @@ describe('boot()', function () {
 });
 
 describe('registering in code', function () {
-	test('scan() takes its folder and namespace with or without a trailing slash, and reads only class files', function (
-		string $folder,
-		string $namespace,
-	) {
+	test('scan() ignores trailing slashes and non-class files', function (string $folder, string $namespace) {
 		$app = new App(FIXTURES);
 		$app->scan($folder, $namespace);
 
@@ -132,7 +125,7 @@ describe('registering in code', function () {
 		'with' => [FIXTURES . '/Scan/', 'Sapling\Tests\Fixtures\Scan\\'],
 	]);
 
-	test('add() refuses a class with no #[Route] or #[Command], which scan() would skip', function () {
+	test('add() refuses a class with no #[Route] or #[Command]', function () {
 		$app = new App(FIXTURES);
 
 		expect(fn() => $app->add(Sapling\Tests\Fixtures\Container\Clock::class))
@@ -185,7 +178,7 @@ describe('registering in code', function () {
 });
 
 describe('middleware', function () {
-	test('global middleware runs first, then the action middleware in attribute order, then the action', function () {
+	test('global middleware runs first, then the action\'s in attribute order', function () {
 		$app = scannedApp();
 		$app->middleware(GlobalOne::class);
 		$app->middleware(GlobalTwo::class);
@@ -242,7 +235,7 @@ describe('middleware', function () {
 		expect($notAllowed->headers['Allow'])->toBe('DELETE, GET, HEAD');
 	});
 
-	test('an HttpException thrown by middleware reaches the middleware outside it as a response', function () {
+	test('an HttpException from middleware reaches outer middleware as a response', function () {
 		$app = scannedApp();
 		$app->middleware(Stamp::class);
 		$app->middleware(fn() => throw new Sapling\Http\HttpException(429, 'Slow down'));
@@ -292,12 +285,7 @@ describe('middleware', function () {
 });
 
 describe('errors', function () {
-	test('an error answers with its status, and only a 5xx or a crash is logged, by method and path', function (
-		string $path,
-		int $status,
-		string $body,
-		array $logged,
-	) {
+	test('only a 5xx or a crash is logged', function (string $path, int $status, string $body, array $logged) {
 		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', $path)));
 
 		expect([$response->status, $response->body])->toBe([$status, $body]);
@@ -353,7 +341,7 @@ describe('errors', function () {
 
 		expect([$response['status'], $response['body']])->toBe([200, 'still works']);
 	});
-	test('a crash inside Sapling or a package also logs the line of your code that led there', function () {
+	test('a crash in a package logs the line of your code that led there', function () {
 		$app = new App(FIXTURES);
 		$app->router->add('GET', '/report', require FIXTURES . '/missing-download.php');
 
@@ -367,7 +355,7 @@ describe('errors', function () {
 });
 
 describe('onError()', function () {
-	test('answers every HttpException with the request, and middleware sees its response', function () {
+	test('the handler\'s response passes back through middleware', function () {
 		$app = scannedApp();
 		$app->middleware(Stamp::class);
 		$app->onError(fn(HttpException $e, Request $request): Response => Response::text(
@@ -382,7 +370,7 @@ describe('onError()', function () {
 		expect([$forbidden->body, $forbidden->headers['X-Stamp']])->toBe(['403 at /forbidden: Forbidden', 'saw 403']);
 	});
 
-	test('adds the exception\'s headers to the handler\'s response, without replacing the handler\'s own', function () {
+	test('adds the exception\'s headers without replacing the handler\'s', function () {
 		$app = new App(FIXTURES);
 		$app->router->add('GET', '/busy', fn() => throw new HttpException(503, '', [
 			'Retry-After' => '60',
@@ -398,7 +386,7 @@ describe('onError()', function () {
 		]);
 	});
 
-	test('takes a class name, built by the container when an error happens', function () {
+	test('builds a handler class only when an error happens', function () {
 		$app = scannedApp();
 		$app->onError(JsonErrors::class);
 
@@ -438,7 +426,7 @@ describe('testing', function () {
 });
 
 describe('debug page', function () {
-	test('an app closure is shown by its relative file, whatever the base path ends in', function (string $base) {
+	test('an app closure is shown by its relative file', function (string $base) {
 		$app = new App($base, debug: true);
 		$app->router->add('GET', '/closure', require FIXTURES . '/closure-route.php');
 
@@ -449,7 +437,7 @@ describe('debug page', function () {
 });
 
 describe('commands', function () {
-	test('a warning in a command prints the error once, with the full trace, and exits 1', function () {
+	test('a warning in a command prints the trace once and exits 1', function () {
 		$result = runConsole(['crash']);
 
 		expect($result['code'])->toBe(1);
@@ -481,7 +469,7 @@ describe('commands', function () {
 		],
 	]);
 
-	test('a usage mistake, such as an option without =, prints only its message', function () {
+	test('a UsageException prints only its message', function () {
 		$result = runConsole(['greet', '--times', '2']);
 
 		expect($result['code'])->toBe(1);

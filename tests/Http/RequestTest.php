@@ -10,7 +10,7 @@ afterEach(function () {
 	[$_SERVER, $_GET, $_POST, $_COOKIE, $_FILES] = $this->globals;
 });
 
-test('fromGlobals() reads method, normalized path, query, headers, cookies and files', function () {
+test('fromGlobals() reads the request from PHP\'s globals', function () {
 	$_SERVER['REQUEST_METHOD'] = 'GET';
 	$_SERVER['REQUEST_URI'] = '//notes//7/?page=2';
 	$_SERVER['HTTP_X_REQUEST_ID'] = 'abc';
@@ -95,7 +95,7 @@ test('POST _method may switch only to PUT, PATCH or DELETE', function (
 	'an array, ignored without a warning' => ['POST', ['DELETE'], 'POST'],
 ]);
 
-test('data() reads a field as the type asked for, and a crafted array never reaches a string', function () {
+test('a crafted array never reaches a string field', function () {
 	$request = new Request('POST', '/notes', input: ['body' => ['x'], 'tags' => ['a'], 'count' => '3']);
 
 	expect($request->data('body')->string('fallback'))->toBe('fallback');
@@ -104,7 +104,7 @@ test('data() reads a field as the type asked for, and a crafted array never reac
 	expect($request->data('missing')->raw)->toBeNull();
 });
 
-test('a JSON body becomes input, alongside query, headers, cookies and params', function () {
+test('a JSON request through php -S reaches the action intact', function () {
 	$body = '{"name":"Ann"}';
 	$response = httpRequest(
 		'PUT',
@@ -130,7 +130,7 @@ test('a JSON body becomes input, alongside query, headers, cookies and params', 
 	]);
 });
 
-test('data() is the whole body, and form fields PHP has already read win over it', function () {
+test('data() reads JSON, plain text and posted form fields', function () {
 	$json = new Request('PUT', '/x', headers: ['Content-Type' => 'application/json'], body: '[1,2]');
 	$text = new Request('PUT', '/x', headers: ['Content-Type' => 'text/plain'], body: 'hello');
 	$posted = new Request('POST', '/x', input: ['a' => '1'], headers: ['Content-Type' => 'multipart/form-data']);

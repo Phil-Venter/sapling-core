@@ -11,8 +11,7 @@ final class CommandList
 	private array $commands = [];
 
 	/**
-	 * Adds a command. The action is a class name, an object or a closure. Throws LogicException when the name is
-	 * taken.
+	 * Throws a LogicException when the name is taken.
 	 *
 	 * @param class-string|object $action
 	 */
@@ -29,18 +28,14 @@ final class CommandList
 		$this->commands[$name] = ['action' => $action, 'description' => $description];
 	}
 
-	/**
-	 * The command's action, or null.
-	 *
-	 * @return class-string|object|null
-	 */
+	/** @return class-string|object|null */
 	public function find(string $name): string|object|null
 	{
 		return $this->commands[$name]['action'] ?? null;
 	}
 
 	/**
-	 * Every command, sorted by name.
+	 * Sorted by name.
 	 *
 	 * @return array<string, array{action: class-string|object, description: string}>
 	 */

@@ -29,10 +29,7 @@ function nextRequest(): Session
 	return new Session();
 }
 
-test('the cookie is HttpOnly and SameSite=Lax with strict mode on, and Secure only over HTTPS', function (
-	array $server,
-	bool $secure,
-) {
+test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS', function (array $server, bool $secure) {
 	unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
 	$_SERVER = [...$_SERVER, ...$server];
 	new Session()->get('anything');
@@ -82,7 +79,7 @@ test('destroy() forgets everything and the next use starts a fresh session', fun
 	expect(session_id())->not->toBe($before);
 });
 
-test('with a lifetime, every visit renews the cookie, so an active visitor stays signed in', function () {
+test('with a lifetime, every visit renews the cookie', function () {
 	$first = httpRequest('GET', '/visit');
 	$cookie = explode(';', headerValues($first, 'Set-Cookie')[0])[0];
 

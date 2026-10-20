@@ -14,7 +14,7 @@ final readonly class ClientResponse
 	public array $headers;
 
 	/**
-	 * A reply built by hand, for tests or from a cache. HttpClient builds the real ones.
+	 * A reply built by hand, for tests or from a cache.
 	 *
 	 * @param array<string, string|list<string>> $headers
 	 */
@@ -24,8 +24,7 @@ final readonly class ClientResponse
 	}
 
 	/**
-	 * A header, ignoring the case of its name, as in header('Retry-After')->int(60). A header sent more than once is
-	 * a list, read with rawArray().
+	 * The name is case-insensitive. A header sent more than once is a list, read with rawArray().
 	 */
 	public function header(string $name): Value
 	{
@@ -33,9 +32,8 @@ final readonly class ClientResponse
 	}
 
 	/**
-	 * A field from the body, decoded by its Content-Type as JSON, XML or a form, as in data('name')->string(). More
-	 * keys read deeper, and no key gives the whole body. An empty body gives an empty Value, and any other type gives
-	 * the body as it is.
+	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read
+	 * deeper, as Value::get() does.
 	 *
 	 * @throws \JsonException When a JSON body is invalid.
 	 * @throws \RuntimeException When an XML body is invalid.

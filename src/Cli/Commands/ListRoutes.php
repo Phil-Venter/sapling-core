@@ -18,9 +18,6 @@ final readonly class ListRoutes
 
 	public function __construct(private Router $router) {}
 
-	/**
-	 * Prints every route, sorted by path and then method.
-	 */
 	public function __invoke(Console $console): int
 	{
 		$routes = $this->router->all();

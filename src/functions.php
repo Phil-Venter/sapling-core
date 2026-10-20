@@ -58,8 +58,7 @@ if (!function_exists('attr')) {
 
 if (!function_exists('attrs')) {
 	/**
-	 * Several HTML attributes, as in attrs(['class' => 'note', 'hidden' => false, 'data-id' => 7]). Empty ones are
-	 * left out.
+	 * attr() for each pair, joined with spaces. Empty ones are left out.
 	 *
 	 * @param array<string, mixed> $attrs
 	 */
