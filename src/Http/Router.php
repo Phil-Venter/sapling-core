@@ -8,14 +8,11 @@ namespace Sapling\Http;
  */
 final class Router
 {
-	// A level of the tree, cast to an object so branches can be filled in where they are.
-	private const array NODE = ['fixed' => [], 'param' => null, 'routes' => []];
-
-	private object $tree;
+	private RouteNode $tree;
 
 	public function __construct()
 	{
-		$this->tree = (object) self::NODE;
+		$this->tree = new RouteNode();
 	}
 
 	/**
@@ -56,15 +53,18 @@ final class Router
 		$taken = $node->routes[$method]['action'] ?? null;
 
 		if ($taken !== null) {
-			// @mago-expect analysis:mixed-assignment
 			$first = is_object($taken) ? $taken::class : $taken;
 			$second = is_object($action) ? $action::class : $action;
 
 			throw new \LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
 		}
 
-		// @mago-expect analysis:ambiguous-object-property-access
-		$node->routes[$method] = ['action' => $action, 'middleware' => $middleware, 'params' => $params];
+		$node->routes[$method] = [
+			'action' => $action,
+			'middleware' => $middleware,
+			'params' => $params,
+			'path' => $path,
+		];
 	}
 
 	/**
@@ -86,7 +86,6 @@ final class Router
 			if ($route !== null) {
 				$params = array_combine($route['params'], $values);
 
-				// @mago-expect analysis:less-specific-nested-return-statement
 				return ['action' => $route['action'], 'middleware' => $route['middleware'], 'params' => $params];
 			}
 
@@ -116,24 +115,21 @@ final class Router
 		return iterator_to_array($this->routesBelow($this->tree), false);
 	}
 
-	// Typed as object, so the analyzer can follow a node down the tree.
-	private function branch(object $node, string $segment): object
+	private function branch(RouteNode $node, string $segment): RouteNode
 	{
 		if (str_starts_with($segment, ':')) {
-			// @mago-expect analysis:ambiguous-object-property-access
-			return $node->param ??= (object) self::NODE;
+			return $node->param ??= new RouteNode();
 		}
 
-		// @mago-expect analysis:ambiguous-object-property-access
-		return $node->fixed[$segment] ??= (object) self::NODE;
+		return $node->fixed[$segment] ??= new RouteNode();
 	}
 
 	/**
 	 * @param list<string> $segments
 	 * @param list<string> $values
-	 * @return \Generator<array{object, list<string>}>
+	 * @return \Generator<array{RouteNode, list<string>}>
 	 */
-	private function walk(object $node, array $segments, array $values = []): \Generator
+	private function walk(RouteNode $node, array $segments, array $values = []): \Generator
 	{
 		if ($segments === []) {
 			yield [$node, $values];
@@ -150,48 +146,26 @@ final class Router
 
 		$value = rawurldecode($segment);
 
-		// @mago-expect analysis:ambiguous-object-property-access
 		if ($node->param !== null && $value !== '' && !str_contains($value, '/')) {
 			yield from $this->walk($node->param, $segments, [...$values, $value]);
 		}
 	}
 
-	/**
-	 * @param list<string> $segments
-	 * @return \Generator<array{method: string, path: string, action: string}>
-	 */
-	private function routesBelow(object $node, array $segments = []): \Generator
+	/** @return \Generator<array{method: string, path: string, action: string}> */
+	private function routesBelow(RouteNode $node): \Generator
 	{
-		// @mago-expect analysis:ambiguous-object-property-access
-		// @mago-expect analysis:invalid-iterator
 		foreach ($node->routes as $method => $route) {
-			$params = $route['params'];
-			$parts = [];
-
-			foreach ($segments as $segment) {
-				if ($segment === ':') {
-					$segment = ':' . array_shift($params);
-				}
-
-				$parts[] = $segment;
-			}
-
-			// @mago-expect analysis:mixed-assignment
 			$action = is_object($route['action']) ? $route['action']::class : $route['action'];
 
-			// @mago-expect analysis:invalid-yield-value-type
-			yield ['method' => $method, 'path' => '/' . implode('/', $parts), 'action' => $action];
+			yield ['method' => $method, 'path' => $route['path'], 'action' => $action];
 		}
 
-		// @mago-expect analysis:ambiguous-object-property-access
-		// @mago-expect analysis:invalid-iterator
-		foreach ($node->fixed as $segment => $branch) {
-			yield from $this->routesBelow($branch, [...$segments, (string) $segment]);
+		foreach ($node->fixed as $branch) {
+			yield from $this->routesBelow($branch);
 		}
 
-		// @mago-expect analysis:ambiguous-object-property-access
 		if ($node->param !== null) {
-			yield from $this->routesBelow($node->param, [...$segments, ':']);
+			yield from $this->routesBelow($node->param);
 		}
 	}
 }
