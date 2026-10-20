@@ -88,7 +88,7 @@ count = 1
 file = "src/Container.php"
 code = "invalid-return-statement"
 message = '''Invalid return type for function `Sapling\Container::get`: expected `('T.sapling\container::get() extends object)`, but found `object`.'''
-count = 3
+count = 2
 
 [[issues]]
 file = "src/Container.php"

@@ -52,6 +52,14 @@ test('a circular dependency throws and names the loop', function () {
 		->toThrow(LogicException::class, "Circular dependency: {$loop}");
 });
 
+test('a factory that needs its own class names the loop', function () {
+	$container = new Container();
+	$container->set(Egg::class, fn(Container $container) => $container->get(Chicken::class));
+	$loop = Egg::class . ' -> ' . Chicken::class . ' -> ' . Egg::class;
+
+	expect(fn() => $container->get(Egg::class))->toThrow(LogicException::class, "Circular dependency: {$loop}");
+});
+
 test('#[Config] fills a parameter from the config', function () {
 	$settings = function (array $config): Settings {
 		$container = new Container();

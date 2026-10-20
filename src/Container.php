@@ -36,13 +36,6 @@ final class Container
 			return $this->instances[$id];
 		}
 
-		if (array_key_exists($id, $this->factories)) {
-			$factory = $this->factories[$id];
-			$this->instances[$id] = $factory($this);
-
-			return $this->instances[$id];
-		}
-
 		$this->instances[$id] = $this->build($id);
 
 		return $this->instances[$id];
@@ -73,12 +66,17 @@ final class Container
 			throw new \LogicException("Circular dependency: {$loop}");
 		}
 
-		$reflection = new \ReflectionClass($id);
-		$parameters = $reflection->getConstructor()?->getParameters() ?? [];
-		$arguments = [];
 		$this->building[$id] = true;
+		$arguments = [];
 
 		try {
+			if (array_key_exists($id, $this->factories)) {
+				return $this->factories[$id]($this);
+			}
+
+			$reflection = new \ReflectionClass($id);
+			$parameters = $reflection->getConstructor()?->getParameters() ?? [];
+
 			foreach ($parameters as $parameter) {
 				$arguments[] = $this->argument($parameter, $id);
 			}

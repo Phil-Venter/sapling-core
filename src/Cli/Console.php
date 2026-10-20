@@ -50,14 +50,16 @@ final readonly class Console
 		}
 
 		foreach ($words as $word) {
-			if (str_starts_with($word, '--') && str_contains($word, '=')) {
-				$parts = explode('=', substr($word, 2), 2);
-				$options[$parts[0]] = $parts[1] ?? '';
-				continue;
-			}
-
 			if (str_starts_with($word, '--')) {
-				$flags[substr($word, 2)] = true;
+				$name = substr($word, 2);
+				$equals = strpos($name, '=');
+
+				if ($equals === false) {
+					$flags[$name] = true;
+					continue;
+				}
+
+				$options[substr($name, 0, $equals)] = substr($name, $equals + 1);
 				continue;
 			}
 
