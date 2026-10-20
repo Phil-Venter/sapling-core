@@ -127,8 +127,7 @@ final class Request
 			return $remote;
 		}
 
-		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. With '*', only the
-		// proxy that connected is trusted, because the visitor can write anything before the address it added.
+		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added.
 		$hops = array_map(trim(...), explode(',', $forwarded));
 
 		if ($any) {

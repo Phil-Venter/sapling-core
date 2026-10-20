@@ -70,12 +70,10 @@ final readonly class Config
 	{
 		$quoted = [];
 
-		// "x" # note becomes x.
 		if (preg_match('/^(["\'])(.*?)\1(\s+#.*)?$/', $value, $quoted) === 1) {
 			return $quoted[2] ?? '';
 		}
 
-		// x # note becomes x, but a#b stays a#b.
 		return trim((string) preg_replace('/(^|\s)#.*$/', '', $value));
 	}
 

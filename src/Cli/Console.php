@@ -123,7 +123,7 @@ final readonly class Console
 		echo $question, ' ';
 		$line = fgets($this->input ?? STDIN);
 
-		// At the end of input, such as after Ctrl+D, the cursor is still after the question.
+		// At the end of input, the cursor is still after the question.
 		if ($line === false) {
 			echo PHP_EOL;
 
@@ -166,7 +166,7 @@ final readonly class Console
 
 		foreach ($rows as $row) {
 			foreach ($row as $column => $cell) {
-				// Characters, not bytes, so é takes one column. PCRE counts them without needing mbstring.
+				// Counts characters, not bytes, without needing mbstring.
 				$widths[$column] = max($widths[$column] ?? 0, (int) preg_match_all('/./su', $cell));
 			}
 		}
@@ -176,7 +176,6 @@ final readonly class Console
 			$cells = [];
 
 			foreach ($row as $column => $cell) {
-				// The last cell isn't padded, so no line ends in spaces.
 				if ($column === $last) {
 					$cells[] = $cell;
 					continue;

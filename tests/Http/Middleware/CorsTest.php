@@ -117,7 +117,7 @@ test('an OPTIONS request that is not a preflight reaches the app', function () {
 	expect($response->status)->toBe(405);
 });
 
-test('an allowed site can read an HttpException, such as a 404, and other callers get it as before', function () {
+test('an allowed site can read an HttpException, such as a 404, and other sites get it without CORS headers', function () {
 	$app = scannedApp();
 	$app->middleware(new Cors(['https://app.example']));
 

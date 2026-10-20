@@ -42,7 +42,6 @@ final class Router
 
 			$param = substr($segment, 1);
 
-			// Either mistake would otherwise go unnoticed, with a lost value or an unreachable name.
 			if (in_array($param, $params, true)) {
 				throw new \LogicException("Route {$method} {$path} uses :{$param} twice");
 			}

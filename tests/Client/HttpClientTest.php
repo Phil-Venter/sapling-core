@@ -34,7 +34,7 @@ test('a string body goes as it is with the Content-Type you pass, and data() dec
 	]);
 });
 
-test('a GET follows redirects and keeps only the final headers; a POST gets the redirect back', function () {
+test('a GET follows redirects and keeps only the final headers, and a POST gets the redirect back', function () {
 	$followed = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
 	$returned = $this->client->send(ClientRequest::form('POST', serverUrl('/notes'), ['body' => 'x']));
 

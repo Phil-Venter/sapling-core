@@ -45,7 +45,7 @@ final readonly class Crypto
 	{
 		$raw = base64_decode($stored, true);
 
-		// Too short to hold a nonce, such as a value cut off by its column. Sodium would throw.
+		// Sodium throws on a value too short to hold a nonce.
 		if ($raw === false || strlen($raw) < self::NONCE_BYTES) {
 			return null;
 		}

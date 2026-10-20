@@ -112,7 +112,6 @@ final class Data
 			return null;
 		}
 
-		// "application/vnd.api+json; charset=utf-8" becomes json.
 		$mime = strtolower(trim(explode(';', $contentType)[0]));
 		$format = preg_replace('#^.*[/+]#', '', $mime);
 

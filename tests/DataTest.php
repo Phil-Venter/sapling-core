@@ -51,7 +51,7 @@ test('broken JSON and XML throw', function () {
 	expect(fn() => Data::fromXml('<nope'))->toThrow(RuntimeException::class, 'Invalid XML:');
 });
 
-test('decode() picks the format by Content-Type; an empty body is null and any other type is the body', function (
+test('decode() picks the format by Content-Type, an empty body is null, and any other type gives the body', function (
 	string $type,
 	string $body,
 	mixed $data,

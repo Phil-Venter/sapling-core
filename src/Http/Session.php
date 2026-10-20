@@ -127,7 +127,6 @@ final class Session
 		unset($_SESSION[self::FLASH]);
 	}
 
-	// The cookie's path, domain and flags as session_start() set them, with its own expiry.
 	private function sendCookie(string $id, int $expires): void
 	{
 		$cookie = session_get_cookie_params();

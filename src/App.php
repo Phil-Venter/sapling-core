@@ -152,7 +152,6 @@ final class App
 	 */
 	public function add(string $class): void
 	{
-		// scan() skips a class with nothing to register, but naming one here is a mistake.
 		if (!$this->register($class)) {
 			throw new \LogicException("{$class} has no #[Route] or #[Command] to add");
 		}
@@ -166,7 +165,6 @@ final class App
 	 */
 	public function middleware(string|object $middleware, string $prefix = ''): void
 	{
-		// So admin, /admin and /admin/ all mean the same prefix.
 		$prefix = trim($prefix, '/');
 
 		if ($prefix !== '') {

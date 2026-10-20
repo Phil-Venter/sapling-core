@@ -122,7 +122,7 @@ Two classes on the same method and path can't both win, so the app stops with a 
 
 ### HEAD requests
 
-A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own wins. Since the GET action still runs in full, keep GET actions free of side effects.
+A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own wins. The GET action still runs in full, so keep it free of side effects.
 
 ### Not found and wrong method
 

@@ -56,7 +56,6 @@ final class Template
 		try {
 			$run($file, $data + $this->shared);
 
-			// A partial's end() can't close what its page opened, or the output lands in the wrong place.
 			if (count($this->open) < $opened) {
 				throw new \LogicException("end() in {$template} closes a component or slot it didn't open");
 			}
@@ -73,7 +72,6 @@ final class Template
 				ob_end_clean();
 			}
 
-			// So the next render() doesn't find them still open.
 			array_splice($this->open, $opened);
 
 			throw $e;
@@ -135,7 +133,6 @@ final class Template
 			return;
 		}
 
-		// yield() reads this component's slots while it renders.
 		$outer = $this->slots;
 		$this->slots = ['' => $content, ...$open['slots']];
 

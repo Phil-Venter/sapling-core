@@ -56,7 +56,7 @@ test('Csrf lets a write through from the same origin, a trusted site, or a clien
 	'a trusted site' => ['POST', ['Sec-Fetch-Site' => 'cross-site', 'Origin' => 'https://front.example'], [], 302],
 ]);
 
-test('a refused write explains itself, and checking never starts a session', function () {
+test('a refused write says why in its body, and checking never starts a session', function () {
 	$app = scannedApp();
 	$app->middleware(Csrf::class);
 

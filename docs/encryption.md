@@ -26,7 +26,7 @@ Each environment, such as your laptop and production, needs its own key. Every s
 php -r 'echo "APP_KEY=" . base64_encode(random_bytes(32)), PHP_EOL;'
 ```
 
-A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Without the right key nothing can be decrypted, so keep it out of database backups.
+A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Keep the key out of database backups, or anyone with a backup can decrypt the secrets. Back it up somewhere else, because without it nothing can be decrypted.
 
 ## Encrypting and decrypting
 

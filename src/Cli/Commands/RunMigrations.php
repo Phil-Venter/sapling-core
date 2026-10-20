@@ -82,8 +82,7 @@ final readonly class RunMigrations
 	/** @throws \Throwable */
 	private function apply(string $name, string $sql): void
 	{
-		// SQLite ignores foreign_keys inside a transaction, so a table rebuild's DROP TABLE would delete every row
-		// pointing at the table. Keys are switched off around it instead, and checked before the commit.
+		// SQLite ignores foreign_keys inside a transaction.
 		$sqlite = $this->db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
 		$foreignKeys = $sqlite && $this->db->value('PRAGMA foreign_keys')->int() === 1;
 
