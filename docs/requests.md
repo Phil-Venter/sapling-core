@@ -110,10 +110,7 @@ $remember = $request->data('remember')->bool();
 $city = $request->data('address', 'city')->string();
 ```
 
-The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP leaves alone. `data()` only reads the body, never the query string.
-
-> [!WARNING]
-> A JSON or XML body that doesn't decode stops the request with a 400.
+The body is decoded by its `Content-Type` the first time you read it. That includes form-encoded PUT, PATCH and DELETE requests, which PHP leaves alone. `data()` only reads the body, never the query string. A JSON or XML body that doesn't decode stops the request with a 400.
 
 ### The whole body
 

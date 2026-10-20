@@ -85,7 +85,7 @@ By default htmx doesn't swap a 4xx or 5xx response. A page from your [error hand
 
 ## Scripts
 
-[`SecurityHeaders`](middleware.md#security-headers) blocks inline scripts, in a fragment as on a page, while inline styles work everywhere. htmx is a script file, and `hx-*` attributes aren't scripts, so most pages need nothing more.
+htmx is a script file, and `hx-*` attributes aren't scripts, so [`SecurityHeaders`](middleware.md#security-headers) lets most pages through as they are.
 
 htmx features that evaluate strings need `'unsafe-eval'`, which the policy doesn't allow. That covers `hx-on` attributes, event filters such as `hx-trigger="keyup[key=='Enter']"`, and `js:` values in `hx-vals`. Write those as listeners in a script file, or loosen `script-src` in `content_policy`.
 
@@ -103,4 +103,3 @@ A flash value goes to the next request that uses the session. With htmx, that ca
 | `Vary: HX-Request` | Added by the middleware, so pages and fragments from one URL are cached apart |
 | `HX-Redirect` | Sent by the middleware instead of a redirect, so the browser loads the new page |
 | `HX-Location` | Sent by an action instead of a redirect, to have htmx fetch another page and swap it in |
-| `htmx-config` meta tag | Sets `responseHandling`, and any other htmx setting, for the whole page |

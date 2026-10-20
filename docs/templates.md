@@ -7,7 +7,6 @@
 - [Components](#components)
     - [Named slots](#named-slots)
 - [Layouts](#layouts)
-- [Inline scripts and styles](#inline-scripts-and-styles)
 - [Plain text](#plain-text)
 - [Sharing data with every template](#sharing-data-with-every-template)
 - [Templates next to their classes](#templates-next-to-their-classes)
@@ -146,10 +145,6 @@ Most pages share the same outer HTML. A layout is a component that wraps the who
 ```
 
 A layout can wrap itself in another the same way, such as an admin layout inside the main one. It passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
-
-## Inline scripts and styles
-
-`<style>` blocks and `style` attributes work in any template, but [`SecurityHeaders`](middleware.md#security-headers) blocks an inline `<script>`. Put scripts in a file under `public/` and load them with `<script src>`.
 
 ## Plain text
 

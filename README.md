@@ -64,13 +64,11 @@ To try it, install Sapling in an empty folder with `composer require sapling/cor
 
 ## Why Sapling
 
-I like Symfony, Laravel and Slim, and I use them, but they're too much for the prototypes, one-off projects and slapped-together internal tools I keep building. There's a lot of dogma and ceremony in them that those projects don't need.
+I like Symfony, Laravel and Slim, and I use them. For a prototype or a slapped-together internal tool, they bring more dogma and ceremony than the project needs.
 
-So I've been fiddling with my own micro frameworks since early 2023, and Sapling is roughly my tenth. Most of the earlier ones went one of two ways. Some were quick experiments I never came back to. The rest got too clever, with interfaces nobody needed, a template compiler, a pile of global helpers, or packages and a build step just to boot.
+I've been fiddling with my own micro frameworks since early 2023, and Sapling is roughly my tenth. Some of the earlier ones were quick experiments I never came back to. Others got too clever, with interfaces nobody needed, a template compiler, a pile of global helpers, or packages and a build step just to boot.
 
-Sapling keeps the parts that worked and drops the rest.
-
-## How Sapling thinks
+## Design
 
 - Actions, middleware and commands are classes with a single `__invoke` method. Closures work too, for small apps.
 - Sapling only checks what PHP can't. When you make a mistake, PHP's own error usually names the class at fault.

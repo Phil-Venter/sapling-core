@@ -10,7 +10,6 @@
     - [Which route wins](#which-route-wins)
     - [HEAD requests](#head-requests)
     - [Not found and wrong method](#not-found-and-wrong-method)
-- [Listing routes](#listing-routes)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -127,14 +126,6 @@ A HEAD request is answered by the GET route for the same path, with only the hea
 ### Not found and wrong method
 
 A path that no route fits is a 404, and a known path with the wrong method is a 405 with an `Allow` header listing the methods it does take. Both pass through your global middleware and your [error handler](errors.md#showing-your-own-error-page), like any other error.
-
-## Listing routes
-
-`routes:list` prints every route and the class that answers it:
-
-```sh
-php bin/console routes:list
-```
 
 ## Method reference
 

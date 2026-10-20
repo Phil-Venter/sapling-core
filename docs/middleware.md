@@ -167,7 +167,6 @@ $app->middleware(RequireLogin::class);          // then your own
 
 | Method | What it does |
 | --- | --- |
-| `__invoke($request, $next)` | Your middleware's entry point. Calls `$next($request)` for the rest of the app, or returns its own response |
 | `$app->middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix`. Takes a class name, an object or a closure |
 | `#[Middleware($class)]` | Runs middleware around one class's routes. Repeat it for more, first outermost |
 | `new SecurityHeaders($policy = [])` | Sets the security headers and a content policy. Each directive in `$policy` replaces the default of the same name. `App::boot()` registers it with `content_policy` |

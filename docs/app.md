@@ -95,7 +95,7 @@ Only files that start with a capital letter and have no other dot are read as cl
 There's no cache, so every request scans. That takes about 0.2 ms for a dozen classes.
 
 > [!WARNING]
-> A file in `app/` that fails to load breaks every request. Lint the app before deploying, for example with `find app -name '*.php' -exec php -l {} \;`.
+> A file in `app/` that fails to load breaks every request. The [production checklist](production.md) has a command that lints it before you deploy.
 
 ### Adding one class
 

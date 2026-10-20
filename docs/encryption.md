@@ -5,12 +5,13 @@
 - [Encrypting and decrypting](#encrypting-and-decrypting)
     - [Contexts](#contexts)
     - [When decrypting fails](#when-decrypting-fails)
-- [What not to encrypt](#what-not-to-encrypt)
 - [Method reference](#method-reference)
 
 ## Introduction
 
 Some secrets can't be hashed, because the app has to send the original somewhere, such as a tenant's API key for another service. `Sapling\Crypto` encrypts those before they're stored, so a copy of the database without the key reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
+
+A password only needs checking, so hash it with `password_hash()` instead.
 
 ## The app key
 
@@ -56,13 +57,6 @@ if ($apiKey === null) {
     return Response::redirect('/settings/evernote/connect');
 }
 ```
-
-> [!TIP]
-> Treat `null` as "connect again", not as a crash. Changing `app_key` makes every stored secret unreadable.
-
-## What not to encrypt
-
-Passwords never need decrypting, only checking, so hash them with `password_hash()` instead.
 
 ## Method reference
 
