@@ -24,7 +24,7 @@ afterEach(function () {
 	rmdir($this->dir);
 });
 
-test('migrate runs new files in name order, once each', function () {
+test('migrations:run runs new files in name order, once each', function () {
 	($this->migration)(
 		'002_tags.sql',
 		'CREATE TABLE tags (id INTEGER PRIMARY KEY, note_id INTEGER NOT NULL REFERENCES notes (id));',

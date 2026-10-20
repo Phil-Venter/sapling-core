@@ -20,7 +20,7 @@ test('the same secret encrypts differently every time', function () {
 	expect($first)->not->toBe($second);
 });
 
-test('another key, a changed or cut-off value or broken base64 decrypts to null', function () {
+test('a tampered value or the wrong key decrypts to null', function () {
 	$stored = $this->crypto->encrypt('evernote-key', 'tenant:7:evernote');
 	$other = new Crypto(base64_encode(random_bytes(32)));
 	$changed = substr($stored, 0, -4) . 'AAA=';

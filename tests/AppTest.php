@@ -65,7 +65,7 @@ describe('boot()', function () {
 			->toThrow(Exception::class, 'Mars/Olympus');
 	});
 
-	test('gives Session, Crypto, Cors and SecurityHeaders their settings from the config', function () {
+	test('configures the built-in services from the config', function () {
 		$key = base64_encode(random_bytes(32));
 		$app = App::boot(BOOT, new Config([
 			'session_lifetime' => 3600,
@@ -341,6 +341,7 @@ describe('errors', function () {
 
 		expect([$response['status'], $response['body']])->toBe([200, 'still works']);
 	});
+
 	test('a crash in a package logs the line of your code that led there', function () {
 		$app = new App(FIXTURES);
 		$app->router->add('GET', '/report', require FIXTURES . '/missing-download.php');

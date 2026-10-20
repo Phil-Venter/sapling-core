@@ -16,11 +16,15 @@ test('a page in a layout component fills its slots', function () {
 		->toContain('<footer>Sapling</footer>');
 });
 
-test('shared data reaches every template, partials included, and call data wins', function () {
+test('shared data reaches partials', function () {
 	$list = $this->view->render('list', ['items' => ['a', 'b']]);
-	$plain = $this->view->render('plain', ['name' => 'Ann', 'site' => 'Override']);
 
 	expect($list)->toContain('<li>a (Sapling)</li>')->toContain('<li>b (Sapling)</li>');
+});
+
+test('call data wins over shared data', function () {
+	$plain = $this->view->render('plain', ['name' => 'Ann', 'site' => 'Override']);
+
 	expect($plain)->toBe("<p>Ann on Override</p>\n");
 });
 

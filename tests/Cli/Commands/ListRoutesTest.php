@@ -2,7 +2,7 @@
 
 use Sapling\Http\Router;
 
-test('routes lists method, path and class for every route', function () {
+test('routes:list shows method, path and class for every route', function () {
 	$app = scannedApp();
 
 	[$code, $output] = runInApp($app, 'routes:list');

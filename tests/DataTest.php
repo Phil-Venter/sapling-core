@@ -9,7 +9,7 @@ test('JSON round-trips with slashes and Unicode as they are', function () {
 	expect(Data::fromJson(Data::toJson($data)))->toBe($data);
 });
 
-test('XML round-trips: elements, repeated elements, attributes, text beside attributes, escaping', function () {
+test('XML round-trips', function () {
 	$data = [
 		'user' => [
 			'@id' => '7',
