@@ -73,3 +73,43 @@ test('a failing file rolls back with its migrations row, and earlier files stay'
 	expect($db->value("SELECT count(*) FROM sqlite_master WHERE name = 'half'")->int())->toBe(0);
 	expect($db->value("SELECT count(*) FROM sqlite_master WHERE name = 'notes'")->int())->toBe(1);
 });
+
+test('rebuilding a table keeps the rows that point at it, and foreign keys are back on after', function () {
+	($this->migration)('001_users.sql', <<<SQL
+		CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);
+		CREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE);
+		INSERT INTO users (id, name) VALUES (1, 'Ann');
+		INSERT INTO notes (user_id) VALUES (1), (1), (1);
+		SQL);
+	($this->migration)('002_rebuild_users.sql', <<<SQL
+		CREATE TABLE users_new (id INTEGER PRIMARY KEY, name TEXT NOT NULL DEFAULT '');
+		INSERT INTO users_new (id, name) SELECT id, name FROM users;
+		DROP TABLE users;
+		ALTER TABLE users_new RENAME TO users;
+		SQL);
+	$db = $this->app->container->get(Db::class);
+
+	runInApp($this->app, 'migrations:run');
+
+	expect($db->value('SELECT count(*) FROM notes')->int())->toBe(3);
+	expect($db->value('PRAGMA foreign_keys')->int())->toBe(1);
+});
+
+test('a migration that leaves a row pointing nowhere rolls back, since deletes don\'t cascade while it runs', function () {
+	($this->migration)('001_users.sql', <<<SQL
+		CREATE TABLE users (id INTEGER PRIMARY KEY);
+		CREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE);
+		INSERT INTO users (id) VALUES (1);
+		INSERT INTO notes (user_id) VALUES (1);
+		SQL);
+	($this->migration)('002_drop_users.sql', 'DELETE FROM users;');
+	$db = $this->app->container->get(Db::class);
+
+	[$code, $output] = runInApp($this->app, 'migrations:run');
+
+	expect($code)->toBe(1);
+	expect($output)->toBe("Migrated 001_users.sql\n");
+	expect($db->value('SELECT count(*) FROM users')->int())->toBe(1);
+	expect(array_column($db->all('SELECT name FROM migrations'), 'name'))->toBe(['001_users.sql']);
+	expect($db->value('PRAGMA foreign_keys')->int())->toBe(1);
+});

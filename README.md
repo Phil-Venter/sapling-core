@@ -114,6 +114,7 @@ Some parts need extensions that most PHP installs already have:
 | --- | --- |
 | `Db` | `pdo`, plus the driver for your database (`pdo_sqlite` for `Db::sqlite()`) |
 | `Session` and `Csrf` | `session` |
+| `Value` | `filter` |
 | `HttpClient` | `curl` |
 | XML in `Data` | `simplexml` and `xmlwriter` |
 | `Crypto` | `sodium` |

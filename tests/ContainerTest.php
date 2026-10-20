@@ -2,7 +2,9 @@
 
 use Sapling\Config;
 use Sapling\Container;
+use Sapling\Tests\Fixtures\Container\Chicken;
 use Sapling\Tests\Fixtures\Container\Clock;
+use Sapling\Tests\Fixtures\Container\Egg;
 use Sapling\Tests\Fixtures\Container\Mailer;
 use Sapling\Tests\Fixtures\Container\NeedsName;
 use Sapling\Tests\Fixtures\Container\Settings;
@@ -41,6 +43,13 @@ test('a Closure factory runs once, on first get()', function () {
 test('an unresolvable scalar parameter names the class and the parameter', function () {
 	expect(fn() => new Container()->get(NeedsName::class))
 		->toThrow(LogicException::class, 'Cannot autowire $name in ' . NeedsName::class);
+});
+
+test('classes that need each other name the loop, instead of recursing until PHP runs out of stack', function () {
+	$loop = Chicken::class . ' -> ' . Egg::class . ' -> ' . Chicken::class;
+
+	expect(fn() => new Container()->get(Chicken::class))
+		->toThrow(LogicException::class, "Circular dependency: {$loop}");
 });
 
 test('#[Config] fills a parameter and a default covers a missing key, while a wrong type or a missing key throws', function () {

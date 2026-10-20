@@ -5,6 +5,7 @@ namespace Sapling\Cli\Commands;
 use Sapling\App;
 use Sapling\Cli\Console;
 use Sapling\Db;
+use Sapling\Value;
 
 /**
  * Runs new database/migrations/*.sql files in name order, each in a transaction, and records them.
@@ -31,6 +32,7 @@ final readonly class RunMigrations
 	 * Runs the migrations that haven't run yet.
 	 *
 	 * @throws \PDOException When a migration's SQL fails. Its transaction is rolled back.
+	 * @throws \RuntimeException When a migration leaves a row whose foreign key points nowhere. It's rolled back too.
 	 * @throws \Throwable
 	 */
 	public function __invoke(Console $console): int
@@ -57,14 +59,7 @@ final readonly class RunMigrations
 				continue;
 			}
 
-			$this->db->transaction(
-				/** @throws \PDOException */
-				function (Db $db) use ($sql, $name): void {
-					$db->pdo->exec($sql);
-					$db->run('INSERT INTO migrations (name, ran_at) VALUES (?, ?)', [$name, gmdate('Y-m-d H:i:s')]);
-				},
-			);
-
+			$this->apply($name, $sql);
 			$console->line("Migrated {$name}");
 			$ran++;
 		}
@@ -82,5 +77,47 @@ final readonly class RunMigrations
 		$console->line($summary);
 
 		return Console::SUCCESS;
+	}
+
+	/** @throws \Throwable */
+	private function apply(string $name, string $sql): void
+	{
+		// SQLite ignores foreign_keys inside a transaction, so a table rebuild's DROP TABLE would delete every row
+		// pointing at the table. Keys are switched off around it instead, and checked before the commit.
+		$sqlite = $this->db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
+		$foreignKeys = $sqlite && $this->db->value('PRAGMA foreign_keys')->int() === 1;
+
+		if ($foreignKeys) {
+			$this->db->run('PRAGMA foreign_keys = OFF');
+		}
+
+		try {
+			$this->db->transaction(
+				/** @throws \PDOException|\RuntimeException */
+				function (Db $db) use ($sql, $name, $foreignKeys): void {
+					$db->pdo->exec($sql);
+					$broken = null;
+
+					if ($foreignKeys) {
+						$broken = $db->one('PRAGMA foreign_key_check');
+					}
+
+					if ($broken !== null) {
+						$table = new Value($broken)->get('table')->string();
+						$parent = new Value($broken)->get('parent')->string();
+
+						throw new \RuntimeException(
+							"{$name} leaves a row in {$table} that points at a missing row in {$parent}",
+						);
+					}
+
+					$db->run('INSERT INTO migrations (name, ran_at) VALUES (?, ?)', [$name, gmdate('Y-m-d H:i:s')]);
+				},
+			);
+		} finally {
+			if ($foreignKeys) {
+				$this->db->run('PRAGMA foreign_keys = ON');
+			}
+		}
 	}
 }

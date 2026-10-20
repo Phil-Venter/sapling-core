@@ -16,6 +16,13 @@ final class Container
 	private array $factories = [];
 
 	/**
+	 * The classes being built, outermost first, to catch two that need each other.
+	 *
+	 * @var array<string, true>
+	 */
+	private array $building = [];
+
+	/**
 	 * The one shared instance of the class, built the first time. Constructor arguments come from their types,
 	 * #[Config] or their defaults.
 	 *
@@ -60,12 +67,23 @@ final class Container
 	/** @param class-string $id */
 	private function build(string $id): object
 	{
+		if (array_key_exists($id, $this->building)) {
+			$loop = implode(' -> ', [...array_keys($this->building), $id]);
+
+			throw new \LogicException("Circular dependency: {$loop}");
+		}
+
 		$reflection = new \ReflectionClass($id);
 		$parameters = $reflection->getConstructor()?->getParameters() ?? [];
 		$arguments = [];
+		$this->building[$id] = true;
 
-		foreach ($parameters as $parameter) {
-			$arguments[] = $this->argument($parameter, $id);
+		try {
+			foreach ($parameters as $parameter) {
+				$arguments[] = $this->argument($parameter, $id);
+			}
+		} finally {
+			unset($this->building[$id]);
 		}
 
 		// Not newInstanceArgs(), which converts loosely, so a setting of 'false' would fill a bool with true.

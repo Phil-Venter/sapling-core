@@ -67,7 +67,7 @@ final class StoreNote
 Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, so `//notes/` arrives as `/notes`.
 
 > [!NOTE]
-> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. Sapling reads `X-Forwarded-For` only from a listed proxy, since anyone can send it and pick their own. `X-Forwarded-Proto` is trusted from anyone, because it only marks the session cookie Secure.
+> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. With `['*']`, only the proxy that connected is trusted, so `$request->ip` is the address it added. Behind more than one, such as a CDN in front of a load balancer, list them. Sapling reads `X-Forwarded-For` only from a listed proxy, since anyone can send it and pick their own. `X-Forwarded-Proto` is trusted from anyone, because it only marks the session cookie Secure.
 
 ## Retrieving input
 

@@ -89,7 +89,7 @@ $lifetime = $config->get('session_lifetime', 0);
 | `cors_origins` | Sites that may call the app from a browser, for [`Cors` and `Csrf`](middleware.md) | None |
 | `cors_credentials` | Whether those sites may send cookies | No |
 | `content_policy` | Directives that replace [`SecurityHeaders`](middleware.md#security-headers)' defaults | None |
-| `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` for any | None |
+| `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` to trust only the one that connects | None |
 
 Each setting needs the type Sapling expects, such as a `bool` for `debug` and an `int` for `session_lifetime`, or it throws a `TypeError` when the app boots or first uses it. The same goes for a `#[Config]` parameter. `.env` values are always strings, so convert them in `config.php`:
 

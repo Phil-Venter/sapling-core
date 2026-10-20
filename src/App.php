@@ -129,9 +129,8 @@ final class App
 		/** @var \SplFileInfo $file */
 		foreach (new \RecursiveIteratorIterator($directory) as $file) {
 			$name = $file->getBasename('.php');
-			$first = substr($name, 0, 1);
 
-			if ($file->getExtension() !== 'php' || !ctype_upper($first) || str_contains($name, '.')) {
+			if ($file->getExtension() !== 'php' || preg_match('/^[A-Z]/', $name) !== 1 || str_contains($name, '.')) {
 				continue;
 			}
 

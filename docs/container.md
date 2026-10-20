@@ -87,7 +87,7 @@ Each constructor parameter gets the first of these that applies:
 2. The container's instance of its class or interface type.
 3. Its default value.
 
-A parameter none of them covers, such as a `string` with no default, throws a `LogicException` that names the parameter and the class.
+A parameter none of them covers, such as a `string` with no default, throws a `LogicException` that names the parameter and the class. So do two classes that need each other, directly or through others, and the message lists the loop.
 
 > [!NOTE]
 > A class type always comes from the container, even when it's nullable or has a default. `?Mailer $mailer = null` still needs a `Mailer`.

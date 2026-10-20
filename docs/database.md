@@ -175,6 +175,8 @@ This runs the files that haven't run yet, in name order and each in its own tran
 
 Migrations are recorded by file name, so editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
 
+On SQLite, foreign keys are off while a migration runs, so you can [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade either. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
+
 > [!NOTE]
 > MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.
 

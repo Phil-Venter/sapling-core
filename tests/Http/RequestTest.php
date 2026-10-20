@@ -47,7 +47,7 @@ test('behind a trusted proxy, the ip is the visitor\'s from X-Forwarded-For', fu
 	'no trusted proxies' => [[], '10.0.0.2'],
 	'an untrusted proxy' => [['10.0.0.9'], '10.0.0.2'],
 	'trusted proxies, closest first' => [['10.0.0.2', '10.0.0.1'], '203.0.113.9'],
-	'any proxy' => [['*'], '198.51.100.7'],
+	'any proxy, trusting only the one that connected' => [['*'], '10.0.0.1'],
 ]);
 
 test('the readers take a path of keys, as Value::get() does', function () {
