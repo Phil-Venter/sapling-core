@@ -15,7 +15,7 @@
 
 ## Introduction
 
-PHP is already a template language, so Sapling's templates are plain PHP files in `views/`, with no compiler, cache or new syntax to learn. `Sapling\Template` adds partials, components and layouts. Inside a template, `$this` is the `Template`.
+Sapling's templates are plain PHP files in `views/`, rendered by `Sapling\Template`. It adds partials, components and layouts. Inside a template, `$this` is the `Template`.
 
 ## Rendering a template
 
@@ -59,16 +59,13 @@ For attributes, `attrs()` builds the escaped list and leaves out the ones that a
 
 ## Partials
 
-Pieces that several pages share, such as a navigation bar, go in their own file. Inside a template, `render()` prints one:
+Pieces that several pages share, such as a navigation bar, go in their own file, named with a leading `_` by convention. Inside a template, `render()` prints one:
 
 ```php
 <?= $this->render('_nav', ['active' => 'notes']) ?>
 ```
 
 A partial sees the variables you pass it and the [shared](#sharing-data-with-every-template) ones, but not the page's.
-
-> [!TIP]
-> Prefix partials with `_`, such as `_nav.tmpl.php`.
 
 ## Components
 
@@ -89,7 +86,7 @@ The component template prints the default slot with `yield()`:
 </article>
 ```
 
-A slot is HTML the page has already printed, so don't escape it again.
+A slot is HTML the page has already printed. Don't escape it again.
 
 ### Named slots
 
@@ -121,7 +118,7 @@ A component can take more than one piece of content. `slot()` with only a name c
 <?php endforeach ?>
 ```
 
-A slot belongs to the component it's set in, so another component never sees it.
+A slot belongs to the component it's set in. Another component never sees it.
 
 ## Layouts
 
@@ -168,7 +165,7 @@ $view = $app->container->get(Template::class);
 $view->share('appName', 'Notes');
 ```
 
-Share helpers as closures, so they only run when a template calls them. A page that never shows a flash message then never starts the session:
+Share helpers as closures, which only run when a template calls them. A page that never shows a flash message then never starts the session:
 
 ```php
 $view->share('flash', function (string $key) use ($app): string {

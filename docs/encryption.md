@@ -9,9 +9,9 @@
 
 ## Introduction
 
-Some secrets can't be hashed, because the app has to send the original somewhere, such as a tenant's API key for another service. `Sapling\Crypto` encrypts those before they're stored, so a copy of the database without the key reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
+`Sapling\Crypto` encrypts secrets the app has to send on somewhere, such as a tenant's API key for another service, before they're stored. A copy of the database without the key reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
 
-A password only needs checking, so hash it with `password_hash()` instead.
+A password only needs checking. Hash it with `password_hash()` instead.
 
 ## The app key
 
@@ -40,11 +40,11 @@ $stored = $this->crypto->encrypt($apiKey, "tenant:{$tenantId}:evernote");
 $apiKey = $this->crypto->decrypt($stored, "tenant:{$tenantId}:evernote");
 ```
 
-Each value gets a fresh random nonce, so encrypting the same secret twice gives different text.
+Encrypting the same secret twice gives different text, since each value gets a fresh random nonce.
 
 ### Contexts
 
-The second argument is a context, a string that ties the value to the place it's stored, such as the tenant and the service above. A value only decrypts with the context it was encrypted with, so a value copied into another tenant's row gives `null` rather than the other tenant's secret.
+The second argument is a context, a string that ties the value to the place it's stored, such as the tenant and the service above. A value only decrypts with the context it was encrypted with. Copied into another tenant's row, it gives `null` rather than the other tenant's secret.
 
 ### When decrypting fails
 

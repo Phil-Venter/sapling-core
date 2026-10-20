@@ -12,7 +12,7 @@
 
 ## Introduction
 
-A few things happen in almost every file, such as escaping a value or stopping with an error. Sapling has short global functions for those. They need no app, so they work in templates and scripts too.
+Sapling has a few global functions for what almost every file does, such as escaping a value or stopping with an error. They need no app, and work in templates and scripts too.
 
 ## Escaping HTML
 
@@ -58,7 +58,7 @@ blank(0);        // false
 blank(false);    // false
 ```
 
-A [`Value`](values.md) never looks empty, so `blank()` throws a `LogicException` when it's given one. Read it as a type first:
+`blank()` throws a `LogicException` when given a [`Value`](values.md), which never looks empty. Read it as a type first:
 
 ```php
 $email = $console->arg(0)->string();
@@ -92,7 +92,7 @@ try {
 
 ## Ids and debugging
 
-`uuid()` returns a version 7 UUID, which sorts by the time it was made, so it suits database keys.
+`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys.
 
 `dd()` dumps its values and stops:
 
@@ -102,7 +102,7 @@ dd($request, $note);
 
 ## Replacing a helper
 
-Each helper is skipped when a function with its name already exists, so an app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
+Each helper is skipped when a function with its name already exists. An app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
 
 > [!WARNING]
 > A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here.

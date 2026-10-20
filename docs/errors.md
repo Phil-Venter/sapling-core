@@ -14,9 +14,7 @@
 
 ## Introduction
 
-Sapling sorts what goes wrong into two kinds. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist. It becomes a response with that status. A crash is anything else thrown, usually a bug, and it's logged and answered with a 500.
-
-Either way, your actions and middleware need no `try` and `catch`, and outside debug mode a visitor never sees a stack trace.
+Sapling sorts what goes wrong into two kinds, and neither needs a `try` in your code. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist. It becomes a response with that status. A crash is anything else thrown, usually a bug. It's logged and answered with a 500, with a stack trace only in debug mode.
 
 ## Errors the visitor causes
 
@@ -28,10 +26,10 @@ abort_if($note === null, 404, 'That note does not exist.');
 abort_if($note['user_id'] !== $userId, 403);
 ```
 
-Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response, so error pages get the [security headers](middleware.md#security-headers) like any other.
+Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response. Error pages get the [security headers](middleware.md#security-headers) like any other page.
 
 > [!WARNING]
-> The message is shown to the visitor, so keep internal details, like another exception's message, out of it.
+> The message is shown to the visitor. Keep internal details, like another exception's message, out of it.
 
 ### Sending headers with an error
 
@@ -58,7 +56,7 @@ The exception's headers, like `Allow` on a 405, are added to the handler's respo
 
 ### Answering in JSON
 
-The handler also gets the request, so one handler can answer in more than one way, such as JSON for paths under `/api/`:
+The handler also gets the request. One handler can then answer in more than one way, such as JSON for paths under `/api/`:
 
 ```php
 $app->onError(function (HttpException $e, Request $request): Response {
@@ -82,7 +80,7 @@ While you're working, turn on `debug` in the [config](config.md). The skeleton's
 
 Inside a request or a command, PHP's warnings and notices throw an `ErrorException` and crash like any other bug. Reading an undefined array key crashes, for example, instead of giving `null`.
 
-`file_get_contents()` on a missing file throws, so a `=== false` check after it never runs. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies, so warnings there behave as PHP's usually do.
+A `=== false` check after `file_get_contents()` never runs, because a missing file throws. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies. Warnings there behave as PHP's usually do.
 
 Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP.
 

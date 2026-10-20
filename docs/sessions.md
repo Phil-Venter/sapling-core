@@ -12,7 +12,7 @@
 
 A session keeps values for one visitor between requests, such as who's logged in. `Sapling\Http\Session` is PHP's session with two additions. It sets safer cookie settings than PHP's defaults before the session starts, and it has flash values for messages that need to survive a redirect.
 
-The session only starts the first time something uses it, so a request that never touches it sends no cookie.
+The session only starts the first time something uses it. A request that never touches it sends no cookie.
 
 ## Using the session
 
@@ -28,7 +28,7 @@ final class ShowSettings
 }
 ```
 
-`set()` stores a value, `forget()` removes it, and `get()` reads it back as a [`Value`](values.md), so a key that was never set gives the default:
+`set()` stores a value, `forget()` removes it, and `get()` reads it back as a [`Value`](values.md). A key that was never set gives the default:
 
 ```php
 $this->session->set('theme', 'dark');
@@ -75,7 +75,7 @@ $notice = $this->session->getFlash('notice')->string();
 
 ## Logging in and out
 
-Give the session a new id on login, so an id someone learned before the login is useless after it:
+Give the session a new id on login. An id someone learned before the login is then useless:
 
 ```php
 $this->session->regenerate();
@@ -90,7 +90,7 @@ $this->session->destroy();
 
 ## The session cookie
 
-The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. Strict mode is on, so PHP only accepts session ids it created. PHP sends the cookie, so it never appears on the response `$app->handle()` returns in a test.
+The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. With strict mode on, PHP only accepts session ids it created. PHP sends the cookie itself, so it never appears on the response `$app->handle()` returns in a test.
 
 ### How long a session lasts
 

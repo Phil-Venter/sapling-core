@@ -11,7 +11,7 @@
 
 ## Introduction
 
-PHP's own functions for JSON, XML and form strings each report errors differently and have different defaults. `Sapling\Data` gives every format the same pair of methods, one to encode an array and one to decode it back, and broken input always throws. The methods are static and need no app, so scripts can use them too.
+`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken input always throws, whichever format it's in. The methods are static and need no app. Scripts can use them too.
 
 ## JSON
 
@@ -29,7 +29,7 @@ $user = Data::fromJson($json);
 
 ## Forms and query strings
 
-A URL-encoded form body and a query string are the same format, so one pair of methods covers both:
+A URL-encoded form body and a query string are the same format. One pair of methods covers both:
 
 ```php
 $query = Data::toForm(['q' => 'notes', 'page' => 2]); // q=notes&page=2
@@ -49,9 +49,9 @@ $order = Data::fromXml($xml);
 
 ### How XML maps to arrays
 
-XML doesn't map onto arrays one to one, so `fromXml()` follows a few rules:
+XML doesn't map onto arrays one to one. `fromXml()` follows these rules:
 
-- Elements become keys, and repeated elements become lists. One `<item>` is a string and two are a list, so check with `is_array()` when the count varies.
+- Elements become keys, and repeated elements become lists. One `<item>` is a string and two are a list. Check with `is_array()` when the count varies.
 - `@name` keys are attributes, and `#text` is text beside attributes.
 - Values are strings, because XML has no types.
 - Namespace prefixes stay on the keys, as in `soap:Body`.
@@ -65,7 +65,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-Suffixes count, so `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
+A suffix counts too. `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
 
 ## Reading nested data
 

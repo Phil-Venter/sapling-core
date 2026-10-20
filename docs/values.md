@@ -15,9 +15,9 @@
 
 ## Introduction
 
-Data from outside the app is loosely typed. A form field can turn out to be an array, a query parameter is always a string, and JSON can hold anything. Checking each one by hand takes a cast or an `is_string()` at every read. Miss one, and a crafted `body[]=x` reaches a `string` parameter and becomes a 500.
+`Sapling\Value` wraps data from outside the app and reads it as the type you ask for. A value that's missing, or of the wrong type, gives a default instead of an error.
 
-`Sapling\Value` does those checks in one place. It wraps a piece of outside data and reads it as the type you ask for, and a value that's missing or of the wrong type gives a default instead.
+Outside data is loosely typed. A query parameter is always a string, and a form field sent as `body[]=x` arrives as an array. Passed to a `string` parameter, it's a 500.
 
 ## Where values come from
 
@@ -50,11 +50,11 @@ $count = $db->value($sql)->int();
 
 ### Strings
 
-`string()` returns strings as they are and casts numbers and `Stringable` objects. A backed enum reads as its value, so `$session->get('role')->string()` gives `'admin'` for `Role::Admin`. Booleans, arrays and other objects give the default.
+`string()` returns strings as they are and casts numbers and `Stringable` objects. A backed enum reads as its value, such as `'admin'` for `Role::Admin`. Booleans, arrays and other objects give the default.
 
 ### Numbers
 
-`int()` and `float()` use PHP's `filter_var()`, so spaces around a number are fine but trailing text isn't:
+`int()` and `float()` use PHP's `filter_var()`. Spaces around a number are fine, but trailing text isn't:
 
 ```php
 new Value('12')->int();      // 12
@@ -64,11 +64,11 @@ new Value('1.5')->int();     // 0
 new Value('1.5')->float();   // 1.5
 ```
 
-`filter_var()` doesn't treat `'007'` or `'1e3'` as whole numbers either, so read codes with leading zeros, such as zip codes, with `string()`. An int-backed enum reads as its value.
+`filter_var()` doesn't treat `'007'` or `'1e3'` as whole numbers either. Read codes with leading zeros, such as zip codes, with `string()`. An int-backed enum reads as its value.
 
 ### Booleans
 
-`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. An unticked checkbox sends nothing, so it reads as `false`:
+`bool()` reads `'1'`, `'true'`, `'on'` and `'yes'` as `true`, and `'0'`, `'false'`, `'off'`, `'no'` and `''` as `false`. Anything else gives the default. An unticked checkbox sends nothing, which reads as `false`:
 
 ```php
 $remember = $request->data('remember')->bool();
@@ -76,7 +76,7 @@ $remember = $request->data('remember')->bool();
 
 ### Arrays
 
-`items()` returns each item of an array as a `Value`, under its key, so each item is read like any other value. The list `tags[]=php&tags[]=sql` sends becomes a list of strings:
+`items()` returns each item of an array as a `Value`, under its key. Here `tags[]=php&tags[]=sql` becomes a list of strings:
 
 ```php
 $tags = array_map(fn(Value $tag): string => $tag->string(), $request->query('tags')->items());
@@ -92,7 +92,7 @@ foreach ($reply->data('items')->items() as $item) {
 
 Anything that isn't an array gives `[]`.
 
-`rawArray()` returns the array as it arrived, or the default for anything else. Its items aren't checked, so a visitor's `tags[][]=x` puts an array where you expect a string. Use it to pass an array on whole, such as [keeping the filters](requests.md#the-query-string) in a link to the next page.
+`rawArray()` returns the array as it arrived, or the default for anything else. Its items aren't checked. A visitor's `tags[][]=x` puts an array where you expect a string. Use it to pass an array on whole, such as [keeping the filters](requests.md#the-query-string) in a link to the next page.
 
 ### Enums
 
@@ -103,11 +103,11 @@ $sort = $request->query('sort')->enum(Sort::Newest);
 $priority = $request->query('priority')->enum(Priority::Normal);
 ```
 
-An int-backed enum reads the value as `int()` does, so `'2'` gives the case whose value is 2.
+An int-backed enum reads the value as `int()` does. `'2'` gives the case whose value is 2.
 
 ## Nested data
 
-Decoded JSON and XML are often nested. `get()` reads an array key or a public property as another `Value`, and more keys read deeper. The readers that hand you a `Value`, such as `data()`, `query()` and `$session->get()`, take the same path of keys:
+`get()` reads an array key or a public property as another `Value`, and more keys read deeper. The readers that hand you a `Value`, such as `data()`, `query()` and `$session->get()`, take the same path of keys:
 
 ```php
 $name = $value->get('profile', 'name')->string();
@@ -124,7 +124,7 @@ A default can't tell you whether a value was sent. `string()` gives `''` both fo
 $editing = $request->param('id')->raw !== null;
 ```
 
-Sapling has no validation layer, so check required fields yourself after reading them:
+Sapling has no validation layer. Check required fields yourself after reading them:
 
 ```php
 $body = $request->data('body')->string();
@@ -149,8 +149,8 @@ $port = $settings->get('server', 'port')->int(8080);
 | Method | What it returns |
 | --- | --- |
 | `string($default = '')` | A string. Numbers, `Stringable` objects and backed enums are cast, and a boolean gives the default |
-| `int($default = 0)` | A whole number, so `'12'` is 12, while `'12abc'` and `'1.5'` give the default |
-| `float($default = 0.0)` | A number, so `'1.5'` is 1.5 |
+| `int($default = 0)` | A whole number. `'12'` is 12, while `'12abc'` and `'1.5'` give the default |
+| `float($default = 0.0)` | A number, such as 1.5 from `'1.5'` |
 | `bool($default = false)` | `true` for `'1'`, `'true'`, `'on'` and `'yes'`, and `false` for `'0'`, `'false'`, `'off'`, `'no'` and `''` |
 | `enum($default)` | The case of the default's enum with this value, or the default when no case has it |
 | `items()` | Each item of an array as a `Value`, under its key, or `[]` when it isn't an array |

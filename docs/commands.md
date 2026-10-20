@@ -14,7 +14,7 @@
 
 ## Introduction
 
-Jobs such as clearing out old rows or creating accounts don't belong behind a URL. A command is a class you run from the terminal instead, such as `php bin/console notes:prune`. It gets its dependencies from the same container as your actions.
+A command is a class you run from the terminal, such as `php bin/console notes:prune`, for jobs that don't belong behind a URL. It gets its dependencies from the same container as your actions.
 
 ## Writing a command
 
@@ -58,7 +58,7 @@ final class PruneNotes
 `#[Command]` takes the command's name and a description, which the list of commands shows.
 
 > [!TIP]
-> Name commands `domain:action` with a plural domain, such as `notes:prune` or `users:add`, so the list groups them by domain.
+> Name commands `domain:action` with a plural domain, such as `notes:prune` or `users:add`. `commands:list` groups them by domain.
 
 ## Running commands
 
@@ -88,7 +88,7 @@ $email = $console->arg(0)->string();        // ann@example.com
 $role = $console->arg(1)->string('member'); // member
 ```
 
-`$console->args` holds every argument as a list of strings, so a name typed without quotes can be joined back together:
+`$console->args` holds every argument as a list of strings. A name typed without quotes can be joined back together:
 
 ```php
 // php bin/console users:find Ann Smith
@@ -105,14 +105,14 @@ $days = $console->option('days')->int(30); // 7
 $dryRun = $console->flag('dry-run');       // true
 ```
 
-An option that's missing or isn't of the type you read gives the default, so `--days=soon` gives 30.
+An option that's missing or isn't of the type you read gives the default. `--days=soon` gives 30.
 
 > [!WARNING]
-> Options need `=`. Written as `--days 7`, the value would be lost, so `option('days')` throws a `UsageException` instead. `flag('force')` throws the same way when given `--force=yes`.
+> Options need `=`. Written as `--days 7`, the value would be lost. `option('days')` throws a `UsageException` instead. `flag('force')` throws the same way when given `--force=yes`.
 
 ### Asking a question
 
-`ask()` prints a question and returns the answer as a `Value`. A blank answer gives the default you read it with, so pressing Enter here keeps the notes:
+`ask()` prints a question and returns the answer as a `Value`. A blank answer gives the default you read it with. Pressing Enter here keeps the notes:
 
 ```php
 if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {

@@ -16,7 +16,7 @@
 
 An action is the class that answers a request, what other frameworks call a controller. Its `#[Route]` says which method and path it answers, and its `__invoke()` takes the `Request` and returns a `Response`.
 
-Each action is one class in one file, with its route written on the class. That keeps each action's dependencies separate, and searching for a path finds the code behind it.
+Each action is one class in one file, with its route written on the class. Searching the code for a path finds the action that answers it.
 
 ## Writing an action
 
@@ -51,7 +51,7 @@ final class ShowNote
 }
 ```
 
-The [container](container.md) builds the constructor's arguments. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored, so `notes/:id/` and `/notes/:id` are the same route.
+The [container](container.md) builds the constructor's arguments. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored. `notes/:id/` and `/notes/:id` are the same route.
 
 ## Route parameters
 
@@ -66,7 +66,7 @@ $userId = $request->param('user')->int();
 $noteId = $request->param('note')->int();
 ```
 
-Parameters arrive URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash. Fixed parts are matched as browsers send them, so write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
+Parameters arrive URL-decoded, as in `café` from `/tags/caf%C3%A9`. A parameter never matches an empty part or a slash. Fixed parts are matched as browsers send them. Write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
 
 Parameter names start with a letter or underscore, followed by letters, digits and underscores. `:note_id` works, while `:note-id` and `:2fa` throw a `LogicException`, as does a path that uses one name twice.
 
@@ -80,7 +80,7 @@ Routes have no optional parts. When one action should answer two paths, such as 
 final class NoteForm
 ```
 
-The action then tells them apart by whether the parameter is there, since `raw` is `null` when it isn't:
+The action tells them apart by `raw`, which is `null` when the parameter isn't there:
 
 ```php
 $editing = $request->param('id')->raw !== null;
@@ -97,7 +97,7 @@ Most [middleware](middleware.md) is added for every request, but `#[Middleware]`
 final class ListUsers
 ```
 
-Like `#[Route]`, it can be repeated, and the first one is outermost, so the login check runs before the admin check. Middleware added with `$app->middleware()` runs before both.
+Like `#[Route]`, it can be repeated. The first one is outermost, so the login check runs before the admin check. Middleware added with `$app->middleware()` runs before both.
 
 ## Adding routes in code
 
@@ -115,13 +115,13 @@ An optional fourth argument lists middleware for the route, as `#[Middleware]` d
 
 ### Which route wins
 
-When more than one route fits a path, the most specific one wins, so `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. The order routes are added in doesn't matter.
+When more than one route fits a path, the most specific one wins. `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. The order routes are added in doesn't matter.
 
-Two classes on the same method and path can't both win, so the app stops with a `LogicException` that names both. That usually means an action was copied without changing its route.
+Two classes on the same method and path stop the app with a `LogicException` that names both. That usually means an action was copied without changing its route.
 
 ### HEAD requests
 
-A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own wins. The GET action still runs in full, so keep it free of side effects.
+A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own wins. The GET action still runs in full. Keep it free of side effects.
 
 ### Not found and wrong method
 

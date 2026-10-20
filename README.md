@@ -1,6 +1,6 @@
 # Sapling
 
-Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies, and its core is about 2,300 lines of code, so you can read the whole thing in a day.
+Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies. You can read the whole core, about 2,300 lines of code, in a day.
 
 Each action or command is one class in one file, with an attribute that declares its route or command name:
 
@@ -126,14 +126,14 @@ Some parts need extensions that most PHP installs already have:
 | `composer check` | Checks formatting, runs mago's linter and static analyzer, then the tests |
 | `composer mutate` | Runs mutation testing, to find code the tests don't check (needs Xdebug or PCOV) |
 
-Core never calls the global helpers, so an app can replace them.
+Core never calls the global helpers, which an app can replace.
 
-Tests mirror `src/`, so `tests/Http/RouterTest.php` tests `src/Http/Router.php`. Write one `expect()` per line.
+Tests mirror `src/`, as in `tests/Http/RouterTest.php` for `src/Http/Router.php`. Write one `expect()` per line.
 
-The analyzer skips the tests, since it can't follow Pest's closures. `analyzer-baseline.toml` lists reviewed findings in `src/`, so only new ones are reported. After a fix, regenerate it with `vendor/bin/mago analyze --generate-baseline` and diff it before committing.
+The analyzer skips the tests, since it can't follow Pest's closures. `analyzer-baseline.toml` lists the reviewed findings in `src/`, and only new ones are reported. After a fix, regenerate it with `vendor/bin/mago analyze --generate-baseline` and diff it before committing.
 
 Each guide in `docs/` has a table of contents, an introduction, sections named after tasks, and a method reference. Update a guide in the same change as the behaviour it describes.
 
 ## License
 
-Sapling is 0BSD, so you can use it for anything. See `LICENSE`.
+Sapling is 0BSD. You can use it for anything. See `LICENSE`.

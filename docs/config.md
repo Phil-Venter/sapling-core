@@ -45,7 +45,7 @@ A new app from the [skeleton](../README.md#getting-started) gets one for develop
 ### How it's read
 
 - Lines are `KEY=value`. Lines starting with `#` are comments. Values are always strings.
-- Surrounding quotes are removed. In unquoted values, ` #` starts a comment, so `KEY=abc # note` is `abc`, but `KEY=a#b` is `a#b`.
+- Surrounding quotes are removed. In unquoted values, ` #` starts a comment. `KEY=abc # note` is `abc`, but `KEY=a#b` is `a#b`.
 - A line without `=` throws.
 - Real environment variables win over `.env`, which is optional.
 - Values only reach `config.php`, never `getenv()` or `$_ENV`.
@@ -72,7 +72,7 @@ $debug = $config->get('debug');
 
 ### Missing settings
 
-A missing setting is usually a typo, so `get()` throws a `LogicException` that names it. When a setting is optional, pass a default:
+`get()` throws a `LogicException` that names a missing setting, since that's usually a typo. When a setting is optional, pass a default:
 
 ```php
 $lifetime = $config->get('session_lifetime', 0);
@@ -91,7 +91,7 @@ $lifetime = $config->get('session_lifetime', 0);
 | `content_policy` | Directives that replace [`SecurityHeaders`](middleware.md#security-headers)' defaults | None |
 | `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` to trust only the one that connects | None |
 
-Each setting needs the type Sapling expects, such as a `bool` for `debug` and an `int` for `session_lifetime`, or it throws a `TypeError` when the app boots or first uses it. The same goes for a `#[Config]` parameter. `.env` values are always strings, so convert them in `config.php`:
+Each setting needs the type Sapling expects, such as a `bool` for `debug` and an `int` for `session_lifetime`, or it throws a `TypeError` when the app boots or first uses it. The same goes for a `#[Config]` parameter. `.env` values are always strings. Convert them in `config.php`:
 
 ```php
 'session_lifetime' => (int) ($env['SESSION_LIFETIME'] ?? 60 * 60 * 24 * 14),

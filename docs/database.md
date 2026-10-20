@@ -18,9 +18,7 @@
 
 ## Introduction
 
-`Sapling\Db` is a thin layer over PDO. With PDO alone, every query takes a prepare, an execute and a fetch, and rows come back twice, by name and by position. `Db` turns each query into one call with `?` placeholders, and returns rows as arrays keyed by column name.
-
-There's no query builder or ORM. You write the SQL.
+`Sapling\Db` is a thin layer over PDO for SQL you write yourself. Each query is one call with `?` placeholders, and rows come back as arrays keyed by column name.
 
 ## Connecting
 
@@ -56,7 +54,7 @@ $app->container->set(Db::class, function () use ($config): Db {
 });
 ```
 
-`Db` then sets the connection to throw on errors, to fetch rows by name, and to use real prepared statements, so `LIMIT ?` works on MySQL.
+`Db` then sets the connection to throw on errors, to fetch rows by name, and to use real prepared statements. The last one makes `LIMIT ?` work on MySQL.
 
 ## Running queries
 
@@ -106,7 +104,7 @@ $sql = <<<SQL
 $count = $this->db->value($sql, [$userId])->int();
 ```
 
-Rows come back as plain arrays. A lone value comes back as a [`Value`](values.md), so read it as the type you need. Drivers differ here, and MySQL returns a `DECIMAL` as a string.
+Rows come back as plain arrays. A lone value comes back as a [`Value`](values.md), to read as the type you need. Drivers differ here, and MySQL returns a `DECIMAL` as a string.
 
 ### Inserting, updating and deleting
 
@@ -148,7 +146,7 @@ $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
 });
 ```
 
-On SQLite, a transaction starts with `BEGIN IMMEDIATE`, so it waits for the write lock like any other write, instead of failing at its first write.
+On SQLite, a transaction starts with `BEGIN IMMEDIATE`. It waits for the write lock like any other write, instead of failing at its first write.
 
 > [!WARNING]
 > Transactions don't nest. A `transaction()` inside another throws a `PDOException`. Start the transaction in the outermost code, such as the action, and let the classes it calls use plain `run()`.
@@ -171,14 +169,14 @@ This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starti
 php bin/console migrations:run
 ```
 
-This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped without being recorded, so it still runs once it has SQL in it. There are no down migrations. To undo one, write another that reverses it.
+This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped, and runs later once it has SQL in it. There are no down migrations. To undo one, write another that reverses it.
 
-Migrations are recorded by file name, so editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
+Migrations are recorded by file name. Editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
 
-On SQLite, foreign keys are off while a migration runs, so you can [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade either. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
+On SQLite, foreign keys are off while a migration runs. That lets you [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade either. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
 
 > [!NOTE]
-> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.
+> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction. A migration that fails partway can leave some of its changes behind. Keep one schema change per file.
 
 ### Checking what has run
 

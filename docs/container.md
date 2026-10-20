@@ -34,7 +34,7 @@ final class ListNotes
 
 Neither class is registered anywhere. The container builds `NoteRepository` because `ListNotes` asks for it, and `Db` because `NoteRepository` does. Actions, middleware and commands are all built this way.
 
-Each class is built once and then shared, so everything that asks for `Db` during a request gets the same connection.
+Each class is built once and then shared. Everything that asks for `Db` during a request gets the same connection.
 
 ## Registering services
 
@@ -48,7 +48,7 @@ The closure runs once, the first time the class is needed. `set()` also takes a 
 
 ### Interfaces
 
-The container can't guess which class to use for an interface, so register the one you want under the interface's name. The closure receives the container:
+The container can't guess which class to use for an interface. Register the one you want under the interface's name. The closure receives the container:
 
 ```php
 $app->container->set(Mailer::class, function (Container $c): Mailer {
@@ -60,7 +60,7 @@ $app->container->set(Mailer::class, function (Container $c): Mailer {
 
 ## Settings in constructors
 
-Settings aren't classes, so the container can't find them by type. `#[Config]` names the [setting](config.md) a parameter should get instead:
+The container can't find a setting by its type. `#[Config]` names the [setting](config.md) a parameter should get instead:
 
 ```php
 use Sapling\Attributes\Config;
@@ -77,7 +77,7 @@ final class Weather
 }
 ```
 
-When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so [convert `.env` strings](config.md#settings-sapling-reads) in `config.php`.
+When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`. [Convert `.env` strings](config.md#settings-sapling-reads) in `config.php`.
 
 ## How a class is built
 
@@ -100,7 +100,7 @@ Outside your classes, in `bootstrap.php`, tests and one-file apps, `get()` retur
 $db = $app->container->get(Db::class);
 ```
 
-Inside your own classes, ask for it in the constructor instead, so the constructor shows everything the class depends on.
+Inside your own classes, ask for it in the constructor instead. The constructor then shows everything the class depends on.
 
 ## Method reference
 

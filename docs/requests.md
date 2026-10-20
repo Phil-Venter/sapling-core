@@ -64,10 +64,10 @@ final class StoreNote
 }
 ```
 
-Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, so `//notes/` arrives as `/notes`.
+Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, as in `/notes` for `//notes/`.
 
 > [!NOTE]
-> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. With `['*']`, only the proxy that connected is trusted, so `$request->ip` is the address it added. Behind more than one, such as a CDN in front of a load balancer, list them. Sapling reads `X-Forwarded-For` only from a listed proxy, since anyone can send it and pick their own. `X-Forwarded-Proto` is trusted from anyone, because it only marks the session cookie Secure.
+> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. With `['*']`, `$request->ip` is the address the connecting proxy added. Behind more than one, such as a CDN in front of a load balancer, list them all. `X-Forwarded-For` is read only from a listed proxy, while `X-Forwarded-Proto` is trusted from anyone, because it only marks the session cookie Secure.
 
 ## Retrieving input
 
@@ -132,7 +132,7 @@ $accept = $request->header('Accept')->string();
 $theme = $request->cookie('theme')->string('light');
 ```
 
-Sapling only writes the session's cookie. To set another, add it with `withHeader('Set-Cookie', '…')`. A second `withHeader()` replaces the first, so pass a list for several, as in `withHeader('Set-Cookie', ['theme=dark; Path=/', 'lang=en; Path=/'])`.
+Sapling only writes the session's cookie. To set another, add it with `withHeader('Set-Cookie', '…')`. A second `withHeader()` replaces the first. Pass a list for several, as in `withHeader('Set-Cookie', ['theme=dark; Path=/', 'lang=en; Path=/'])`.
 
 ### Uploaded files
 
@@ -216,7 +216,7 @@ abort_if($note === null, 404, 'That note does not exist.');
 
 ## File downloads
 
-`Response::file()` sends a file as a download. It streams from disk, so large files don't fill memory:
+`Response::file()` sends a file as a download. It streams from disk instead of loading the file into memory:
 
 ```php
 return Response::file($path, 'report.pdf');
@@ -243,7 +243,7 @@ return Response::redirect(publish($path, $this->app->path('public')));
 
 The action asks for `App` in its constructor, as `private App $app`, to find `public/`.
 
-A hard link is instant and uses no extra space, but both folders must be on the same disk. Anyone with the link can download the file until it's deleted, so clear old folders from cron:
+A hard link is instant and uses no extra space, but both folders must be on the same disk. Anyone with the link can download the file until it's deleted. Clear old folders from cron:
 
 ```sh
 find public/downloads -mindepth 1 -maxdepth 1 -type d -mmin +60 -exec rm -rf {} +

@@ -16,7 +16,7 @@
 
 ## Introduction
 
-Some work applies to many routes, such as checking a login, adding headers or refusing cross-site requests. Middleware keeps that code out of each action. It runs around your actions, seeing the request on the way in and the response on the way out, and it can answer without calling the action.
+Middleware runs around your actions. It sees the request on the way in and the response on the way out, and it can answer without calling the action at all. A login check or a header every page needs goes here, instead of in each action.
 
 ## Writing middleware
 
@@ -60,11 +60,11 @@ final class RequireLogin
 }
 ```
 
-Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, so middleware never has to catch one.
+Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception.
 
 ## Registering middleware
 
-Middleware is added in `bootstrap.php`, so the server and your tests run the same layers. `$app->middleware()` adds it around every request, and takes a class name, an object or a closure:
+Middleware is added in `bootstrap.php`, which the server and your tests both load. `$app->middleware()` adds it around every request, and takes a class name, an object or a closure:
 
 ```php
 $app->middleware(NoIndex::class);
@@ -78,7 +78,7 @@ $app->middleware(function (Request $request, Closure $next): Response {
 
 ### For part of the site
 
-A `prefix` limits middleware to a path and the paths below it, so `/api` covers `/api/notes` but not `/apis`:
+A `prefix` limits middleware to a path and the paths below it. `/api` covers `/api/notes` but not `/apis`:
 
 ```php
 $app->middleware(Cors::class, prefix: '/api');
@@ -99,11 +99,13 @@ final class ListUsers
 For each request, middleware runs in this order:
 
 1. Middleware from `$app->middleware()`, in the order it was added. The first is outermost.
-2. Routing, so 404s and 405s pass through the middleware above.
+2. Routing. A 404 or 405 passes back through the middleware above.
 3. The action's `#[Middleware]`, top to bottom.
 4. The action. Its constructor runs only now, after any login check.
 
 ## Built-in middleware
+
+Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.php` already adds `SecurityHeaders` and `Csrf`, while `Cors` is only needed when other sites call your app.
 
 | Middleware | What it does | Settings |
 | --- | --- | --- |
@@ -111,11 +113,9 @@ For each request, middleware runs in this order:
 | `Csrf` | Refuses writes that a browser sent from another site | `cors_origins`, which may write too |
 | `Cors` | Lets sites on other domains call the app from a browser | `cors_origins`, `cors_credentials` |
 
-Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.php` already adds `SecurityHeaders` and `Csrf`, while `Cors` is only needed when other sites call your app.
-
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site. Styles, images and fonts may also come from any HTTPS site, so a CSS framework from a CDN still works. Inline styles are allowed, `<style>` blocks and `style` attributes included.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site. Styles, images and fonts may also come from any HTTPS site, such as a CDN. Inline styles are allowed, `<style>` blocks and `style` attributes included.
 
 > [!WARNING]
 > Inline scripts are blocked, and browsers only report it in the console. That includes `<script>` blocks, `onclick` attributes, and libraries such as Alpine.js that evaluate strings. Put scripts in a file under `public/`, such as `public/app.js`.
@@ -126,16 +126,16 @@ To loosen the policy, set `content_policy` in `config.php`. Each directive repla
 'content_policy' => ['script-src' => "'self' https://unpkg.com"],
 ```
 
-`SecurityHeaders::POLICY` holds the defaults. A header the action sets is kept, so one page can have its own policy.
+`SecurityHeaders::POLICY` holds the defaults. An action can set its own policy header, and the middleware keeps it.
 
 ### Cross-site request protection
 
-`Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older, so your forms need no token.
+`Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older. Your forms need no token.
 
 Scripts and servers send neither header, so their requests pass. A request with neither header but with the session cookie is refused. It could be a forged request from a browser too old to send either header. Sites listed in `cors_origins` may write too.
 
 > [!NOTE]
-> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write. A form on a subdomain is same-site but not same-origin, so list the subdomain in `cors_origins`.
+> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, and a form on a subdomain is same-site but not same-origin. List the subdomain in `cors_origins`.
 
 ### CORS
 
@@ -161,7 +161,7 @@ $app->middleware(RequireLogin::class);          // then your own
 ```
 
 > [!WARNING]
-> Put login checks after `Cors`. A preflight carries no cookie or token, so a login check in front of `Cors` refuses it, and the browser then blocks the real request.
+> Put login checks after `Cors`. A preflight carries no cookie or token. A login check in front of `Cors` refuses it, and the browser then blocks the real request.
 
 ## Method reference
 

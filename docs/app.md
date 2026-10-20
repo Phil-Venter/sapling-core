@@ -15,7 +15,7 @@
 
 `Sapling\App` holds the [container](container.md) that builds your classes, the [routes](routing.md) and [commands](commands.md) they answer, and the [middleware](middleware.md) around them. The same object answers web requests and runs commands, depending on how PHP was started.
 
-An app lives for one request and has no static state, so each test builds its own.
+An app lives for one request and has no static state. Each test builds its own.
 
 ## Booting the app
 
@@ -81,9 +81,9 @@ Sapling finds your classes through their attributes. `#[Route]` makes a class an
 $app->scan(__DIR__ . '/app', 'App');
 ```
 
-It expects one class per file, named after its path as PSR-4 does, so `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order.
+It expects one class per file, named after its path as PSR-4 does. `app/Notes/Show.php` holds `App\Notes\Show`. Classes without attributes are skipped, and the rest are registered in name order.
 
-Only files that start with a capital letter and have no other dot are read as classes. Anything else, such as `helpers.php` or `list.tmpl.php`, is skipped, so `app/` can hold plain functions and [templates](templates.md#templates-next-to-their-classes) too. Load function files through Composer, as Sapling's own helpers are:
+Only files that start with a capital letter and have no other dot are read as classes. Anything else, such as `helpers.php` or `list.tmpl.php`, is skipped. `app/` can hold plain functions and [templates](templates.md#templates-next-to-their-classes) too. Load function files through Composer, as Sapling's own helpers are:
 
 ```json
 "autoload": {
@@ -92,7 +92,7 @@ Only files that start with a capital letter and have no other dot are read as cl
 }
 ```
 
-There's no cache, so every request scans. That takes about 0.2 ms for a dozen classes.
+There's no cache. Every request scans, taking about 0.2 ms for a dozen classes.
 
 > [!WARNING]
 > A file in `app/` that fails to load breaks every request. The [production checklist](production.md) has a command that lints it before you deploy.
@@ -143,7 +143,7 @@ The examples use [Pest](https://pestphp.com). Add it to an app with `composer re
 
 `handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
 
-To act as a signed-in visitor, set the session before the request. The app shares one `Session`, so the action sees the same values:
+To act as a signed-in visitor, set the session before the request. The action sees the same values, since the app shares one `Session`:
 
 ```php
 $app->container->get(Session::class)->set('user_id', 7);
@@ -165,7 +165,7 @@ $response = $app->handle(new Request('GET', '/settings'));
 | `middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix` |
 | `onError($handler)` | Sets what turns an `HttpException` into a response, see [errors](errors.md) |
 | `run()` | Answers the current request and sends it, or runs a command from the terminal |
-| `handle($request)` | Returns the `Response` for a `Request`. An error becomes a response too, so it never throws |
+| `handle($request)` | Returns the `Response` for a `Request`. It never throws, since an error becomes a response too |
 | `runCommand($console)` | Runs a command and returns its exit code |
 | `path($relative = '')` | Returns an absolute path inside the app, such as `path('views')` |
 | `$app->container` | The [container](container.md) |

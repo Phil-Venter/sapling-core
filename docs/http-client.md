@@ -15,7 +15,7 @@
 
 ## Introduction
 
-Most apps call an API or two, such as a payment provider or a weather service. `Sapling\Client\HttpClient` covers that without a client library. It sends requests with curl, and each reply is a `Sapling\Client\ClientResponse`.
+`Sapling\Client\HttpClient` calls other services, such as a payment provider or a weather API, through curl. Each reply is a `Sapling\Client\ClientResponse`.
 
 ## Making requests
 
@@ -72,7 +72,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 ]);
 ```
 
-`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A failed connection comes back with status 0, as from `send()`, so the other replies aren't lost.
+`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A failed connection comes back with status 0, as from `send()`, without losing the other replies.
 
 ## Reading the reply
 
@@ -183,7 +183,7 @@ CREATE TABLE http_cache (
 );
 ```
 
-Only 200 replies are kept, so a 404 or an outage isn't remembered for a day. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
+Only 200 replies are kept. A 404 or an outage isn't remembered for a day. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
 
 ## Timeouts, redirects and TLS
 
@@ -193,7 +193,7 @@ A request gives up after 30 seconds. When a visitor waits on it, register a clie
 $app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, so a POST is never sent twice. Only `http` and `https` URLs are allowed, redirects included, so a URL from a visitor can't read local files. TLS certificates are always checked, and compressed replies are unpacked.
+GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, which keeps a POST from being sent twice. Only `http` and `https` URLs are allowed, redirects included. A URL from a visitor can't read local files. TLS certificates are always checked, and compressed replies are unpacked.
 
 > [!WARNING]
 > A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.

@@ -12,11 +12,11 @@
 
 ## Introduction
 
-[htmx](https://htmx.org) fits the apps Sapling is for, with server-rendered pages and fragments swapped in from your actions. It needs nothing special, but a few of Sapling's defaults trip it up.
+[htmx](https://htmx.org) swaps HTML from your actions into the page. It works with Sapling as it is, apart from a few defaults that trip it up.
 
 ## The htmx middleware
 
-Two of the fixes belong on every response, so they go in one small middleware in your app:
+Two of the fixes belong on every response. They fit in one small middleware in your app:
 
 ```php
 use Closure;
@@ -43,7 +43,7 @@ final class Htmx
 }
 ```
 
-Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check, so a login redirect reaches htmx as `HX-Redirect` too.
+Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check. That way a login redirect reaches htmx as `HX-Redirect` too.
 
 ## Fragments and full pages
 
@@ -59,17 +59,17 @@ if ($request->header('HX-Request')->bool()) {
 return Response::html($this->view->render($template, ['notes' => $notes]));
 ```
 
-One URL then answers with two different bodies. The middleware adds `Vary: HX-Request`, so the back button never shows a cached fragment in place of the page.
+One URL then answers with two different bodies. The middleware adds `Vary: HX-Request`. Without it, the back button can show a cached fragment in place of the page.
 
 ## Redirects
 
-The browser follows a redirect before htmx sees it, so htmx would swap the whole page it lands on into the target. For htmx requests, the middleware turns a redirect into a normal response with `HX-Redirect`, which loads the new page in full. Actions keep returning `Response::redirect()`. To have htmx fetch and swap the page instead, as a boosted link does, send `HX-Location` from the action.
+The browser follows a redirect before htmx sees it. htmx would then swap the whole page it lands on into the target. For htmx requests, the middleware turns a redirect into a normal response with `HX-Redirect`, which loads the new page in full. Actions keep returning `Response::redirect()`. To have htmx fetch and swap the page instead, as a boosted link does, send `HX-Location` from the action.
 
 ## Forms and methods
 
-`Csrf` lets htmx's requests through without a token, since they come from your own pages and browsers mark them as same-origin.
+`Csrf` lets htmx's requests through without a token. They come from your own pages, and browsers mark them as same-origin.
 
-`hx-put` and `hx-patch` send their values in the body. PHP only reads POST bodies, but `$request->data()` decodes these too. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET, so read them with `query()`:
+`hx-put` and `hx-patch` send their values in the body. PHP only reads POST bodies, but `$request->data()` decodes these too. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET. Read them with `query()`:
 
 ```php
 $id = $request->query('id')->int();
@@ -85,13 +85,13 @@ By default htmx doesn't swap a 4xx or 5xx response. A page from your [error hand
 
 ## Scripts
 
-htmx is a script file, and `hx-*` attributes aren't scripts, so [`SecurityHeaders`](middleware.md#security-headers) lets most pages through as they are.
+htmx is a script file and `hx-*` attributes aren't scripts. Most pages work with [`SecurityHeaders`](middleware.md#security-headers) as they are.
 
 htmx features that evaluate strings need `'unsafe-eval'`, which the policy doesn't allow. That covers `hx-on` attributes, event filters such as `hx-trigger="keyup[key=='Enter']"`, and `js:` values in `hx-vals`. Write those as listeners in a script file, or loosen `script-src` in `content_policy`.
 
 ## Sessions
 
-PHP locks the session from the moment something uses it until the request ends. Requests that use the session run one at a time, so a slow one holds up the polls and swaps behind it. Keep frequent requests, such as polling, away from the session.
+PHP locks the session from the moment something uses it until the request ends. Requests that use the session run one at a time. A slow one holds up the polls and swaps behind it. Keep frequent requests, such as polling, away from the session.
 
 A flash value goes to the next request that uses the session. With htmx, that can be a background poll rather than the page after a redirect, as [sessions](sessions.md#flash-values) explains.
 
@@ -100,6 +100,6 @@ A flash value goes to the next request that uses the session. With htmx, that ca
 | Header | What it does |
 | --- | --- |
 | `HX-Request` | Sent by htmx with its requests. Read it with `$request->header('HX-Request')->bool()` |
-| `Vary: HX-Request` | Added by the middleware, so pages and fragments from one URL are cached apart |
-| `HX-Redirect` | Sent by the middleware instead of a redirect, so the browser loads the new page |
+| `Vary: HX-Request` | Added by the middleware. Keeps pages and fragments from one URL cached apart |
+| `HX-Redirect` | Sent by the middleware instead of a redirect. The browser loads the new page in full |
 | `HX-Location` | Sent by an action instead of a redirect, to have htmx fetch another page and swap it in |
