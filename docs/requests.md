@@ -19,6 +19,8 @@
     - [Serving large files](#serving-large-files)
 - [Reading a response](#reading-a-response)
 - [Method reference](#method-reference)
+    - [Request](#request)
+    - [Response](#response)
 
 ## Introduction
 
@@ -75,7 +77,7 @@ Every part of the request comes back as a [`Value`](values.md). Read it as the t
 $page = $request->query('page')->int(1);
 ```
 
-Crafted input can't change the type either. If someone sends `body[]=x` where you expect text, `string()` gives the default. Every reader takes more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
+Crafted input can't change the type either. If someone sends `body[]=x` where you expect text, `string()` gives the default. `param()`, `query()`, `data()` and `cookie()` take more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
 
 ### Route parameters
 
@@ -133,7 +135,7 @@ $accept = $request->header('Accept')->string();
 $theme = $request->cookie('theme')->string('light');
 ```
 
-Sapling only writes the session's cookie. To set another, add it with `withHeader('Set-Cookie', '…')`.
+Sapling only writes the session's cookie. To set another, add it with `withHeader('Set-Cookie', '…')`. A second `withHeader()` replaces the first, so pass a list for several, as in `withHeader('Set-Cookie', ['theme=dark; Path=/', 'lang=en; Path=/'])`.
 
 ### Uploaded files
 
@@ -192,6 +194,19 @@ return Response::redirect('/notes');
 return Response::redirect('/notes/7', 303);
 ```
 
+`redirect()` sends any URL it's given. When the target comes from the visitor, such as a `?next=` page to return to after signing in, accept only a path on your own site:
+
+```php
+$next = $request->query('next')->string('/');
+
+// Browsers read //evil.example as another site, and /\evil.example or a tab or newline in the path can turn into it.
+if (!str_starts_with($next, '/') || str_starts_with($next, '//') || strpbrk($next, "\\\t\r\n") !== false) {
+    $next = '/';
+}
+
+return Response::redirect($next);
+```
+
 ### Error responses
 
 For an error, you don't build a response. `abort()` stops the request with an error status from anywhere, including middleware and templates:
@@ -210,6 +225,8 @@ abort_if($note === null, 404, 'That note does not exist.');
 return Response::file($path, 'report.pdf');
 ```
 
+A missing file throws a `RuntimeException`, which is a crash. When the path comes from the visitor, check it first with `abort_if(!is_file($path), 404)`.
+
 ### Serving large files
 
 Streaming still keeps a PHP worker busy until the download finishes. For large or popular files, let the web server send them. Hard-link the file into a random folder under `public/` and redirect to it:
@@ -226,6 +243,8 @@ function publish(string $file, string $public): string
 
 return Response::redirect(publish($path, $this->app->path('public')));
 ```
+
+The action asks for `App` in its constructor, as `private App $app`, to find `public/`.
 
 A hard link is instant and uses no extra space, but both folders must be on the same disk. Anyone with the link can download the file until it's deleted, so clear old folders from cron:
 
@@ -256,7 +275,7 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `query(...$keys)` | A query string value, as a `Value` |
 | `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON, XML or a form, as a `Value` |
 | `header($name)` | A header, case-insensitive, as a `Value` |
-| `cookie(...$keys)` | A cookie, as a `Value`. Like the readers above, more keys read deeper and no key gives all of them |
+| `cookie(...$keys)` | A cookie, as a `Value`. Like `param()`, `query()` and `data()`, more keys read deeper and no key gives all of them |
 | `$request->method`, `$request->path` | The method, and the path without its query string |
 | `$request->params` | Every route parameter, by name |
 | `$request->body` | The raw body |
@@ -272,11 +291,11 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `Response::text($text, $status = 200)` | Returns a plain text response |
 | `Response::json($data, $status = 200)` | Returns JSON. Throws `JsonException` when the data can't be encoded |
 | `Response::redirect($url, $status = 302)` | Returns a redirect |
-| `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent |
+| `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent. Throws `RuntimeException` when the file is missing |
 | `Response::error($e)` | Returns plain text with an `HttpException`'s status and message, for an [error handler](errors.md#showing-your-own-error-page) |
 | `new Response($body, $status = 200, $headers = [])` | Returns any other response |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
 | `send($body = true)` | Sends the response. `App::run()` calls it |
-| `$response->status`, `headers`, `body` | Read-only. `withHeader()` returns a copy with a new header |
+| `$response->status`, `headers`, `body`, `file` | Read-only. `headers` keeps each name as it was set, and `file` holds a download's path. `withHeader()` returns a copy with a new header |

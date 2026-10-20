@@ -25,7 +25,7 @@ A few things happen in almost every file, such as escaping a value or stopping w
 
 ### Attributes
 
-Attributes are fiddlier, since some should be left out and some have no value at all. `attrs()` builds them from an array and escapes each one:
+`attrs()` builds attributes from an array and escapes each one:
 
 ```php
 <li <?= attrs(['class' => ['note', 'pinned'], 'data-id' => 7, 'hidden' => true, 'title' => null]) ?>>
@@ -114,8 +114,8 @@ Each helper is skipped when a function with its name already exists, so an app c
 | `e($value)` | Escapes a value for HTML. A backed enum prints its value |
 | `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
 | `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
-| `abort($status, $message = '', $headers = [])` | Throws an `HttpException`, which becomes the response |
-| `abort_if($condition, $status, $message = '', $headers = [])` | Throws like `abort()` when the condition is true |
+| `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
+| `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |

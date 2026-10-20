@@ -24,6 +24,7 @@ An app's settings live in one PHP file, `config.php`, where each one can have a 
 return [
     'debug' => ($env['APP_ENV'] ?? 'production') === 'dev',
     'app_key' => $env['APP_KEY'] ?? '',
+    'weather_api_key' => $env['WEATHER_API_KEY'] ?? '',
     'timezone' => 'UTC',
     'db_file' => __DIR__ . '/database/app.db',
     'session_lifetime' => 60 * 60 * 24 * 14,
@@ -36,7 +37,7 @@ return [
 
 ```sh
 APP_ENV=dev
-API_KEY="a long secret"
+WEATHER_API_KEY="a long secret"
 ```
 
 A new app from the [skeleton](../README.md#getting-started) gets one for development, with a fresh `APP_KEY`, and ignores it in git.
@@ -54,7 +55,13 @@ A new app from the [skeleton](../README.md#getting-started) gets one for develop
 Most classes get their settings in the constructor with [`#[Config]`](container.md#settings-in-constructors):
 
 ```php
-public function __construct(#[Config('api_key'), SensitiveParameter] private string $apiKey) {}
+use Sapling\Attributes\Config;
+use SensitiveParameter;
+
+final class Weather
+{
+    public function __construct(#[Config('weather_api_key'), SensitiveParameter] private string $apiKey) {}
+}
 ```
 
 Elsewhere, such as in `bootstrap.php`, ask the `Config` object with `get()`:
@@ -83,6 +90,15 @@ $lifetime = $config->get('session_lifetime', 0);
 | `cors_credentials` | Whether those sites may send cookies | No |
 | `content_policy` | Directives that replace [`SecurityHeaders`](middleware.md#security-headers)' defaults | None |
 | `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` for any | None |
+
+Each setting needs the type Sapling expects, such as a `bool` for `debug` and an `int` for `session_lifetime`, or it throws a `TypeError` when the app boots or first uses it. The same goes for a `#[Config]` parameter. `.env` values are always strings, so convert them in `config.php`:
+
+```php
+'session_lifetime' => (int) ($env['SESSION_LIFETIME'] ?? 60 * 60 * 24 * 14),
+'cors_credentials' => ($env['CORS_CREDENTIALS'] ?? '') === 'true',
+```
+
+Compare a boolean instead of casting it, because `(bool) 'false'` is `true`.
 
 ## Configuration in production
 

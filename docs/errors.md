@@ -76,7 +76,7 @@ Any other exception is a crash. It's logged, and the visitor gets a plain-text 5
 
 ### Debug mode
 
-While you're working, set `debug` in the [config](config.md). A crash then shows the code around the error and a stack trace, with the frames outside your app folded away.
+While you're working, turn on `debug` in the [config](config.md). The skeleton's `config.php` turns it on when `.env` has `APP_ENV=dev`. A crash then shows the code around the error and a stack trace, with the frames outside your app folded away.
 
 ### Warnings and notices
 
@@ -91,7 +91,7 @@ Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PH
 Sapling writes one line per crash or 5xx response with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there, which is usually where the fix belongs:
 
 ```text
-GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:72 from /srv/app/app/Notes/Download.php:21
+GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:70 from /srv/app/app/Notes/Download.php:21
 ```
 
 ### Where the log goes
@@ -108,7 +108,7 @@ Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime
 
 | Method | What it does |
 | --- | --- |
-| `abort($status, $message = '', $headers = [])` | Throws an `HttpException` |
+| `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException` |
 | `abort_if($condition, $status, ...)` | Throws one when the condition is true |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |

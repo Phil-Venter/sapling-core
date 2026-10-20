@@ -21,7 +21,7 @@ Each action is one class in one file, with its route written on the class. That 
 
 ## Writing an action
 
-An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. Here's one that shows a note:
+An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. Here's one that shows a note from the [database](database.md), with [`abort_if()`](helpers.md) for a missing one:
 
 ```php
 namespace App\Notes;
@@ -68,6 +68,8 @@ $noteId = $request->param('note')->int();
 ```
 
 Parameters arrive URL-decoded, so `/tags/caf%C3%A9` gives `café`. A parameter never matches an empty part or a slash. Fixed parts are matched as browsers send them, so write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
+
+Parameter names start with a letter or underscore, followed by letters, digits and underscores. `:note_id` works, while `:note-id` and `:2fa` throw a `LogicException`, as does a path that uses one name twice.
 
 ## More than one route per action
 
@@ -133,9 +135,6 @@ A path that no route fits is a 404, and a known path with the wrong method is a 
 ```sh
 php bin/console routes:list
 ```
-
-> [!NOTE]
-> There are no route groups or prefixes. Every route spells out its full path, so you can grep for it.
 
 ## Method reference
 

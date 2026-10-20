@@ -124,7 +124,7 @@ A default can't tell you whether a value was sent. `string()` gives `''` both fo
 $editing = $request->param('id')->raw !== null;
 ```
 
-For the same reason, a default can hide a required field that was left out. Sapling has no validation layer, so check required fields yourself after reading them:
+Sapling has no validation layer, so check required fields yourself after reading them:
 
 ```php
 $body = $request->data('body')->string();

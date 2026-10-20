@@ -84,6 +84,6 @@ $price = $envelope->get('soap:Body', 'Price')->string();
 | `fromJson($json)` | Decodes JSON, with objects as arrays. Throws `JsonException` when it's invalid |
 | `toForm($data)` | Returns a URL-encoded form body, the same format as a query string |
 | `fromForm($form)` | Decodes a URL-encoded form body |
-| `toXml($data, $root = 'root')` | Returns an XML document with the data inside a root element |
+| `toXml($data, $root = 'root')` | Returns an XML document with the data inside a root element. Throws `InvalidArgumentException` when `$data` is a list |
 | `fromXml($xml)` | Decodes XML into arrays, or a string when the root only holds text. Throws `RuntimeException` when it's invalid |
 | `decode($body, $contentType)` | Decodes JSON, XML or a form by its `Content-Type`. Any other type gives the body as it is |

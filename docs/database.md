@@ -106,7 +106,7 @@ $sql = <<<SQL
 $count = $this->db->value($sql, [$userId])->int();
 ```
 
-Rows come back as plain arrays, since their shape is your own schema. A lone value is wrapped because drivers differ in its type, such as MySQL returning a `DECIMAL` as a string.
+Rows come back as plain arrays. A lone value comes back as a [`Value`](values.md), so read it as the type you need. Drivers differ here, and MySQL returns a `DECIMAL` as a string.
 
 ### Inserting, updating and deleting
 
@@ -155,7 +155,7 @@ On SQLite, a transaction starts with `BEGIN IMMEDIATE`, so it waits for the writ
 
 ## Migrations
 
-Each schema change is a migration, a plain SQL file in `database/migrations/`, and two commands manage them.
+Each schema change is a migration, a plain SQL file in `database/migrations/`, and three commands manage them.
 
 ### Creating a migration
 
@@ -172,6 +172,8 @@ php bin/console migrations:run
 ```
 
 This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped without being recorded, so it still runs once it has SQL in it. There are no down migrations. To undo one, write another that reverses it.
+
+Migrations are recorded by file name, so editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
 
 > [!NOTE]
 > MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction, so a migration that fails partway can leave some changes behind. Keep one schema change per file.

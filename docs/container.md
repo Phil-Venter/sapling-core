@@ -64,6 +64,8 @@ Settings aren't classes, so the container can't find them by type. `#[Config]` n
 
 ```php
 use Sapling\Attributes\Config;
+use Sapling\Client\HttpClient;
+use SensitiveParameter;
 
 final class Weather
 {
@@ -75,7 +77,7 @@ final class Weather
 }
 ```
 
-When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so convert `.env` strings in `config.php`, as in `'retries' => (int) ($env['RETRIES'] ?? 3)`. Compare booleans instead, as in `'cache' => ($env['CACHE'] ?? '') === 'true'`, because `(bool) 'false'` is `true`.
+When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`, so [convert `.env` strings](config.md#settings-sapling-reads) in `config.php`.
 
 ## How a class is built
 

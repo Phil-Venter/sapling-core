@@ -72,7 +72,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 ]);
 ```
 
-`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A list of 1,000 URLs can't flood one service. A failed connection comes back with status 0, as from `send()`, so the other replies aren't lost.
+`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A failed connection comes back with status 0, as from `send()`, so the other replies aren't lost.
 
 ## Reading the reply
 
@@ -81,6 +81,8 @@ A reply has its `status`, `headers` and `body`. `data()` decodes the body by its
 ```php
 $name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"name": "bob"}}
 ```
+
+A JSON or XML body that doesn't decode, such as a cut-off reply, makes `data()` throw a `JsonException` or `RuntimeException`, which is a crash.
 
 A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` ignores case:
 
@@ -102,7 +104,7 @@ if ($reply->status !== 200) {
 
 ## Retrying a request
 
-`HttpClient` sends each request once. Whether a request is safe to repeat, and how long someone can wait for it, depends on the request, so retrying is up to your app. Retry only requests that change nothing, such as a GET, and keep retries out of pages a visitor is waiting for.
+`HttpClient` sends each request once. Retry only requests that change nothing, such as a GET, and keep retries out of pages a visitor is waiting for.
 
 This function tries a GET up to 3 times, waiting 1 second and then 2, when the connection fails or the service answers 429, 502, 503 or 504:
 
@@ -130,7 +132,7 @@ The last try returns its reply, whatever its status.
 
 ## Caching replies
 
-Sapling doesn't cache replies, since only your app knows which ones can be kept and for how long. A small class around `HttpClient` can keep them in the database. This one keeps successful GET replies for a day:
+Sapling doesn't cache replies. A small class around `HttpClient` can keep them in the database. This one keeps successful GET replies for a day:
 
 ```php
 final readonly class CachedHttp
@@ -208,7 +210,7 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
-| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body |
+| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` or `RuntimeException` when a JSON or XML body is invalid |
 | `$reply->header($name)` | Returns a header, ignoring case, as a `Value`. A header sent more than once is a list |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
 | `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests or from a cache |

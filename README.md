@@ -60,7 +60,7 @@ $app->commands->add('greet', function (Console $console): int {
 $app->run();
 ```
 
-Serve it with `php -S localhost:8080 app.php`, and run its commands with `php app.php greet`.
+To try it, install Sapling in an empty folder with `composer require sapling/core:dev-main`, serve the file with `php -S localhost:8080 app.php`, and run its commands with `php app.php greet`.
 
 ## Why Sapling
 
@@ -82,6 +82,7 @@ Sapling keeps the parts that worked and drops the rest.
 | Guide | What's in it |
 | --- | --- |
 | [The app](docs/app.md) | `App`, `bootstrap.php`, `public/index.php`, `boot()` and `scan()` |
+| [Configuration](docs/config.md) | `config.php`, `.env` and the settings Sapling reads |
 | [The container](docs/container.md) | How classes get what their constructors ask for, and `#[Config]` |
 | [Routing and actions](docs/routing.md) | Actions, `#[Route]`, `#[Middleware]`, the router and how routes match |
 | [Requests and responses](docs/requests.md) | The request lifecycle, `Request`, `Response` and downloads |
@@ -91,7 +92,6 @@ Sapling keeps the parts that worked and drops the rest.
 | [htmx](docs/htmx.md) | Fragments, redirects, errors, scripts and sessions with htmx |
 | [Sessions](docs/sessions.md) | Session values, flash values and the cookie |
 | [Database](docs/database.md) | `Db`, SQLite and migrations |
-| [Configuration](docs/config.md) | `config.php`, `.env` and the settings Sapling reads |
 | [Encrypting secrets](docs/encryption.md) | `Crypto` and `app_key` |
 | [Commands](docs/commands.md) | `#[Command]`, `Console` and the built-in commands |
 | [Talking to other services](docs/http-client.md) | `HttpClient`, `ClientRequest` and `ClientResponse`, one request at a time or several at once |
@@ -113,7 +113,7 @@ Some parts need extensions that most PHP installs already have:
 | Part | Extension |
 | --- | --- |
 | `Db` | `pdo`, plus the driver for your database (`pdo_sqlite` for `Db::sqlite()`) |
-| `Session` | `session` |
+| `Session` and `Csrf` | `session` |
 | `HttpClient` | `curl` |
 | XML in `Data` | `simplexml` and `xmlwriter` |
 | `Crypto` | `sodium` |

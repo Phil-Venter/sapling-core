@@ -139,6 +139,8 @@ $response = $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy mi
 expect($response->status)->toBe(302);
 ```
 
+The examples use [Pest](https://pestphp.com). Add it to an app with `composer require --dev pestphp/pest`.
+
 `handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
 
 To act as a signed-in visitor, set the session before the request. The app shares one `Session`, so the action sees the same values:

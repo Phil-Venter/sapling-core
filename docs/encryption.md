@@ -6,7 +6,6 @@
     - [Contexts](#contexts)
     - [When decrypting fails](#when-decrypting-fails)
 - [What not to encrypt](#what-not-to-encrypt)
-- [Why XChaCha20-Poly1305](#why-xchacha20-poly1305)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -21,7 +20,7 @@ Some secrets can't be hashed, because the app has to send the original somewhere
 'app_key' => $env['APP_KEY'] ?? '',
 ```
 
-Each server needs its own key. To generate one:
+Each environment, such as your laptop and production, needs its own key. Every server in one environment uses the same key, or it can't decrypt what the others stored. To generate a key:
 
 ```sh
 php -r 'echo "APP_KEY=" . base64_encode(random_bytes(32)), PHP_EOL;'
@@ -64,12 +63,6 @@ if ($apiKey === null) {
 ## What not to encrypt
 
 Passwords never need decrypting, only checking, so hash them with `password_hash()` instead.
-
-## Why XChaCha20-Poly1305
-
-- **It's authenticated.** A tampered value fails to decrypt, and the context is checked along with it without being stored.
-- **Its nonce is 24 bytes,** so each value can safely get a random one, with no counter to keep.
-- **It comes with PHP.** It's part of the sodium extension and runs in constant time without special CPU support.
 
 ## Method reference
 

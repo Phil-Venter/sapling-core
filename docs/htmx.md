@@ -19,6 +19,10 @@
 Two of the fixes belong on every response, so they go in one small middleware in your app:
 
 ```php
+use Closure;
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+
 final class Htmx
 {
     public function __invoke(Request $request, Closure $next): Response
@@ -39,7 +43,7 @@ final class Htmx
 }
 ```
 
-Add it with `$app->middleware(Htmx::class)` after the built-in middleware.
+Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check, so a login redirect reaches htmx as `HX-Redirect` too.
 
 ## Fragments and full pages
 
