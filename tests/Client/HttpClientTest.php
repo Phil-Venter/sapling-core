@@ -1,6 +1,7 @@
 <?php
 
 use Sapling\Client\ClientRequest;
+use Sapling\Client\ClientResponse;
 use Sapling\Client\HttpClient;
 use Sapling\Data;
 
@@ -10,6 +11,22 @@ function serverUrl(string $path): string
 }
 
 beforeEach(fn() => $this->client = new HttpClient());
+
+test('a fake answers every request instead of curl', function () {
+	$sent = [];
+	$client = new HttpClient()->fake(function (ClientRequest $request) use (&$sent): ClientResponse {
+		$sent[] = "{$request->method} {$request->url}";
+
+		return new ClientResponse('{"paid":true}', 200, ['Content-Type' => 'application/json']);
+	});
+
+	$reply = $client->send(ClientRequest::json('POST', 'https://pay.example/charge', ['amount' => 500]));
+	$replies = $client->sendAll(['a' => ClientRequest::json('GET', 'https://pay.example/a')]);
+
+	expect($reply->data('paid')->bool())->toBeTrue();
+	expect(array_keys($replies))->toBe(['a']);
+	expect($sent)->toBe(['POST https://pay.example/charge', 'GET https://pay.example/a']);
+});
 
 test('send() returns status, lowercased headers and body', function () {
 	$response = $this->client->send(new ClientRequest('GET', serverUrl('/notes')));

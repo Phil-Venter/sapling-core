@@ -151,6 +151,8 @@ $app->container->get(Session::class)->set('user_id', 7);
 $response = $app->handle(new Request('GET', '/settings'));
 ```
 
+To answer for another service, such as a payment provider, [fake its replies](http-client.md#faking-replies-in-tests).
+
 > [!NOTE]
 > Send one request per app, as the server does. A second request through the same app shares the first one's objects.
 

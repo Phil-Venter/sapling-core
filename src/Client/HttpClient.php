@@ -5,12 +5,15 @@ namespace Sapling\Client;
 /**
  * Sends ClientRequests to other HTTP services through curl.
  */
-final readonly class HttpClient
+final class HttpClient
 {
+	/** @var (\Closure(ClientRequest): ClientResponse)|null */
+	private ?\Closure $fake = null;
+
 	/**
 	 * Requests give up after $timeout seconds.
 	 */
-	public function __construct(private int $timeout = 30) {}
+	public function __construct(private readonly int $timeout = 30) {}
 
 	/**
 	 * Follows redirects for GET and HEAD. An error status is a normal reply. A connection that fails or times out
@@ -18,14 +21,14 @@ final readonly class HttpClient
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{
-		$handle = $this->handle($request);
-		$content = curl_exec($handle);
-
-		if (curl_errno($handle) !== 0) {
-			return $this->failure($request, $handle);
+		if ($this->fake !== null) {
+			return ($this->fake)($request);
 		}
 
-		return $this->response($handle, (string) $content);
+		$handle = $this->handle($request);
+		$content = (string) curl_exec($handle);
+
+		return $this->response($request, $handle, $content);
 	}
 
 	/**
@@ -37,6 +40,10 @@ final readonly class HttpClient
 	 */
 	public function sendAll(array $requests): array
 	{
+		if ($this->fake !== null) {
+			return array_map($this->fake, $requests);
+		}
+
 		$multi = curl_multi_init();
 		$pairs = [];
 
@@ -66,15 +73,23 @@ final readonly class HttpClient
 		$responses = [];
 
 		foreach ($pairs as $key => [$request, $handle]) {
-			if (curl_errno($handle) !== 0) {
-				$responses[$key] = $this->failure($request, $handle);
-				continue;
-			}
-
-			$responses[$key] = $this->response($handle, (string) curl_multi_getcontent($handle));
+			$content = (string) curl_multi_getcontent($handle);
+			$responses[$key] = $this->response($request, $handle, $content);
 		}
 
 		return $responses;
+	}
+
+	/**
+	 * Answers every request with $answer instead of curl, for tests.
+	 *
+	 * @param \Closure(ClientRequest): ClientResponse $answer
+	 */
+	public function fake(\Closure $answer): self
+	{
+		$this->fake = $answer;
+
+		return $this;
 	}
 
 	private function handle(ClientRequest $request): \CurlHandle
@@ -123,31 +138,34 @@ final readonly class HttpClient
 		return $handle;
 	}
 
-	private function failure(ClientRequest $request, \CurlHandle $handle): ClientResponse
+	private function response(ClientRequest $request, \CurlHandle $handle, string $content): ClientResponse
 	{
-		$error = "{$request->method} {$request->url} failed: " . curl_error($handle);
+		if (curl_errno($handle) !== 0) {
+			$error = "{$request->method} {$request->url} failed: " . curl_error($handle);
 
-		return new ClientResponse($error, 0, []);
-	}
+			return new ClientResponse($error, 0, []);
+		}
 
-	private function response(\CurlHandle $handle, string $content): ClientResponse
-	{
 		$size = (int) curl_getinfo($handle, CURLINFO_HEADER_SIZE);
 		$status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
-
-		// Every redirect adds a block of headers, and the last block is the final reply's.
-		$blocks = explode("\r\n\r\n", trim(substr($content, 0, $size)));
-		$lines = explode("\r\n", $blocks[count($blocks) - 1] ?? '');
+		$head = trim(substr($content, 0, $size));
+		$lastBlock = strrpos($head, "\r\n\r\n");
 		$received = [];
 
-		foreach ($lines as $line) {
-			if (!str_contains($line, ':')) {
+		// Every redirect adds a block of headers, and the last block is the final reply's.
+		if ($lastBlock !== false) {
+			$head = substr($head, $lastBlock + 4);
+		}
+
+		foreach (explode("\r\n", $head) as $line) {
+			$colon = strpos($line, ':');
+
+			if ($colon === false) {
 				continue;
 			}
 
-			$parts = explode(':', $line, 2);
-			$name = strtolower(trim($parts[0]));
-			$received[$name][] = trim($parts[1] ?? '');
+			$name = strtolower(trim(substr($line, 0, $colon)));
+			$received[$name][] = trim(substr($line, $colon + 1));
 		}
 
 		$headers = [];

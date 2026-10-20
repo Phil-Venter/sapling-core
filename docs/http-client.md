@@ -11,6 +11,7 @@
 - [Retrying a request](#retrying-a-request)
 - [Caching replies](#caching-replies)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
+- [Faking replies in tests](#faking-replies-in-tests)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -198,12 +199,34 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 > [!WARNING]
 > A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.
 
+## Faking replies in tests
+
+In a test, `fake()` makes the app's client answer every request with a closure instead of curl. The closure gets each `ClientRequest`, and can answer by its URL or record what was sent:
+
+```php
+use Sapling\Client\ClientRequest;
+use Sapling\Client\ClientResponse;
+use Sapling\Client\HttpClient;
+use Sapling\Http\Request;
+
+$app = require __DIR__ . '/../bootstrap.php';
+
+$app->container->get(HttpClient::class)->fake(function (ClientRequest $request): ClientResponse {
+    return new ClientResponse('{"status":true}', 200, ['Content-Type' => 'application/json']);
+});
+
+$response = $app->handle(new Request('POST', '/billing/charge'));
+```
+
+The client keeps the settings `bootstrap.php` gave it, and `sendAll()` calls the closure once per request.
+
 ## Method reference
 
 | Method | What it does |
 | --- | --- |
 | `send($request)` | Sends a `ClientRequest` and returns the reply as a `ClientResponse`. A failed connection comes back as status 0, with the error as its body |
 | `sendAll($requests)` | Sends `ClientRequest`s at once and returns their replies under the same keys |
+| `fake($answer)` | Answers every request with the closure `$answer` instead of curl, for tests. Returns the client |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
 | `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
