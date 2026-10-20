@@ -175,10 +175,11 @@ final class Template
 		$dir = $this->dir;
 		$name = $template;
 
-		if (str_contains($template, '::')) {
-			$parts = explode('::', $template, 2);
-			$prefix = $parts[0];
-			$name = $parts[1] ?? '';
+		$separator = strpos($template, '::');
+
+		if ($separator !== false) {
+			$prefix = substr($template, 0, $separator);
+			$name = substr($template, $separator + 2);
 
 			if (!array_key_exists($prefix, $this->prefixes)) {
 				throw new \LogicException("Unknown template prefix {$prefix} in {$template}");

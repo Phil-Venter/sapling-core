@@ -43,7 +43,7 @@ final readonly class Config
 		$lines = file($file);
 
 		if ($lines === false) {
-			return [];
+			throw new \RuntimeException("Cannot read {$file}");
 		}
 
 		foreach ($lines as $index => $line) {
@@ -53,14 +53,15 @@ final readonly class Config
 				continue;
 			}
 
-			if (!str_contains($line, '=')) {
+			$equals = strpos($line, '=');
+
+			if ($equals === false) {
 				$number = $index + 1;
 				throw new \RuntimeException("Expected KEY=value in {$file} on line {$number}");
 			}
 
-			$parts = explode('=', $line, 2);
-			$key = trim($parts[0]);
-			$env[$key] = self::envValue(trim($parts[1] ?? ''));
+			$key = trim(substr($line, 0, $equals));
+			$env[$key] = self::envValue(trim(substr($line, $equals + 1)));
 		}
 
 		return $env;
