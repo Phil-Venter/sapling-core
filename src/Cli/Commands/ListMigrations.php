@@ -5,6 +5,7 @@ namespace Sapling\Cli\Commands;
 use Sapling\App;
 use Sapling\Cli\Console;
 use Sapling\Db;
+use Sapling\Migrations;
 
 /**
  * Lists every migration file, and when it ran or that it's pending.
@@ -20,10 +21,10 @@ final readonly class ListMigrations
 	/** @throws \PDOException When the migrations table can't be created or read. */
 	public function __invoke(Console $console): int
 	{
-		$this->db->run(RunMigrations::CREATE_TABLE);
-		$files = glob($this->app->path(RunMigrations::DIR . '/*.sql'));
+		$dir = $this->app->path(RunMigrations::DIR);
+		$migrations = new Migrations($this->db, $dir)->all();
 
-		if ($files === false || $files === []) {
+		if ($migrations === []) {
 			$console->line('No migrations in ' . RunMigrations::DIR . '.');
 
 			return Console::SUCCESS;
@@ -31,16 +32,14 @@ final readonly class ListMigrations
 
 		$rows = [];
 
-		foreach ($files as $file) {
-			$name = basename($file);
-			$ranAt = $this->db->value('SELECT ran_at FROM migrations WHERE name = ?', [$name])->string();
+		foreach ($migrations as $name => $ranAt) {
 			$status = 'pending';
 
-			if (trim((string) file_get_contents($file)) === '') {
+			if (trim((string) file_get_contents("{$dir}/{$name}")) === '') {
 				$status = 'empty, so migrations:run skips it';
 			}
 
-			if ($ranAt !== '') {
+			if ($ranAt !== null) {
 				$status = "ran {$ranAt} UTC";
 			}
 

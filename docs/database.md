@@ -13,6 +13,7 @@
     - [Creating a migration](#creating-a-migration)
     - [Running migrations](#running-migrations)
     - [Checking what has run](#checking-what-has-run)
+    - [Running migrations from code](#running-migrations-from-code)
 - [Using PDO directly](#using-pdo-directly)
 - [Method reference](#method-reference)
 
@@ -191,6 +192,19 @@ php bin/console migrations:list
 20261019112938-add_tags.sql   pending
 ```
 
+### Running migrations from code
+
+`Sapling\Migrations` runs a folder of migrations on any `Db`, as `migrations:run` does on the app's database. Use it for another database, such as one file per customer, or to set up a database in a test:
+
+```php
+use Sapling\Migrations;
+
+$db = Db::sqlite("/data/customers/{$customerId}.db");
+$ran = new Migrations($db, $app->path('database/customer-migrations'))->run();
+```
+
+`run()` prints nothing and returns the names of the files it ran. A failed file throws a `RuntimeException` that names it. `all()` returns each file with the UTC time it ran, or `null` while it's pending.
+
 ## Using PDO directly
 
 For anything the methods don't cover, `$db->pdo` is the PDO connection. A common use is setting more SQLite pragmas when the database is registered:
@@ -217,3 +231,6 @@ $app->container->set(Db::class, function () use ($config): Db {
 | `Db::sqlite($file)` | Opens a SQLite file with the settings above |
 | `new Db($pdo)` | Wraps any PDO connection, set to throw on errors, fetch rows by name and use real prepared statements |
 | `$db->pdo` | The PDO connection, for anything the methods don't cover |
+| `$migrations->run()` | Runs the migrations that haven't run yet and returns their file names |
+| `$migrations->all()` | Returns each migration's file name with the UTC time it ran, or `null` while it's pending |
+| `new Migrations($db, $dir)` | The `.sql` files in `$dir`, to run on `$db` |

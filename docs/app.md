@@ -168,27 +168,21 @@ This helper in `tests/Pest.php` empties the session, loads the app, and gives it
 
 ```php
 use Sapling\App;
-use Sapling\Cli\Console;
 use Sapling\Db;
+use Sapling\Migrations;
 
 function testApp(): App
 {
     $_SESSION = [];
 
     $app = require __DIR__ . '/../bootstrap.php';
-    $app->container->set(Db::class, Db::sqlite(':memory:'));
-
-    ob_start();
-    $code = $app->runCommand(new Console(['bin/console', 'migrations:run']));
-    ob_end_clean();
-
-    expect($code)->toBe(Console::SUCCESS);
+    $db = Db::sqlite(':memory:');
+    new Migrations($db, $app->path('database/migrations'))->run();
+    $app->container->set(Db::class, $db);
 
     return $app;
 }
 ```
-
-`ob_start()` keeps the command's output out of the test's. A failed migration still prints its error, and the `expect()` stops the test.
 
 ### Checking a flash value
 
