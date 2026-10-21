@@ -10,6 +10,7 @@
 - [Output and exit codes](#output-and-exit-codes)
 - [Adding commands in code](#adding-commands-in-code)
 - [Built-in commands](#built-in-commands)
+- [Testing commands](#testing-commands)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -122,16 +123,6 @@ if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
 
 Without a terminal, such as under cron, every answer is blank. Read answers with a safe default, or skip the question when `stream_isatty(STDIN)` is false.
 
-To test a command that asks, give `Console` its answers as a stream and run it with `$app->runCommand()`:
-
-```php
-$answers = fopen('php://memory', 'r+');
-fwrite($answers, "yes\n");
-rewind($answers);
-
-$code = $app->runCommand(new Console(['bin/console', 'notes:prune'], $answers));
-```
-
 ## Output and exit codes
 
 `line()` prints to standard output and `error()` to standard error:
@@ -185,6 +176,25 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `migrations:run` | Runs new migrations, see [database](database.md#running-migrations) |
 | `migrations:list` | Lists every migration and when it ran, see [database](database.md#checking-what-has-run) |
 | `migrations:new <name>` | Creates an empty migration named by the UTC time, see [database](database.md#creating-a-migration) |
+
+## Testing commands
+
+A test runs a command with `$app->runCommand()`, which returns its exit code. `ob_start()` catches what `line()` prints, and a command that asks reads its answers from the stream given to `Console`:
+
+```php
+$answers = fopen('php://memory', 'r+');
+fwrite($answers, "yes\n");
+rewind($answers);
+
+ob_start();
+$code = $app->runCommand(new Console(['bin/console', 'notes:prune'], $answers));
+$output = ob_get_clean();
+
+expect($code)->toBe(Console::SUCCESS);
+expect($output)->toContain('Deleted 3 notes.');
+```
+
+`error()` writes to standard error, which the buffer doesn't catch.
 
 ## Method reference
 
