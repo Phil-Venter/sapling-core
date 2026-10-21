@@ -9,6 +9,8 @@
     - [Adding one class](#adding-one-class)
 - [One-file apps](#one-file-apps)
 - [Testing the whole app](#testing-the-whole-app)
+    - [An app for each test](#an-app-for-each-test)
+    - [Checking a flash value](#checking-a-flash-value)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -151,10 +153,57 @@ $app->container->get(Session::class)->set('user_id', 7);
 $response = $app->handle(new Request('GET', '/settings'));
 ```
 
+PHP keeps that session for the rest of the test run. [The helper below](#an-app-for-each-test) empties it for each test.
+
+The session cookie never shows up on the response from `handle()`, since PHP sends it itself.
+
 To answer for another service, such as a payment provider, [fake its replies](http-client.md#faking-replies-in-tests).
 
 > [!NOTE]
 > Send one request per app, as the server does. A second request through the same app shares the first one's objects.
+
+### An app for each test
+
+This helper in `tests/Pest.php` empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
+
+```php
+use Sapling\App;
+use Sapling\Cli\Console;
+use Sapling\Db;
+
+function testApp(): App
+{
+    $_SESSION = [];
+
+    $app = require __DIR__ . '/../bootstrap.php';
+    $app->container->set(Db::class, Db::sqlite(':memory:'));
+
+    ob_start();
+    $code = $app->runCommand(new Console(['bin/console', 'migrations:run']));
+    ob_end_clean();
+
+    expect($code)->toBe(Console::SUCCESS);
+
+    return $app;
+}
+```
+
+`ob_start()` keeps the command's output out of the test's. A failed migration still prints its error, and the `expect()` stops the test.
+
+### Checking a flash value
+
+To check what an action flashed, read it from a new app, as the next request would:
+
+```php
+$app = testApp();
+$app->handle(new Request('POST', '/notes', input: ['body' => 'Buy milk']));
+
+$next = require __DIR__ . '/../bootstrap.php';
+
+expect($next->container->get(Session::class)->getFlash('notice')->string())->toBe('Saved.');
+```
+
+Load `bootstrap.php` directly here. `testApp()` would empty the session, and the flash value with it.
 
 ## Method reference
 

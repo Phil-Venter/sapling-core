@@ -90,7 +90,7 @@ $this->session->destroy();
 
 ## The session cookie
 
-The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. With strict mode on, PHP only accepts session ids it created. PHP sends the cookie itself, so it never appears on the response `$app->handle()` returns in a test.
+The session cookie is HttpOnly and SameSite=Lax, and Secure over HTTPS or behind a proxy that sends `X-Forwarded-Proto: https`. With strict mode on, PHP only accepts session ids it created.
 
 ### How long a session lasts
 
