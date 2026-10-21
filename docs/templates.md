@@ -57,6 +57,14 @@ For attributes, `attrs()` builds the escaped list and leaves out the ones that a
 > [!WARNING]
 > Nothing is escaped automatically. A value printed without `e()` or `attrs()` can put a visitor's HTML, and their scripts, on your page.
 
+To review the prints that use neither, list them:
+
+```sh
+grep -rnoE '<\?= *[^ ]+' views | grep -vF -e '<?= e(' -e '<?= attrs(' -e '<?= $this->'
+```
+
+[Plain-text templates](#plain-text) show up too, since they leave out `e()` on purpose.
+
 ## Partials
 
 Pieces that several pages share, such as a navigation bar, go in their own file, named with a leading `_` by convention. Inside a template, `render()` prints one:
