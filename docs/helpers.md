@@ -73,7 +73,7 @@ if (blank($email)) {
 
 ## Reading loosely typed data
 
-`value()` wraps data in a [`Value`](values.md), the same as `new Value()`. Read it as the type you need, with a default for a missing key:
+`value()` wraps data in a [`Value`](values.md), as `new Value()` does:
 
 ```php
 $city = value($order)->get('shipping', 'city')->string('Unknown');
@@ -128,7 +128,7 @@ Each helper is skipped when a function with its name already exists. An app can 
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
-| `value($raw)` | Returns a `Value` holding the data, the same as `new Value($raw)` |
+| `value($raw)` | Returns `new Value($raw)` |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |
 | `dd($value, ...$more)` | Dumps the values and stops |
