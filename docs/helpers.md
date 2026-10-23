@@ -92,7 +92,7 @@ try {
 
 ## Ids and debugging
 
-`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys.
+`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys. It's safe to show in a URL, though anyone who sees it can tell when it was made. Only 74 of its bits are random, too few for a secret such as the token in an invite link. Use `bin2hex(random_bytes(32))` for that.
 
 `dd()` dumps its values and stops:
 
