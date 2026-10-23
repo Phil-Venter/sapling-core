@@ -136,10 +136,15 @@ if (!function_exists('dd')) {
 
 if (!function_exists('e')) {
 	/**
-	 * Escapes a value for HTML. A backed enum prints its value.
+	 * Escapes a value for HTML. A backed enum prints its value. A Value has to be read as a type first, as in
+	 * e($value->string()).
 	 */
 	function e(mixed $value): string
 	{
+		if ($value instanceof Sapling\Value) {
+			throw new LogicException('e() needs a typed value, such as $value->string(), not a Value');
+		}
+
 		if ($value instanceof BackedEnum) {
 			$value = $value->value;
 		}

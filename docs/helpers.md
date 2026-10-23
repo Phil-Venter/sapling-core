@@ -24,6 +24,8 @@ Sapling has a few global functions for what almost every file does, such as esca
 <span class="status"><?= e($note['status']) ?></span>
 ```
 
+`e()` throws a `LogicException` when given a [`Value`](values.md). Read it as a type first, as in `e($request->query('q')->string())`.
+
 ### Attributes
 
 `attrs()` builds attributes from an array and escapes each one:
@@ -120,7 +122,7 @@ Each helper is skipped when a function with its name already exists. An app can 
 
 | Function | What it does |
 | --- | --- |
-| `e($value)` | Escapes a value for HTML. A backed enum prints its value |
+| `e($value)` | Escapes a value for HTML. A backed enum prints its value. Throws on a `Value` |
 | `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
 | `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |

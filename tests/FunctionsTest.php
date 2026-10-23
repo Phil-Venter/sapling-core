@@ -6,6 +6,10 @@ test('e()', function () {
 	expect(e('<a href="x">O\'Reilly & Co</a>'))->toBe('&lt;a href=&quot;x&quot;&gt;O&#039;Reilly &amp; Co&lt;/a&gt;');
 });
 
+test('e() refuses a Value', function () {
+	expect(fn() => e(new Sapling\Value('Ann')))->toThrow(LogicException::class, 'not a Value');
+});
+
 test('abort() and abort_if() throw HttpException', function () {
 	expect(fn() => abort(404, 'gone', [
 		'X-Why' => 'deleted',

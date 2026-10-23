@@ -46,7 +46,7 @@ $count = $db->value($sql)->int();
 ```
 
 > [!WARNING]
-> A `Value` isn't a string. `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
+> A `Value` isn't a string. `e($request->data('q'))` throws a `LogicException`, `"Hello {$request->param('name')}"` throws an `Error`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
 
 ### Strings
 
