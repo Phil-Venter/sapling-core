@@ -115,9 +115,6 @@ dd($request, $note);
 
 Each helper is skipped when a function with its name already exists. An app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
 
-> [!WARNING]
-> A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here. Laravel's `illuminate/collections` has a `value()` that returns its argument as it is, and either version breaks code that expects the other.
-
 ## Function reference
 
 | Function | What it does |
