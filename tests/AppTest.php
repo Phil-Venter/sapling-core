@@ -12,6 +12,7 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 use Sapling\Http\Session;
 use Sapling\Tests\Fixtures\Broken\DuplicateGreet;
+use Sapling\Tests\Fixtures\Container\Clock;
 use Sapling\Tests\Fixtures\JsonErrors;
 use Sapling\Tests\Fixtures\Middleware\Deny;
 use Sapling\Tests\Fixtures\Middleware\GlobalOne;
@@ -32,7 +33,7 @@ describe('boot()', function () {
 		session_destroy();
 	});
 
-	test('takes debug from the config and wires the container', function (array $settings, bool $debug, string $body) {
+	test('takes debug from the config', function (array $settings, bool $debug, string $body) {
 		$app = App::boot(BOOT, new Config($settings));
 		$app->scan(BOOT . '/App', 'Sapling\Tests\Fixtures\Boot\App');
 
@@ -128,7 +129,7 @@ describe('registering in code', function () {
 	test('add() refuses a class with no #[Route] or #[Command]', function () {
 		$app = new App(FIXTURES);
 
-		expect(fn() => $app->add(Sapling\Tests\Fixtures\Container\Clock::class))
+		expect(fn() => $app->add(Clock::class))
 			->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command] to add');
 	});
 
@@ -238,7 +239,7 @@ describe('middleware', function () {
 	test('an HttpException from middleware reaches outer middleware as a response', function () {
 		$app = scannedApp();
 		$app->middleware(Stamp::class);
-		$app->middleware(fn() => throw new Sapling\Http\HttpException(429, 'Slow down'));
+		$app->middleware(fn() => throw new HttpException(429, 'Slow down'));
 
 		$response = $app->handle(new Request('GET', '/notes'));
 
@@ -438,7 +439,7 @@ describe('debug page', function () {
 });
 
 describe('commands', function () {
-	test('a warning in a command prints the trace once and exits 1', function () {
+	test('a warning in a command prints its trace once', function () {
 		$result = runConsole(['crash']);
 
 		expect($result['code'])->toBe(1);
@@ -447,10 +448,7 @@ describe('commands', function () {
 		expect($result['stderr'])->toContain('Stack trace:');
 	});
 
-	test('a crashed command prints its trace and logs one line when error_log is set', function (
-		string $command,
-		string $error,
-	) {
+	test('a crashed command logs one line when error_log is set', function (string $command, string $error) {
 		$log = (string) tempnam(sys_get_temp_dir(), 'sapling-log');
 
 		try {
@@ -487,7 +485,7 @@ describe('commands', function () {
 			);
 	});
 
-	test('run() from the CLI runs the command and exits with its code', function () {
+	test('run() from the CLI exits with the code the command returns', function () {
 		$greet = runConsole(['greet', 'Ann', '--shout']);
 		$fail = runConsole(['fail']);
 

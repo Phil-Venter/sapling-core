@@ -1,5 +1,6 @@
 <?php
 
+use Sapling\Http\HttpException;
 use Sapling\Http\Request;
 
 beforeEach(function () {
@@ -153,5 +154,5 @@ test('a body is never decoded by a request that reads no field', function () {
 	$request = new Request('PUT', '/echo/1', headers: ['Content-Type' => 'application/json'], body: '{not json');
 
 	expect($request->header('content-type')->string())->toBe('application/json');
-	expect(fn() => $request->data('name'))->toThrow(Sapling\Http\HttpException::class, 'The request body is invalid');
+	expect(fn() => $request->data('name'))->toThrow(HttpException::class, 'The request body is invalid');
 });

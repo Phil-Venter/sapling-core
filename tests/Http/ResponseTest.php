@@ -1,5 +1,6 @@
 <?php
 
+use Sapling\Http\HttpException;
 use Sapling\Http\Response;
 
 test('withHeader() returns a copy and replaces the header in any case', function () {
@@ -14,7 +15,7 @@ test('withHeader() returns a copy and replaces the header in any case', function
 });
 
 test('error() answers with the error\'s status and message', function () {
-	$response = Response::error(new Sapling\Http\HttpException(404, 'No such note'));
+	$response = Response::error(new HttpException(404, 'No such note'));
 
 	expect([$response->status, $response->body])->toBe([404, 'No such note']);
 });

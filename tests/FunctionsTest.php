@@ -1,13 +1,14 @@
 <?php
 
 use Sapling\Http\HttpException;
+use Sapling\Value;
 
-test('e()', function () {
+test('e() escapes HTML, quotes included', function () {
 	expect(e('<a href="x">O\'Reilly & Co</a>'))->toBe('&lt;a href=&quot;x&quot;&gt;O&#039;Reilly &amp; Co&lt;/a&gt;');
 });
 
 test('e() refuses a Value', function () {
-	expect(fn() => e(new Sapling\Value('Ann')))->toThrow(LogicException::class, 'not a Value');
+	expect(fn() => e(new Value('Ann')))->toThrow(LogicException::class, 'not a Value');
 });
 
 test('abort() and abort_if() throw HttpException', function () {
@@ -31,7 +32,7 @@ test('attr() and attrs() escape values and leave out empty ones', function () {
 		->toBe('class="note" data-id="7" open');
 });
 
-test('blank()', function (mixed $value, bool $blank) {
+test('blank() tells empty values from falsy ones', function (mixed $value, bool $blank) {
 	expect(blank($value))->toBe($blank);
 })->with([
 	'null' => [null, true],
@@ -45,10 +46,10 @@ test('blank()', function (mixed $value, bool $blank) {
 ]);
 
 test('blank() refuses a Value', function () {
-	expect(fn() => blank(new Sapling\Value('')))->toThrow(LogicException::class, 'not a Value');
+	expect(fn() => blank(new Value('')))->toThrow(LogicException::class, 'not a Value');
 });
 
-test('datetime()', function (
+test('datetime() returns the date in the timezone asked for', function (
 	DateTimeInterface|int|float|string|null $value,
 	DateTimeZone|string|null $timezone,
 	string $expected,
@@ -83,6 +84,7 @@ test('datetime() without a timezone uses the default', function () {
 		date_default_timezone_set($default);
 	}
 });
+
 test('uuid() makes a version 7 UUID, ordered by time', function () {
 	$first = uuid();
 	usleep(2000);

@@ -1,5 +1,6 @@
 <?php
 
+use Sapling\App;
 use Sapling\Http\Router;
 
 test('routes:list shows method, path and class for every route', function () {
@@ -15,7 +16,7 @@ test('routes:list shows method, path and class for every route', function () {
 });
 
 test('the paths line up, however long the methods are', function () {
-	$app = new Sapling\App(FIXTURES);
+	$app = new App(FIXTURES);
 	$app->router->add('GET', '/notes', fn() => null);
 	$app->router->add('OPTIONS', '/notes', fn() => null);
 
