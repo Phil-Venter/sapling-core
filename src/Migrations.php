@@ -57,7 +57,11 @@ final readonly class Migrations
 	{
 		$this->db->run(self::CREATE_TABLE);
 		$files = glob("{$this->dir}/*.sql");
-		$rows = $this->db->all('SELECT name, ran_at FROM migrations');
+		$sql = <<<SQL
+			SELECT name, ran_at
+			FROM migrations
+			SQL;
+		$rows = $this->db->all($sql);
 		$ran = new Value(array_column($rows, 'ran_at', 'name'));
 		$all = [];
 
@@ -111,9 +115,9 @@ final readonly class Migrations
 	 * @throws \PDOException When the SQL fails.
 	 * @throws \RuntimeException When the migration leaves a row whose foreign key points nowhere.
 	 */
-	private function migrate(string $name, string $sql, bool $foreignKeys): void
+	private function migrate(string $name, string $migration, bool $foreignKeys): void
 	{
-		$this->db->pdo->exec($sql);
+		$this->db->pdo->exec($migration);
 		$broken = null;
 
 		if ($foreignKeys) {
@@ -121,12 +125,17 @@ final readonly class Migrations
 		}
 
 		if ($broken !== null) {
-			$table = new Value($broken)->get('table')->string();
-			$parent = new Value($broken)->get('parent')->string();
+			$check = new Value($broken);
+			$table = $check->get('table')->string();
+			$parent = $check->get('parent')->string();
 
 			throw new \RuntimeException("{$name} leaves a row in {$table} that points at a missing row in {$parent}");
 		}
 
-		$this->db->run('INSERT INTO migrations (name, ran_at) VALUES (?, ?)', [$name, gmdate('Y-m-d H:i:s')]);
+		$sql = <<<SQL
+			INSERT INTO migrations (name, ran_at)
+			VALUES (?, ?)
+			SQL;
+		$this->db->run($sql, [$name, gmdate('Y-m-d H:i:s')]);
 	}
 }
