@@ -7,7 +7,6 @@ beforeEach(function () {
 	mkdir($this->dir);
 	$this->db = Db::sqlite("{$this->dir}/test.db");
 	$this->db->run('CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL)');
-	$this->db->run('CREATE TABLE tags (id INTEGER PRIMARY KEY, note_id INTEGER NOT NULL REFERENCES notes (id))');
 });
 
 afterEach(function () {

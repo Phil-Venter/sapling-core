@@ -3,14 +3,13 @@
 namespace Sapling\Tests\Fixtures\Broken;
 
 use Sapling\Attributes\Command;
-use Sapling\Http\Request;
-use Sapling\Http\Response;
+use Sapling\Cli\Console;
 
 #[Command('greet')]
 final class DuplicateGreet
 {
-	public function __invoke(Request $request): Response
+	public function __invoke(Console $console): int
 	{
-		return Response::text('broken');
+		return Console::SUCCESS;
 	}
 }

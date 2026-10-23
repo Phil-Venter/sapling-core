@@ -12,7 +12,7 @@ final class Warns
 	public function __invoke(Request $request): Response
 	{
 		$notes = [];
-		$first = $notes[0]; // "Undefined array key 0" warning: run() turns it into an ErrorException
+		$first = $notes[0]; // "Undefined array key 0" warning: handle() turns it into an ErrorException
 
 		return Response::text('kept going after a warning: ' . var_export($first, true));
 	}

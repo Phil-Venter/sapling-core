@@ -7,14 +7,6 @@ use Sapling\Http\Router;
 use Sapling\Tests\Fixtures\Broken\DuplicateA;
 use Sapling\Tests\Fixtures\Broken\DuplicateB;
 
-beforeEach(function () {
-	$this->globals = [$_SERVER, $_POST];
-});
-
-afterEach(function () {
-	[$_SERVER, $_POST] = $this->globals;
-});
-
 test('a request reaches the action its path matches, or gets a 404', function (
 	string $method,
 	string $path,
