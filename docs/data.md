@@ -72,7 +72,7 @@ A suffix counts too. `application/problem+json` is JSON. An empty body gives `nu
 Decoded data can hold anything, and a key you expect may be missing. Wrap it in a [`Value`](values.md) to read nested keys safely, with a default at the end:
 
 ```php
-$envelope = new Value(Data::fromXml($xml));
+$envelope = value(Data::fromXml($xml));
 $price = $envelope->get('soap:Body', 'Price')->string();
 ```
 

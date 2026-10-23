@@ -31,7 +31,7 @@ Everything in Sapling that hands you outside data returns a `Value`:
 | `$db->value()` | The first column of the first row |
 | `$response->data()`, `header()` | A response's decoded body or a header, such as in a test |
 | `$reply->data()`, `header()` | A reply's decoded body or a header, from [another service](http-client.md) |
-| `new Value($data)` | Anything else, such as a decoded file |
+| `value($data)`, `new Value($data)` | Anything else, such as a decoded file |
 
 ## Reading a value
 
@@ -136,11 +136,11 @@ if (blank($body)) {
 
 ## Wrapping your own data
 
-`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it instead of reaching in with `?? ''` at every level:
+`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it with the [`value()`](helpers.md#reading-loosely-typed-data) helper instead of reaching in with `?? ''` at every level:
 
 ```php
 $json = file_get_contents(__DIR__ . '/settings.json');
-$settings = new Value(Data::fromJson($json));
+$settings = value(Data::fromJson($json));
 $port = $settings->get('server', 'port')->int(8080);
 ```
 

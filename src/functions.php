@@ -169,3 +169,13 @@ if (!function_exists('uuid')) {
 		);
 	}
 }
+
+if (!function_exists('value')) {
+	/**
+	 * Wraps data in a Value, the same as new Sapling\Value($raw).
+	 */
+	function value(mixed $raw): Sapling\Value
+	{
+		return new Sapling\Value($raw);
+	}
+}

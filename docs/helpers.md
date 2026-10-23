@@ -5,6 +5,7 @@
     - [Attributes](#attributes)
 - [Stopping with an error](#stopping-with-an-error)
 - [Checking for empty values](#checking-for-empty-values)
+- [Reading loosely typed data](#reading-loosely-typed-data)
 - [Dates and times](#dates-and-times)
 - [Ids and debugging](#ids-and-debugging)
 - [Replacing a helper](#replacing-a-helper)
@@ -68,6 +69,14 @@ if (blank($email)) {
 }
 ```
 
+## Reading loosely typed data
+
+`value()` wraps data in a [`Value`](values.md), the same as `new Value()`. Read it as the type you need, with a default for a missing key:
+
+```php
+$city = value($order)->get('shipping', 'city')->string('Unknown');
+```
+
 ## Dates and times
 
 `datetime()` returns a `DateTimeImmutable` from a date string, a timestamp or another date, in the timezone you ask for:
@@ -105,7 +114,7 @@ dd($request, $note);
 Each helper is skipped when a function with its name already exists. An app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
 
 > [!WARNING]
-> A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here.
+> A package can define the same names first. Laravel's `illuminate/support` has its own `e()` and `blank()`, and Laravel's `abort()` turns a 404 into a 500 here. Laravel's `illuminate/collections` has a `value()` that returns its argument as it is, and either version breaks code that expects the other.
 
 ## Function reference
 
@@ -117,6 +126,7 @@ Each helper is skipped when a function with its name already exists. An app can 
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
+| `value($raw)` | Returns a `Value` holding the data, the same as `new Value($raw)` |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |
 | `dd($value, ...$more)` | Dumps the values and stops |
