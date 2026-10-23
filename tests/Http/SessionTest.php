@@ -67,7 +67,7 @@ test('flash data is readable during the next request only', function () {
 	expect(nextRequest()->getFlash('notice')->string('gone'))->toBe('gone');
 });
 
-test('destroy() forgets everything and the next use starts a fresh session', function () {
+test('destroy() leaves a new, empty session for the next use', function () {
 	$session = new Session();
 	$session->set('user', 'ann');
 	$before = session_id();

@@ -54,7 +54,7 @@ test('an empty file is skipped and not recorded', function () {
 	expect($filled)->toBe(['001_notes.sql']);
 });
 
-test('a failing file is named and rolled back without undoing earlier ones', function () {
+test('a failing file rolls back without undoing earlier ones', function () {
 	($this->migration)('001_notes.sql', 'CREATE TABLE notes (id INTEGER PRIMARY KEY);');
 	($this->migration)('002_broken.sql', 'CREATE TABLE half (id INTEGER); THIS IS NOT SQL;');
 
