@@ -31,7 +31,7 @@ cd my-app
 composer serve
 ```
 
-It has the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`), an `app/` folder for your actions, and a `.env` for development with a fresh `APP_KEY`. Errors are plain text until you [set an error handler](docs/errors.md).
+It has the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`), an `app/` folder for your actions, a `tests/` folder that `composer test` runs with Pest, and a `.env` for development with a fresh `APP_KEY`. Errors are plain text until you [set an error handler](docs/errors.md).
 
 A Sapling app can also fit in one file:
 

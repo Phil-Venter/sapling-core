@@ -141,7 +141,7 @@ $response = $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy mi
 expect($response->status)->toBe(302);
 ```
 
-The examples use [Pest](https://pestphp.com). Add it to an app with `composer require --dev pestphp/pest`.
+The examples use [Pest](https://pestphp.com). The skeleton comes with it and a `composer test` script. In an app made without the skeleton, add it with `composer require --dev pestphp/pest`.
 
 `handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
 
@@ -164,12 +164,16 @@ To answer for another service, such as a payment provider, [fake its replies](ht
 
 ### An app for each test
 
-This helper in `tests/Pest.php` empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
+The skeleton's `tests/Pest.php` looks like this. Its `testApp()` helper empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
 
 ```php
 use Sapling\App;
 use Sapling\Db;
 use Sapling\Migrations;
+
+pest()->beforeEach(function () {
+    error_reporting(E_ALL);
+});
 
 function testApp(): App
 {
@@ -183,6 +187,9 @@ function testApp(): App
     return $app;
 }
 ```
+
+> [!NOTE]
+> PHPUnit lowers `error_reporting()` while a test runs, which hides the [warnings](errors.md#warnings-and-notices) Sapling turns into crashes.
 
 ### Checking a flash value
 
