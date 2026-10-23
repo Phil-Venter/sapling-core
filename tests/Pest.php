@@ -6,7 +6,7 @@ use Sapling\Http\Response;
 
 const FIXTURES = __DIR__ . '/Fixtures';
 
-// PHPUnit lowers error_reporting() during tests; production runs E_ALL.
+// PHPUnit lowers error_reporting() during tests, which hides the warnings Sapling turns into crashes.
 pest()->beforeEach(function () {
 	error_reporting(E_ALL);
 });
