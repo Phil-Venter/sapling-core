@@ -16,7 +16,7 @@
 
 An action is the class that answers a request, what other frameworks call a controller. Its `#[Route]` says which method and path it answers, and its `__invoke()` takes the `Request` and returns a `Response`.
 
-Each action is one class in one file, with its route written on the class. Searching the code for a path finds the action that answers it.
+Each action is one class in one file, with its route written on the class.
 
 ## Writing an action
 

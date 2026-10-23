@@ -9,7 +9,7 @@
 
 ## Introduction
 
-`Sapling\Crypto` encrypts secrets the app has to send on somewhere, such as a tenant's API key for another service, before they're stored. A copy of the database without the key reveals nothing. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
+`Sapling\Crypto` encrypts secrets the app has to send on somewhere, such as a tenant's API key for another service, before they're stored. It uses XChaCha20-Poly1305 from PHP's sodium extension, keyed with the app's `app_key`.
 
 A password only needs checking. Hash it with `password_hash()` instead.
 
@@ -27,7 +27,7 @@ Each environment, such as your laptop and production, needs its own key. Every s
 php -r 'echo "APP_KEY=" . base64_encode(random_bytes(32)), PHP_EOL;'
 ```
 
-A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Keep the key out of database backups, or anyone with a backup can decrypt the secrets. Back it up somewhere else, because without it nothing can be decrypted.
+A key that isn't 32 bytes in base64 throws an `InvalidArgumentException` the first time `Crypto` is used. Back up the key, but not with the database. Without it, nothing encrypted can be read again.
 
 ## Encrypting and decrypting
 

@@ -11,7 +11,7 @@
 
 ## Introduction
 
-`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken input always throws, whichever format it's in. The methods are static and need no app. Scripts can use them too.
+`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken input always throws, whichever format it's in. The methods are static and need no app.
 
 ## JSON
 

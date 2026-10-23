@@ -173,7 +173,7 @@ $view = $app->container->get(Template::class);
 $view->share('appName', 'Notes');
 ```
 
-Share helpers as closures, which only run when a template calls them. A page that never shows a flash message then never starts the session:
+Share helpers as closures, which only run when a template calls them. A page that never shows a flash message never starts the session:
 
 ```php
 $view->share('flash', function (string $key) use ($app): string {

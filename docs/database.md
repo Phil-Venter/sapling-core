@@ -23,7 +23,7 @@
 
 ## Connecting
 
-The database is registered once in `bootstrap.php`, and any class can then ask for `Db` in its constructor. Because it's registered as a closure, a request that never uses the database never connects:
+The database is registered once in `bootstrap.php`. Any class can ask for `Db` in its constructor. Because it's registered as a closure, a request that never uses the database never connects:
 
 ```php
 $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
@@ -105,7 +105,7 @@ $sql = <<<SQL
 $count = $this->db->value($sql, [$userId])->int();
 ```
 
-Rows come back as plain arrays. A lone value comes back as a [`Value`](values.md), to read as the type you need. Drivers differ here, and MySQL returns a `DECIMAL` as a string.
+Drivers differ in the types they return. MySQL gives a `DECIMAL` as a string, in a row as well as from `value()`.
 
 ### Inserting, updating and deleting
 

@@ -13,7 +13,7 @@
 
 ## Introduction
 
-Sapling has a few global functions for what almost every file does, such as escaping a value or stopping with an error. They need no app, and work in templates and scripts too.
+Sapling has a few global functions for what almost every file does, such as escaping a value or stopping with an error. They need no app.
 
 ## Escaping HTML
 

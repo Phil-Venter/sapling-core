@@ -67,7 +67,7 @@ final class StoreNote
 Besides input, the request says where it came from. `$request->method` is the HTTP method, `$request->path` is the path without its query string, and `$request->ip` is the address that connected. The path is tidied before routing, as in `/notes` for `//notes/`.
 
 > [!NOTE]
-> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. With `['*']`, `$request->ip` is the address the connecting proxy added. Behind more than one, such as a CDN in front of a load balancer, list them all. `X-Forwarded-For` is read only from a listed proxy, while `X-Forwarded-Proto` is trusted from anyone, because it only marks the session cookie Secure.
+> Behind a proxy or load balancer, list it in `trusted_proxies`, or use `['*']` when its address changes. Otherwise `$request->ip` is the proxy's address. With `['*']`, `$request->ip` is the address the connecting proxy added. Behind more than one, such as a CDN in front of a load balancer, list them all. `X-Forwarded-For` is read only from a listed proxy. `X-Forwarded-Proto` is read from anyone and only marks the session cookie Secure.
 
 ## Retrieving input
 
@@ -94,7 +94,7 @@ $search = $request->query('q')->string();
 $page = $request->query('page')->int(1);
 ```
 
-Without a name, `query()` gives the whole query string. A link to the next page can then keep the filters:
+Without a name, `query()` gives the whole query string. A link to the next page can keep the filters with it:
 
 ```php
 $next = '/notes?' . Data::toForm([...$request->query()->rawArray(), 'page' => $page + 1]);
@@ -295,4 +295,4 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
 | `send($body = true)` | Sends the response. `App::run()` calls it |
-| `$response->status`, `headers`, `body`, `file` | Read-only. `headers` keeps each name as it was set, and `file` holds a download's path. `withHeader()` returns a copy with a new header |
+| `$response->status`, `headers`, `body`, `file` | Read-only. `headers` keeps each name as it was set, and `file` holds a download's path |

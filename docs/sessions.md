@@ -75,7 +75,7 @@ $notice = $this->session->getFlash('notice')->string();
 
 ## Logging in and out
 
-Give the session a new id on login. An id someone learned before the login is then useless:
+Give the session a new id on login. An id someone learned before the login stops working:
 
 ```php
 $this->session->regenerate();

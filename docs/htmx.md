@@ -59,7 +59,7 @@ if ($request->header('HX-Request')->bool()) {
 return Response::html($this->view->render($template, ['notes' => $notes]));
 ```
 
-One URL then answers with two different bodies. The middleware adds `Vary: HX-Request`. Without it, the back button can show a cached fragment in place of the page.
+That gives one URL two different bodies. The middleware adds `Vary: HX-Request`. Without it, the back button can show a cached fragment in place of the page.
 
 ## Redirects
 

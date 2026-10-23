@@ -64,7 +64,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 
 ## Sending requests at once
 
-`sendAll()` sends several requests at once and returns the replies under the same keys. A page that needs several services then waits only for the slowest:
+`sendAll()` sends several requests at once and returns the replies under the same keys. A page that needs several services waits only for the slowest:
 
 ```php
 [$weather, $news] = $this->http->sendAll([
@@ -184,7 +184,7 @@ CREATE TABLE http_cache (
 );
 ```
 
-Only 200 replies are kept. A 404 or an outage isn't remembered for a day. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
+Only 200 replies are cached. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
 
 ## Timeouts, redirects and TLS
 

@@ -56,7 +56,7 @@ The exception's headers, like `Allow` on a 405, are added to the handler's respo
 
 ### Answering in JSON
 
-The handler also gets the request. One handler can then answer in more than one way, such as JSON for paths under `/api/`:
+The handler also gets the request. Use it to answer paths under `/api/` with JSON:
 
 ```php
 $app->onError(function (HttpException $e, Request $request): Response {
@@ -74,7 +74,7 @@ Any other exception is a crash. It's logged, and the visitor gets a plain-text 5
 
 ### Debug mode
 
-While you're working, turn on `debug` in the [config](config.md). The skeleton's `config.php` turns it on when `.env` has `APP_ENV=dev`. A crash then shows the code around the error and a stack trace, with the frames outside your app folded away.
+While you're working, turn on `debug` in the [config](config.md). The skeleton's `config.php` turns it on when `.env` has `APP_ENV=dev`. In debug mode, a crash shows the code around the error and a stack trace, with the frames outside your app folded away.
 
 ### Warnings and notices
 
@@ -100,7 +100,7 @@ By default, PHP sends the lines to the web server's log, or to the terminal for 
 ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 ```
 
-Old files can then be cleared from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels or other destinations, use Monolog.
+Clear old files from cron with `find logs -name 'app-*.log' -mtime +14 -delete`. For log levels or other destinations, use Monolog.
 
 ## Method reference
 
