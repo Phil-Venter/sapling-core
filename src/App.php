@@ -217,20 +217,13 @@ final class App
 		set_error_handler($this->throwOnError(...));
 
 		try {
-			$response = $this->pipeline($middleware, $this->dispatch(...))($request);
+			return $this->pipeline($middleware, $this->dispatch(...))($request);
 		} catch (\Throwable $e) {
-			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
-
-			return Response::fromCrash($e, $this->debug, $this->basePath);
+			// Only an error handler that crashes in the outermost layer gets this far.
+			return $this->answerCrash($e, $request);
 		} finally {
 			restore_error_handler();
 		}
-
-		if ($response->status >= 500) {
-			error_log("{$request->method} {$request->path} failed: {$response->status}");
-		}
-
-		return $response;
 	}
 
 	/**
@@ -365,6 +358,10 @@ final class App
 			try {
 				return $step($request);
 			} catch (HttpException $e) {
+				if ($e->status >= 500) {
+					error_log("{$request->method} {$request->path} failed: {$e->status}");
+				}
+
 				/** @var callable(HttpException, Request): Response $handler */
 				$handler = $this->resolve($this->errorHandler);
 				$response = $handler($e, $request);
@@ -378,8 +375,17 @@ final class App
 				}
 
 				return $response;
+			} catch (\Throwable $e) {
+				return $this->answerCrash($e, $request);
 			}
 		};
+	}
+
+	private function answerCrash(\Throwable $e, Request $request): Response
+	{
+		new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
+
+		return Response::fromCrash($e, $this->debug, $this->basePath);
 	}
 
 	/** @param class-string|object $handler */

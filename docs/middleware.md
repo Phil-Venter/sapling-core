@@ -60,7 +60,7 @@ final class RequireLogin
 }
 ```
 
-Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception.
+Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception, and so does a crash, as a 500.
 
 ## Registering middleware
 
