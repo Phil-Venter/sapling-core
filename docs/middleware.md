@@ -108,9 +108,6 @@ final readonly class CurrentUser
 
 An action behind `#[Middleware(RequireLogin::class)]` gets it with `__construct(private CurrentUser $user)`.
 
-> [!NOTE]
-> `set()` doesn't change classes already built. A class built before the middleware ran keeps the `CurrentUser` it was given.
-
 ## Registering middleware
 
 Middleware is added in `bootstrap.php`, which the server and your tests both load. `$app->middleware()` adds it around every request, and takes a class name, an object or a closure:

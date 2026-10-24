@@ -23,6 +23,13 @@ final class Container
 	private array $building = [];
 
 	/**
+	 * For each class, the classes built with it, so set() can refuse to replace what they hold.
+	 *
+	 * @var array<string, list<string>>
+	 */
+	private array $dependents = [];
+
+	/**
 	 * The one shared instance of the class, built the first time. Constructor arguments come from their types,
 	 * #[Config] or their defaults.
 	 *
@@ -32,6 +39,12 @@ final class Container
 	 */
 	public function get(string $id): object
 	{
+		$dependent = array_key_last($this->building);
+
+		if ($dependent !== null) {
+			$this->dependents[$id][] = $dependent;
+		}
+
 		if (array_key_exists($id, $this->instances)) {
 			return $this->instances[$id];
 		}
@@ -42,10 +55,22 @@ final class Container
 	}
 
 	/**
-	 * Registers an object, or a closure that builds it the first time it's asked for.
+	 * Registers an object, or a closure that builds it the first time it's asked for. Throws a LogicException once a
+	 * class has been built with the one it would replace.
 	 */
 	public function set(string $id, object $value): void
 	{
+		$built = array_filter($this->dependents[$id] ?? [], fn(string $dependent): bool => array_key_exists(
+			$dependent,
+			$this->instances,
+		));
+
+		if ($built !== []) {
+			$list = implode(', ', array_unique($built));
+
+			throw new \LogicException("Cannot replace {$id} after building {$list} with it");
+		}
+
 		unset($this->instances[$id], $this->factories[$id]);
 
 		if ($value instanceof \Closure) {

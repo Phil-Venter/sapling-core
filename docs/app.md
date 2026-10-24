@@ -160,7 +160,7 @@ The session cookie never shows up on the response from `handle()`, since PHP sen
 To answer for another service, such as a payment provider, [fake its replies](http-client.md#faking-replies-in-tests).
 
 > [!NOTE]
-> Send one request per app, as the server does. A second request through the same app shares the first one's objects.
+> Send one request per app, as the server does. A second request through the same app shares the first one's objects, so a [`set()` in middleware](middleware.md#passing-data-to-the-action) can throw.
 
 ### An app for each test
 

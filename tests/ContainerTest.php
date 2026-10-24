@@ -4,9 +4,11 @@ use Sapling\Config;
 use Sapling\Container;
 use Sapling\Tests\Fixtures\Container\Chicken;
 use Sapling\Tests\Fixtures\Container\Clock;
+use Sapling\Tests\Fixtures\Container\CurrentUser;
 use Sapling\Tests\Fixtures\Container\Egg;
 use Sapling\Tests\Fixtures\Container\Mailer;
 use Sapling\Tests\Fixtures\Container\NeedsName;
+use Sapling\Tests\Fixtures\Container\Profile;
 use Sapling\Tests\Fixtures\Container\Settings;
 
 test('constructor parameters are autowired by type', function () {
@@ -74,4 +76,34 @@ test('#[Config] fills a parameter from the config', function () {
 	expect(fn() => $settings(['greeting' => 'hi', 'retries' => '5']))
 		->toThrow(TypeError::class, 'Argument #2 ($retries) must be of type int, string given');
 	expect(fn() => $settings([]))->toThrow(LogicException::class, 'Missing config key: greeting');
+});
+
+test('set() refuses to replace a class that another class was built with', function (Closure $build) {
+	$container = new Container();
+	$container->set(CurrentUser::class, new CurrentUser('guest'));
+	$build($container);
+
+	expect(fn() => $container->set(CurrentUser::class, new CurrentUser('ann')))
+		->toThrow(
+			LogicException::class,
+			'Cannot replace ' . CurrentUser::class . ' after building ' . Profile::class . ' with it',
+		);
+})->with([
+	'autowired' => [fn(Container $container) => $container->get(Profile::class)],
+	'from a closure' => [
+		function (Container $container): void {
+			$container->set(Profile::class, fn(Container $c) => new Profile($c->get(CurrentUser::class)));
+			$container->get(Profile::class);
+		},
+	],
+]);
+
+test('set() can replace a class that nothing was built with', function () {
+	$container = new Container();
+	$container->set(CurrentUser::class, new CurrentUser('guest'));
+	$container->get(CurrentUser::class);
+
+	$container->set(CurrentUser::class, new CurrentUser('ann'));
+
+	expect($container->get(CurrentUser::class)->name)->toBe('ann');
 });
