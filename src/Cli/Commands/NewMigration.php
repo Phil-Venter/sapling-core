@@ -18,7 +18,7 @@ final readonly class NewMigration
 	public function __construct(private App $app) {}
 
 	/**
-	 * Creates the migration named by the arguments, so add notes and "add notes" both give add_notes.
+	 * Creates the migration named by the arguments. add notes and "add notes" both give add_notes.
 	 *
 	 * @throws UsageException When the name has nothing usable in it.
 	 */

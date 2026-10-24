@@ -43,7 +43,7 @@ final class Htmx
 }
 ```
 
-Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check. That way a login redirect reaches htmx as `HX-Redirect` too.
+Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check. That way a login redirect reaches htmx as `HX-Redirect`.
 
 ## Fragments and full pages
 
@@ -85,7 +85,7 @@ By default htmx doesn't swap a 4xx or 5xx response. A page from your [error hand
 
 ## Scripts
 
-htmx is a script file and `hx-*` attributes aren't scripts. Most pages work with [`SecurityHeaders`](middleware.md#security-headers) as they are.
+htmx is a script file, and `hx-*` attributes aren't scripts. Most pages work with [`SecurityHeaders`](middleware.md#security-headers) as they are.
 
 htmx features that evaluate strings need `'unsafe-eval'`, which the policy doesn't allow. That covers `hx-on` attributes, event filters such as `hx-trigger="keyup[key=='Enter']"`, and `js:` values in `hx-vals`. Write those as listeners in a script file, or loosen `script-src` in `content_policy`.
 

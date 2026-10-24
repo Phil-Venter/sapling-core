@@ -31,7 +31,7 @@ $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 
 ### SQLite
 
-SQLite suits most small apps, since the whole database is one file. `Db::sqlite()` opens that file, creating it if needed, and applies these settings:
+`Db::sqlite()` opens a SQLite database file, creating it if needed, and applies these settings:
 
 | Setting | What it does |
 | --- | --- |
@@ -59,7 +59,7 @@ $app->container->set(Db::class, function () use ($config): Db {
 
 ## Running queries
 
-Every method takes the SQL and a list of values for its `?` placeholders. Writing the SQL as a heredoc, one clause per line, keeps longer queries readable:
+Every method takes the SQL and a list of values for its `?` placeholders. Write the SQL as a heredoc, one clause per line:
 
 ```php
 $sql = <<<SQL
@@ -162,7 +162,7 @@ Each schema change is a migration, a plain SQL file in `database/migrations/`, a
 php bin/console migrations:new add notes
 ```
 
-This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort correctly too.
+This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort correctly.
 
 ### Running migrations
 
@@ -174,7 +174,7 @@ This runs the files that haven't run yet, in name order and each in its own tran
 
 Migrations are recorded by file name. Editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
 
-On SQLite, foreign keys are off while a migration runs. That lets you [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade either. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
+On SQLite, foreign keys are off while a migration runs. That lets you [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
 
 > [!NOTE]
 > MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction. A migration that fails partway can leave some of its changes behind. Keep one schema change per file.

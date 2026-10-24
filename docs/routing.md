@@ -16,8 +16,6 @@
 
 An action is the class that answers a request, what other frameworks call a controller. Its `#[Route]` says which method and path it answers, and its `__invoke()` takes the `Request` and returns a `Response`.
 
-Each action is one class in one file, with its route written on the class.
-
 ## Writing an action
 
 An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. Here's one that shows a note from the [database](database.md), with [`abort_if()`](helpers.md) for a missing one:

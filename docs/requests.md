@@ -77,7 +77,7 @@ Every part of the request comes back as a [`Value`](values.md). Read it as the t
 $page = $request->query('page')->int(1);
 ```
 
-Crafted input can't change the type either. If someone sends `body[]=x` where you expect text, `string()` gives the default. `param()`, `query()`, `data()` and `cookie()` take more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
+Crafted input can't change the type. If someone sends `body[]=x` where you expect text, `string()` gives the default. `param()`, `query()`, `data()` and `cookie()` take more keys for nested data, as [`Value::get()`](values.md#nested-data) does, and no key gives all of it.
 
 ### Route parameters
 

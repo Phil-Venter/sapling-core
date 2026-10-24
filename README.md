@@ -100,7 +100,7 @@ I've been fiddling with my own micro frameworks since early 2023, and Sapling is
 
 ## Not included, on purpose
 
-There's no ORM, query builder, validation or caching, and no route groups. Every route spells out its full path, so you can grep for it. There are no events, queues, long-running workers, mail or PSR interfaces either. When an app needs one of these, write the code it needs.
+There's no ORM, query builder, validation or caching, and no route groups. Every route spells out its full path, so you can grep for it. There are no events, queues, long-running workers, mail or PSR interfaces. When an app needs one of these, write the code it needs.
 
 ## Requirements
 

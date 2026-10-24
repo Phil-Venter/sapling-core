@@ -64,7 +64,7 @@ new Value('1.5')->int();     // 0
 new Value('1.5')->float();   // 1.5
 ```
 
-`filter_var()` doesn't treat `'007'` or `'1e3'` as whole numbers either. Read codes with leading zeros, such as zip codes, with `string()`. An int-backed enum reads as its value.
+`filter_var()` doesn't treat `'007'` or `'1e3'` as whole numbers. Read codes with leading zeros, such as zip codes, with `string()`. An int-backed enum reads as its value.
 
 ### Booleans
 
@@ -136,7 +136,7 @@ if (blank($body)) {
 
 ## Wrapping your own data
 
-`Value` isn't limited to what Sapling hands you. Wrap any loosely typed data in it with the [`value()`](helpers.md#reading-loosely-typed-data) helper instead of reaching in with `?? ''` at every level:
+Wrap any loosely typed data in a `Value` with the [`value()`](helpers.md#reading-loosely-typed-data) helper:
 
 ```php
 $json = file_get_contents(__DIR__ . '/settings.json');

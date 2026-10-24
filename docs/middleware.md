@@ -17,7 +17,7 @@
 
 ## Introduction
 
-Middleware runs around your actions. It sees the request on the way in and the response on the way out, and it can answer without calling the action at all. A login check or a header every page needs goes here, instead of in each action.
+Middleware runs around your actions. It sees the request on the way in and the response on the way out, and it can answer without calling the action at all. A login check or a header every response needs goes here, instead of in each action.
 
 ## Writing middleware
 
@@ -46,6 +46,11 @@ Like an action, middleware gets its constructor arguments from the [container](c
 Middleware doesn't have to call `$next`. Returning its own response stops the request there, as a login check does:
 
 ```php
+use Closure;
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+use Sapling\Http\Session;
+
 final class RequireLogin
 {
     public function __construct(private Session $session) {}
@@ -61,11 +66,11 @@ final class RequireLogin
 }
 ```
 
-Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception, and so does a crash, as a 500.
+Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception. A crash reaches it the same way, as a 500.
 
 ### Passing data to the action
 
-An action is built after its middleware has run. Middleware can put an object in the [container](container.md) with `set()`, for the action to ask for in its constructor:
+An action is built after its middleware has run. Middleware can put an object in the [container](container.md) with `set()`, for the action to ask for in its constructor. This `RequireLogin` passes the signed-in user on:
 
 ```php
 use Closure;
@@ -156,12 +161,12 @@ Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.p
 | Middleware | What it does | Settings |
 | --- | --- | --- |
 | `SecurityHeaders` | Sets the browser security headers and a content policy | Policy directives, passed to its constructor |
-| `Csrf` | Refuses writes that a browser sent from another site | `cors_origins`, which may write too |
+| `Csrf` | Refuses writes that a browser sent from another site | `cors_origins`, whose sites can also write |
 | `Cors` | Lets sites on other domains call the app from a browser | `cors_origins`, `cors_credentials` |
 
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site. Styles, images and fonts may also come from any HTTPS site, such as a CDN. Inline styles are allowed, `<style>` blocks and `style` attributes included.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy lets scripts come only from files on your own site. Styles, images and fonts can also come from any HTTPS site, such as a CDN. Inline styles are allowed, `<style>` blocks and `style` attributes included.
 
 > [!WARNING]
 > Inline scripts are blocked, and browsers only report it in the console. That includes `<script>` blocks, `onclick` attributes, and libraries such as Alpine.js that evaluate strings. Put scripts in a file under `public/`, such as `public/app.js`.
@@ -178,10 +183,10 @@ To loosen the policy, set `content_policy` in `config.php`. Each directive repla
 
 `Csrf` refuses a POST, PUT, PATCH or DELETE that a browser sent from another site, with a 403. Browsers say where a request comes from in the `Sec-Fetch-Site` header, or in `Origin` when they're older. Your forms need no token.
 
-Scripts and servers send neither header, so their requests pass. A request with neither header but with the session cookie is refused. It could be a forged request from a browser too old to send either header. Sites listed in `cors_origins` may write too.
+Scripts and servers send neither header, so their requests pass. A request with neither header but with the session cookie is refused. It could be a forged request from a browser too old to send either header.
 
 > [!NOTE]
-> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin may write, and a form on a subdomain is same-site but not same-origin. List the subdomain in `cors_origins`.
+> Every browser since 2023 sends `Sec-Fetch-Site`, and a page can't fake it. Only the same origin can write, and a form on a subdomain is same-site but not same-origin. List the subdomain in `cors_origins`.
 
 ### CORS
 

@@ -8,14 +8,14 @@ use Sapling\Http\Response;
 
 /**
  * Turns away a POST, PUT, PATCH or DELETE that a browser sent from another site. Browsers say where a request comes
- * from in Sec-Fetch-Site, or in Origin when they're older, so no token is needed.
+ * from in Sec-Fetch-Site, or in Origin when they're older.
  */
 final readonly class Csrf
 {
 	private const array WRITES = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 	/**
-	 * Sites that may send writes anyway, such as https://app.example for a front end on another domain.
+	 * Sites that can send writes anyway, such as https://app.example for a front end on another domain.
 	 *
 	 * @param list<string> $trustedOrigins
 	 */

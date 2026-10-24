@@ -100,7 +100,7 @@ Outside your classes, in `bootstrap.php`, tests and one-file apps, `get()` retur
 $db = $app->container->get(Db::class);
 ```
 
-Inside your own classes, ask for it in the constructor instead. The constructor shows everything the class depends on.
+Inside your own classes, ask for it in the constructor instead.
 
 ## Method reference
 

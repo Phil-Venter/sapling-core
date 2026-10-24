@@ -64,7 +64,7 @@ $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/up
 
 ## Sending requests at once
 
-`sendAll()` sends several requests at once and returns the replies under the same keys. A page that needs several services waits only for the slowest:
+`sendAll()` sends several requests at once and returns the replies under the same keys. An action that calls several services waits only for the slowest:
 
 ```php
 [$weather, $news] = $this->http->sendAll([
@@ -105,7 +105,7 @@ if ($reply->status !== 200) {
 
 ## Retrying a request
 
-`HttpClient` sends each request once. Retry only requests that change nothing, such as a GET, and keep retries out of pages a visitor is waiting for.
+`HttpClient` sends each request once. Retry only requests that change nothing, such as a GET, and keep retries out of actions a visitor is waiting for.
 
 This function tries a GET up to 3 times, waiting 1 second and then 2, when the connection fails or the service answers 429, 502, 503 or 504:
 
@@ -194,7 +194,7 @@ A request gives up after 30 seconds. When a visitor waits on it, register a clie
 $app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply, which keeps a POST from being sent twice. Only `http` and `https` URLs are allowed, redirects included. A URL from a visitor can't read local files. TLS certificates are always checked, and compressed replies are unpacked.
+GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply. Only `http` and `https` URLs are allowed, redirects included. TLS certificates are always checked, and compressed replies are unpacked.
 
 > [!WARNING]
 > A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.

@@ -131,7 +131,7 @@ A bare app has none of what [booting sets up](#what-booting-sets-up). Pass `true
 
 ## Testing the whole app
 
-Because the app is a plain object, a test can load `bootstrap.php` and send requests straight through it. `handle()` returns the response instead of sending it:
+A test can load `bootstrap.php` and send requests straight through it. `handle()` returns the response instead of sending it:
 
 ```php
 $app = require __DIR__ . '/../bootstrap.php';

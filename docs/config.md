@@ -86,8 +86,8 @@ $lifetime = $config->get('session_lifetime', 0);
 | `timezone` | PHP's default timezone, such as `UTC` or `Africa/Johannesburg` | php.ini decides |
 | `session_lifetime` | Seconds the session cookie and an idle session last | php.ini decides |
 | `app_key` | The key [`Crypto`](encryption.md) encrypts with | `Crypto` throws when it's first used |
-| `cors_origins` | Sites that may call the app from a browser, for [`Cors` and `Csrf`](middleware.md) | None |
-| `cors_credentials` | Whether those sites may send cookies | No |
+| `cors_origins` | Sites that can call the app from a browser, for [`Cors` and `Csrf`](middleware.md) | None |
+| `cors_credentials` | Whether those sites can send cookies | No |
 | `content_policy` | Directives that replace [`SecurityHeaders`](middleware.md#security-headers)' defaults | None |
 | `trusted_proxies` | Proxies whose `X-Forwarded-For` gives the visitor's address, or `['*']` to trust only the one that connects | None |
 

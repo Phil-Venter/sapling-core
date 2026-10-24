@@ -14,7 +14,7 @@
 
 ## Introduction
 
-Sapling sorts what goes wrong into two kinds, and neither needs a `try` in your code. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist. It becomes a response with that status. A crash is anything else thrown, usually a bug. It's logged and answered with a 500, with a stack trace only in debug mode.
+Sapling sorts what goes wrong into two kinds. An error is an `HttpException`, something the visitor caused, such as asking for a page that doesn't exist. It becomes a response with that status. A crash is anything else thrown, usually a bug. It's logged and answered with a 500, with a stack trace only in debug mode.
 
 ## Errors the visitor causes
 
@@ -41,7 +41,7 @@ abort(503, 'Down for maintenance.', ['Retry-After' => '600']);
 
 ## Showing your own error page
 
-By default the error goes back as plain text, which is fine for an API but bare for a website. `onError()` sets what answers it instead, as a class, an object or a closure that takes the exception and the request:
+By default the error goes back as plain text. `onError()` sets what answers it instead, as a class, an object or a closure that takes the exception and the request:
 
 ```php
 $app->onError(function (HttpException $e, Request $request) use ($app): Response {
@@ -82,7 +82,7 @@ Inside a request or a command, PHP's warnings and notices throw an `ErrorExcepti
 
 A `=== false` check after `file_get_contents()` never runs, because a missing file throws. Check with `is_file()` first. `bootstrap.php` and `config.php` run before this applies. Warnings there behave as PHP's usually do.
 
-Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP.
+Deprecation notices don't throw. PHP still reports them. Fatal errors, such as running out of memory, are left to PHP.
 
 ## Logging
 

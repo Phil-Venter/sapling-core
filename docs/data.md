@@ -38,7 +38,7 @@ $fields = Data::fromForm('a=1&b[]=2&b[]=3');          // ['a' => '1', 'b' => ['2
 
 ## XML
 
-XML is here for the services that only speak XML, such as older SOAP APIs:
+`toXml()` and `fromXml()` turn arrays into XML and back:
 
 ```php
 $xml = Data::toXml(['id' => 7, 'items' => ['item' => ['Pen', 'Paper']]], root: 'order');
@@ -65,7 +65,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-A suffix counts too. `application/problem+json` is JSON. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
+A `+json` or `+xml` suffix counts, as in `application/problem+json`. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
 
 ## Reading nested data
 

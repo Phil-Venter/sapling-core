@@ -1,6 +1,6 @@
 {
     "name": "sapling/core",
-    "description": "A small PHP framework for prototypes and internal tools, with no dependencies and a core you can read in a day.",
+    "description": "A small PHP framework for prototypes, one-off projects and internal tools, with no dependencies and a core you can read in a day.",
     "type": "library",
     "license": "0BSD",
     "require": {
