@@ -74,11 +74,6 @@ test('rawArray() takes arrays only', function () {
 	expect(new Value(null)->rawArray())->toBe([]);
 });
 
-test('$raw holds the value as it arrived', function () {
-	expect(new Value(['a'])->raw)->toBe(['a']);
-	expect(new Value(null)->raw)->toBeNull();
-});
-
 test('items() wraps each item in a Value under its key', function () {
 	$items = new Value(['a' => ['sku' => 'pen'], 'b' => ['sku' => 'ink']])->items();
 

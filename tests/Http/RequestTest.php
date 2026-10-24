@@ -65,12 +65,7 @@ test('the readers take a path of keys, as Value::get() does', function () {
 	expect($request->data('address', 'city')->string())->toBe('Cape Town');
 	expect($request->cookie('prefs', 'theme')->string())->toBe('dark');
 	expect($request->param()->rawArray())->toBe(['id' => '7']);
-});
-
-test('query() without a name gives the whole query string', function () {
-	$request = new Request('GET', '/notes', query: ['page' => '2', 'tag' => 'php']);
-
-	expect($request->query()->rawArray())->toBe(['page' => '2', 'tag' => 'php']);
+	expect($request->query()->rawArray())->toBe(['filter' => ['status' => 'open']]);
 });
 
 test('POST _method may switch only to PUT, PATCH or DELETE', function (

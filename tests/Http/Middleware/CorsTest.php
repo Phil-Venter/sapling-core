@@ -19,11 +19,6 @@ test('Cors answers preflights before routing, for allowed origins only', functio
 	expect($other->headers)->not->toHaveKey('Access-Control-Allow-Origin');
 });
 
-test('Cors refuses credentials with a * origin', function () {
-	expect(fn() => new Cors(['*'], allowCredentials: true))
-		->toThrow(InvalidArgumentException::class, 'cors_credentials needs cors_origins to list sites, not *');
-});
-
 test('Cors allows credentials and merges an existing Vary', function (string $vary) {
 	$cors = new Cors(['https://app.example'], allowCredentials: true);
 	$next = fn(Request $request) => new Response('ok', 200, [$vary => 'Accept-Encoding']);
@@ -53,6 +48,7 @@ test('Cors refuses origins that could never match, when the app starts', functio
 	],
 	'capitals' => [['https://App.example'], false, 'needs scheme://host[:port] in lowercase'],
 	'no scheme' => [['app.example'], false, 'needs scheme://host[:port] in lowercase'],
+	'* with credentials' => [['*'], true, 'cors_credentials needs cors_origins to list sites, not *'],
 ]);
 
 test('Cors varies on Origin unless it allows *', function (

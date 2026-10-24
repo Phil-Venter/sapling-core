@@ -48,19 +48,21 @@ test('an error inside a template leaves no buffers open', function () {
 	expect($this->view->render('untitled'))->toContain('<title>Default</title>');
 });
 
-test('a misused component or slot throws', function () {
+test('a misused component or slot throws', function (string $template, string $message) {
 	$level = ob_get_level();
 
-	expect(fn() => $this->view->render('unclosed'))
-		->toThrow(LogicException::class, 'Component _card in unclosed has no end()');
-	expect(fn() => $this->view->render('stray-end'))
-		->toThrow(LogicException::class, 'end() without an open slot() or component()');
-	expect(fn() => $this->view->render('stray-slot'))->toThrow(LogicException::class, 'slot() outside a component()');
-	expect(fn() => $this->view->render('closes-parent'))
-		->toThrow(LogicException::class, "end() in _closes closes a component or slot it didn't open");
+	expect(fn() => $this->view->render($template))->toThrow(LogicException::class, $message);
 	expect(ob_get_level())->toBe($level);
 	expect($this->view->render('plain', ['name' => 'Ann']))->toBe("<p>Ann on Sapling</p>\n");
-});
+})->with([
+	'a component with no end()' => ['unclosed', 'Component _card in unclosed has no end()'],
+	'an end() with nothing open' => ['stray-end', 'end() without an open slot() or component()'],
+	'a slot() outside a component' => ['stray-slot', 'slot() outside a component()'],
+	'an end() for what the page opened' => [
+		'closes-parent',
+		"end() in _closes closes a component or slot it didn't open",
+	],
+]);
 
 test('components and slots print exactly what they were given', function (string $template, string $expected) {
 	expect($this->view->render($template))->toBe($expected);

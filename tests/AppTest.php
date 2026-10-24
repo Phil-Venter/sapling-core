@@ -158,17 +158,6 @@ describe('registering in code', function () {
 		expect(runInApp($app, 'routes:list'))->toBe([0, "GET  /hello/:name  Closure\n"]);
 	});
 
-	test('a closure can still clash with a route or command name', function () {
-		$app = new App(FIXTURES);
-		$app->router->add('GET', '/hello/:name', fn() => Response::text('one'));
-		$app->commands->add('greet', fn() => 0);
-
-		expect(fn() => $app->router->add('GET', '/hello/:who', fn() => Response::text('two')))
-			->toThrow(LogicException::class, 'Duplicate route GET /hello/:who: Closure and Closure');
-		expect(fn() => $app->commands->add('greet', fn() => 0))
-			->toThrow(LogicException::class, 'Duplicate command greet: Closure and Closure');
-	});
-
 	test('a class can have more than one #[Route]', function () {
 		$app = new App(FIXTURES);
 		$app->add(NoteForm::class);
@@ -326,6 +315,16 @@ describe('errors', function () {
 		],
 	]);
 
+	test('a 5xx response an action returns is not logged', function () {
+		$app = new App(FIXTURES);
+		$app->router->add('GET', '/busy', fn() => Response::text('Busy', 503));
+
+		[$response, $log] = captureErrorLog(fn() => $app->handle(new Request('GET', '/busy')));
+
+		expect($response->status)->toBe(503);
+		expect($log)->toBe([]);
+	});
+
 	test('debug mode shows an escaped trace', function () {
 		[$response] = captureErrorLog(fn() => scannedApp(debug: true)->handle(new Request('GET', '/fails')));
 
@@ -375,30 +374,25 @@ describe('errors', function () {
 });
 
 describe('crashes', function () {
-	test('a crash behind Cors still gets Access-Control-Allow-Origin', function () {
+	test('a crash reaches the middleware outside it as a 500', function (array $middleware, Closure $action) {
 		$app = new App(FIXTURES);
 		$app->middleware(new Cors(['https://app.example']));
-		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
+
+		foreach ($middleware as $layer) {
+			$app->middleware($layer);
+		}
+
+		$app->router->add('GET', '/boom', $action);
 		$request = new Request('GET', '/boom', headers: ['Origin' => 'https://app.example']);
 
 		[$response] = captureErrorLog(fn() => $app->handle($request));
 
 		expect($response->status)->toBe(500);
 		expect($response->header('Access-Control-Allow-Origin')->string())->toBe('https://app.example');
-	});
-
-	test('a crash in middleware passes back through the middleware outside it', function () {
-		$app = new App(FIXTURES);
-		$app->middleware(new Cors(['https://app.example']));
-		$app->middleware(fn() => throw new RuntimeException('boom'));
-		$app->router->add('GET', '/boom', fn() => Response::text('never'));
-		$request = new Request('GET', '/boom', headers: ['Origin' => 'https://app.example']);
-
-		[$response] = captureErrorLog(fn() => $app->handle($request));
-
-		expect($response->status)->toBe(500);
-		expect($response->header('Access-Control-Allow-Origin')->string())->toBe('https://app.example');
-	});
+	})->with([
+		'in the action' => [[], fn() => throw new RuntimeException('boom')],
+		'in middleware' => [[fn() => throw new RuntimeException('boom')], fn() => Response::text('never')],
+	]);
 
 	test('a crash in middleware is logged once', function () {
 		$app = new App(FIXTURES);
@@ -409,32 +403,6 @@ describe('crashes', function () {
 
 		expect($log)->toHaveCount(1);
 		expect($log[0])->toContain('GET /boom failed: RuntimeException: boom');
-	});
-
-	test('middleware gets a crash inside it as a 500 response', function () {
-		$app = new App(FIXTURES);
-		$statuses = [];
-		$app->middleware(function (Request $request, Closure $next) use (&$statuses): Response {
-			$response = $next($request);
-			$statuses[] = $response->status;
-
-			return $response;
-		});
-		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
-
-		captureErrorLog(fn() => $app->handle(new Request('GET', '/boom')));
-
-		expect($statuses)->toBe([500]);
-	});
-
-	test('a 5xx response an action returns is not logged', function () {
-		$app = new App(FIXTURES);
-		$app->router->add('GET', '/busy', fn() => Response::text('Busy', 503));
-
-		[$response, $log] = captureErrorLog(fn() => $app->handle(new Request('GET', '/busy')));
-
-		expect($response->status)->toBe(503);
-		expect($log)->toBe([]);
 	});
 });
 

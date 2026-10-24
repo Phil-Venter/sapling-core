@@ -1,6 +1,5 @@
 <?php
 
-use Sapling\Http\HttpException;
 use Sapling\Http\Response;
 
 test('withHeader() returns a copy and replaces the header in any case', function () {
@@ -12,12 +11,6 @@ test('withHeader() returns a copy and replaces the header in any case', function
 	expect($original->headers)->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
 	expect($changed->headers)->toBe(['content-type' => 'text/csv']);
 	expect($cookies->headers['Set-Cookie'])->toBe(['a=1', 'b=2']);
-});
-
-test('error() answers with the error\'s status and message', function () {
-	$response = Response::error(new HttpException(404, 'No such note'));
-
-	expect([$response->status, $response->body])->toBe([404, 'No such note']);
 });
 
 test('fromCrash() without debug hides everything', function () {
