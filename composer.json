@@ -47,6 +47,7 @@
             "@test"
         ],
         "mutate": [
+            "Composer\\Config::disableProcessTimeout",
             "@putenv XDEBUG_MODE=coverage",
             "pest --mutate --everything --covered-only --parallel"
         ]
