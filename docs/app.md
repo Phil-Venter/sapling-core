@@ -215,7 +215,7 @@ Load `bootstrap.php` directly here. `testApp()` would empty the session, and the
 | `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes, skipping classes without them |
 | `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes. Throws a `LogicException` when it has no route or command |
 | `middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix` |
-| `onError($handler)` | Sets what turns an `HttpException` into a response, see [errors](errors.md) |
+| `onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response, see [errors](errors.md) |
 | `run()` | Answers the current request and sends it, or runs a command from the terminal |
 | `handle($request)` | Returns the `Response` for a `Request`. It never throws, since an error becomes a response too |
 | `runCommand($console)` | Runs a command and returns its exit code |

@@ -174,7 +174,7 @@ final class App
 
 	/**
 	 * Sets what turns an HttpException into a response. It's called with the exception and the request. The default
-	 * answers in plain text.
+	 * answers in plain text. Outside debug mode, a crash reaches it as a 500 whose previous exception is the crash.
 	 *
 	 * @param class-string|object $handler
 	 */
@@ -218,9 +218,6 @@ final class App
 
 		try {
 			return $this->pipeline($middleware, $this->dispatch(...))($request);
-		} catch (\Throwable $e) {
-			// Only an error handler that crashes in the outermost layer gets this far.
-			return $this->answerCrash($e, $request);
 		} finally {
 			restore_error_handler();
 		}
@@ -362,30 +359,46 @@ final class App
 					error_log("{$request->method} {$request->path} failed: {$e->status}");
 				}
 
-				/** @var callable(HttpException, Request): Response $handler */
-				$handler = $this->resolve($this->errorHandler);
-				$response = $handler($e, $request);
-
-				foreach ($e->headers as $name => $value) {
-					if ($response->header($name)->raw !== null) {
-						continue;
-					}
-
-					$response = $response->withHeader($name, $value);
-				}
-
-				return $response;
+				return $this->answerError($e, $request);
 			} catch (\Throwable $e) {
 				return $this->answerCrash($e, $request);
 			}
 		};
 	}
 
+	private function answerError(HttpException $e, Request $request): Response
+	{
+		try {
+			/** @var callable(HttpException, Request): Response $handler */
+			$handler = $this->resolve($this->errorHandler);
+			$response = $handler($e, $request);
+		} catch (\Throwable $crash) {
+			// Not answerCrash(), which would call the broken handler again.
+			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $crash);
+
+			return Response::fromCrash($crash, $this->debug, $this->basePath);
+		}
+
+		foreach ($e->headers as $name => $value) {
+			if ($response->header($name)->raw !== null) {
+				continue;
+			}
+
+			$response = $response->withHeader($name, $value);
+		}
+
+		return $response;
+	}
+
 	private function answerCrash(\Throwable $e, Request $request): Response
 	{
 		new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
 
-		return Response::fromCrash($e, $this->debug, $this->basePath);
+		if ($this->debug) {
+			return Response::fromCrash($e, true, $this->basePath);
+		}
+
+		return $this->answerError(new HttpException(500, previous: $e), $request);
 	}
 
 	/** @param class-string|object $handler */

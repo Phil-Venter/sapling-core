@@ -70,11 +70,11 @@ $app->onError(function (HttpException $e, Request $request): Response {
 
 ## Crashes
 
-Any other exception is a crash. It's logged, and the visitor gets a plain-text 500 "Internal Server Error". A crash skips your error handler, but its 500 passes back out through the middleware like any other response.
+Any other exception is a crash. It's logged, and your error handler answers it as an `HttpException` with status 500. The default handler sends a plain-text "Internal Server Error". `getPrevious()` on that exception returns the crash. The response passes back out through the middleware like any other.
 
 ### Debug mode
 
-While you're working, turn on `debug` in the [config](config.md). The skeleton's `config.php` turns it on when `.env` has `APP_ENV=dev`. In debug mode, a crash shows the code around the error and a stack trace, with the frames outside your app folded away.
+While you're working, turn on `debug` in the [config](config.md). The skeleton's `config.php` turns it on when `.env` has `APP_ENV=dev`. In debug mode, a crash skips your error handler and shows the code around the error and a stack trace, with the frames outside your app folded away.
 
 ### Warnings and notices
 
@@ -110,5 +110,5 @@ Clear old files from cron with `find logs -name 'app-*.log' -mtime +14 -delete`.
 | `abort_if($condition, $status, ...)` | Throws one when the condition is true |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
-| `$app->onError($handler)` | Sets what turns an `HttpException` into a response |
+| `$app->onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response |
 | `Response::error($e)` | The default answer, in plain text with the error's status and message |

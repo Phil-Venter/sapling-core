@@ -471,6 +471,56 @@ describe('onError()', function () {
 	});
 });
 
+describe('onError() for crashes', function () {
+	test('outside debug mode the handler answers a crash', function () {
+		$app = new App(FIXTURES);
+		$app->onError(fn(HttpException $e, Request $request): Response => Response::text(
+			get_debug_type($e->getPrevious()),
+			$e->status,
+		));
+		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
+
+		[$response] = captureErrorLog(fn() => $app->handle(new Request('GET', '/boom')));
+
+		expect($response->status)->toBe(500);
+		expect($response->body)->toBe('RuntimeException');
+	});
+
+	test('in debug mode a crash skips the handler', function () {
+		$app = new App(FIXTURES, debug: true);
+		$app->onError(fn(HttpException $e, Request $request): Response => Response::text('handled', $e->status));
+		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
+
+		[$response] = captureErrorLog(fn() => $app->handle(new Request('GET', '/boom')));
+
+		expect($response->body)->toContain('<h1>RuntimeException</h1>');
+	});
+
+	test('a crash in the handler is logged once', function (string $path, array $logged) {
+		$app = new App(FIXTURES);
+		$app->middleware(new Cors(['https://app.example']));
+		$app->onError(fn() => throw new LogicException('handler broke'));
+		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
+		$request = new Request('GET', $path, headers: ['Origin' => 'https://app.example']);
+
+		[$response, $log] = captureErrorLog(fn() => $app->handle($request));
+
+		expect($response->status)->toBe(500);
+		expect($response->header('Access-Control-Allow-Origin')->string())->toBe('https://app.example');
+		expect($log)->toHaveCount(count($logged));
+
+		foreach ($logged as $index => $line) {
+			expect($log[$index])->toContain($line);
+		}
+	})->with([
+		'answering a 404' => ['/nowhere', ['GET /nowhere failed: LogicException: handler broke']],
+		'answering a crash' => [
+			'/boom',
+			['GET /boom failed: RuntimeException: boom', 'GET /boom failed: LogicException: handler broke'],
+		],
+	]);
+});
+
 describe('testing', function () {
 	test('a test can sign in by setting the session before handle()', function () {
 		$app = new App(FIXTURES);
