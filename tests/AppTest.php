@@ -13,6 +13,8 @@ use Sapling\Http\Response;
 use Sapling\Http\Session;
 use Sapling\Tests\Fixtures\Broken\DuplicateGreet;
 use Sapling\Tests\Fixtures\Container\Clock;
+use Sapling\Tests\Fixtures\Container\CurrentUser;
+use Sapling\Tests\Fixtures\Container\Profile;
 use Sapling\Tests\Fixtures\JsonErrors;
 use Sapling\Tests\Fixtures\Middleware\Deny;
 use Sapling\Tests\Fixtures\Middleware\GlobalOne;
@@ -283,6 +285,22 @@ describe('middleware', function () {
 		'a longer name' => ['/note', '/notes', false],
 		'elsewhere' => ['/notes', '/guarded', false],
 	]);
+});
+
+describe('passing data to the action', function () {
+	test('an action is built after its middleware runs', function () {
+		$app = new App(FIXTURES);
+		$app->middleware(function (Request $request, Closure $next) use ($app): Response {
+			$app->container->set(CurrentUser::class, new CurrentUser('ann'));
+
+			return $next($request);
+		});
+		$app->router->add('GET', '/profile', Profile::class);
+
+		$response = $app->handle(new Request('GET', '/profile'));
+
+		expect($response->body)->toBe('Signed in as ann');
+	});
 });
 
 describe('errors', function () {

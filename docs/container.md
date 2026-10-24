@@ -44,7 +44,7 @@ Some classes can't be built from types alone. A database connection needs to kno
 $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 ```
 
-The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it.
+The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it. Middleware can use this to [pass data to the action](middleware.md#passing-data-to-the-action).
 
 ### Interfaces
 

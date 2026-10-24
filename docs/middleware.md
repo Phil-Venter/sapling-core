@@ -3,6 +3,7 @@
 - [Introduction](#introduction)
 - [Writing middleware](#writing-middleware)
     - [Answering early](#answering-early)
+    - [Passing data to the action](#passing-data-to-the-action)
 - [Registering middleware](#registering-middleware)
     - [For part of the site](#for-part-of-the-site)
     - [For one action](#for-one-action)
@@ -61,6 +62,54 @@ final class RequireLogin
 ```
 
 Calling `abort()` stops the request too. The `HttpException` reaches the middleware around it as a response, not as an exception, and so does a crash, as a 500.
+
+### Passing data to the action
+
+An action is built after its middleware has run. Middleware can put an object in the [container](container.md) with `set()`, for the action to ask for in its constructor:
+
+```php
+use Closure;
+use Sapling\Container;
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+use Sapling\Http\Session;
+
+final class RequireLogin
+{
+    public function __construct(
+        private Session $session,
+        private Container $container,
+    ) {}
+
+    public function __invoke(Request $request, Closure $next): Response
+    {
+        $id = $this->session->get('user_id')->int();
+
+        if ($id === 0) {
+            return Response::redirect('/login');
+        }
+
+        $user = new CurrentUser($id);
+        $this->container->set(CurrentUser::class, $user);
+
+        return $next($request);
+    }
+}
+```
+
+`CurrentUser` is a class of your own:
+
+```php
+final readonly class CurrentUser
+{
+    public function __construct(public int $id) {}
+}
+```
+
+An action behind `#[Middleware(RequireLogin::class)]` gets it with `__construct(private CurrentUser $user)`.
+
+> [!NOTE]
+> `set()` doesn't change classes already built. A class built before the middleware ran keeps the `CurrentUser` it was given.
 
 ## Registering middleware
 
