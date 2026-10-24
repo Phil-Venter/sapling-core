@@ -79,7 +79,7 @@ test('a param never matches an empty segment', function () {
 	expect(fn() => $router->match('GET', '/'))->toThrow(HttpException::class, 'Not Found');
 });
 
-test('the same method and path on two classes throws at boot and names both', function () {
+test('a second class on the same method and path throws, naming both', function () {
 	$app = new App(FIXTURES);
 	$app->add(DuplicateA::class);
 

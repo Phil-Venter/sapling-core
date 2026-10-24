@@ -25,6 +25,9 @@ test('json() without data sends no body', function () {
 	$none = ClientRequest::json('PUT', '/');
 
 	expect([$none->body, $none->headers])->toBe(['', []]);
+});
+
+test('json() keeps an empty array and an empty object apart', function () {
 	expect(ClientRequest::json('PUT', '/', [])->body)->toBe('[]');
 	expect(ClientRequest::json('PUT', '/', new stdClass())->body)->toBe('{}');
 });

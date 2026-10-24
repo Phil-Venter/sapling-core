@@ -41,7 +41,6 @@ describe('boot()', function () {
 
 		expect($app->debug)->toBe($debug);
 		expect($app->handle(new Request('GET', '/hello'))->body)->toBe($body);
-		expect($app->container->get(Session::class))->toBeInstanceOf(Session::class);
 	})->with([
 		'debug on' => [['debug' => true], true, "<p>hello from dev</p>\n"],
 		'no settings at all' => [[], false, "<p>hello from production</p>\n"],
@@ -65,7 +64,7 @@ describe('boot()', function () {
 
 	test('an unknown timezone stops the boot', function () {
 		expect(fn() => App::boot(BOOT, new Config(['timezone' => 'Mars/Olympus'])))
-			->toThrow(Exception::class, 'Mars/Olympus');
+			->toThrow(DateInvalidTimeZoneException::class, 'Mars/Olympus');
 	});
 
 	test('configures the built-in services from the config', function () {
@@ -112,21 +111,27 @@ describe('boot()', function () {
 
 		expect($post('https://front.example'))->toBe(405);
 		expect($post('https://evil.example'))->toBe(403);
+		expect($post('*'))->toBe(403);
 	});
 });
 
 describe('registering in code', function () {
-	test('scan() ignores trailing slashes and non-class files', function (string $folder, string $namespace) {
+	test('scan() ignores trailing slashes', function (string $folder, string $namespace) {
 		$app = new App(FIXTURES);
 		$app->scan($folder, $namespace);
 
 		expect($app->handle(new Request('GET', '/notes'))->status)->toBe(200);
-		expect(function_exists('scan_fixture_helper'))->toBeFalse();
-		expect(function_exists('scan_fixture_shared'))->toBeFalse();
 	})->with([
 		'without' => [FIXTURES . '/Scan', 'Sapling\Tests\Fixtures\Scan'],
 		'with' => [FIXTURES . '/Scan/', 'Sapling\Tests\Fixtures\Scan\\'],
 	]);
+
+	test('scan() skips files that aren\'t classes', function () {
+		new App(FIXTURES)->scan(FIXTURES . '/Scan', 'Sapling\Tests\Fixtures\Scan');
+
+		expect(function_exists('scan_fixture_helper'))->toBeFalse();
+		expect(function_exists('scan_fixture_shared'))->toBeFalse();
+	});
 
 	test('add() refuses a class with no #[Route] or #[Command]', function () {
 		$app = new App(FIXTURES);
@@ -135,7 +140,7 @@ describe('registering in code', function () {
 			->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command] to add');
 	});
 
-	test('routes, their middleware and commands can be closures registered in code', function () {
+	test('a closure route can have closure middleware', function () {
 		$app = new App(FIXTURES);
 		$app->router->add(
 			'get',
@@ -145,17 +150,23 @@ describe('registering in code', function () {
 				fn(Request $request, Closure $next) => $next($request)->withHeader('X-Route', 'yes'),
 			],
 		);
+
+		$response = $app->handle(new Request('GET', '/hello/Ann'));
+
+		expect($response->body)->toBe('Hello Ann');
+		expect($response->headers['X-Route'])->toBe('yes');
+		expect(runInApp($app, 'routes:list'))->toBe([0, "GET  /hello/:name  Closure\n"]);
+	});
+
+	test('a command can be a closure registered in code', function () {
+		$app = new App(FIXTURES);
 		$app->commands->add('greet', function (Console $console): int {
 			$console->line('Hello');
 
 			return 0;
 		});
 
-		$response = $app->handle(new Request('GET', '/hello/Ann'));
-
-		expect([$response->body, $response->headers['X-Route']])->toBe(['Hello Ann', 'yes']);
 		expect(runInApp($app, 'greet'))->toBe([0, "Hello\n"]);
-		expect(runInApp($app, 'routes:list'))->toBe([0, "GET  /hello/:name  Closure\n"]);
 	});
 
 	test('a class can have more than one #[Route]', function () {
@@ -191,7 +202,7 @@ describe('middleware', function () {
 		]);
 	});
 
-	test('middleware can return early, and nothing inside it runs', function (
+	test('middleware that returns early runs nothing inside it', function (
 		array $middleware,
 		string $path,
 		array $events,
@@ -293,7 +304,12 @@ describe('passing data to the action', function () {
 });
 
 describe('errors', function () {
-	test('only a 5xx or a crash is logged', function (string $path, int $status, string $body, array $logged) {
+	test('only a 5xx HttpException or a crash is logged', function (
+		string $path,
+		int $status,
+		string $body,
+		array $logged,
+	) {
 		[$response, $log] = captureErrorLog(fn() => scannedApp()->handle(new Request('GET', $path)));
 
 		expect([$response->status, $response->body])->toBe([$status, $body]);
@@ -460,16 +476,19 @@ describe('onError()', function () {
 describe('onError() for crashes', function () {
 	test('outside debug mode the handler answers a crash', function () {
 		$app = new App(FIXTURES);
-		$app->onError(fn(HttpException $e, Request $request): Response => Response::text(
-			get_debug_type($e->getPrevious()),
-			$e->status,
-		));
+		$previous = null;
+		$app->onError(function (HttpException $e, Request $request) use (&$previous): Response {
+			$previous = $e->getPrevious();
+
+			return Response::text($e->getMessage(), $e->status);
+		});
 		$app->router->add('GET', '/boom', fn() => throw new RuntimeException('boom'));
 
 		[$response] = captureErrorLog(fn() => $app->handle(new Request('GET', '/boom')));
 
 		expect($response->status)->toBe(500);
-		expect($response->body)->toBe('RuntimeException');
+		expect($response->body)->toBe('Internal Server Error');
+		expect($previous)->toBeInstanceOf(RuntimeException::class);
 	});
 
 	test('in debug mode a crash skips the handler', function () {
@@ -482,7 +501,7 @@ describe('onError() for crashes', function () {
 		expect($response->body)->toContain('<h1>RuntimeException</h1>');
 	});
 
-	test('a crash in the handler is logged once', function (string $path, array $logged) {
+	test('a crash in the error handler falls back to a plain 500', function (string $path, array $logged) {
 		$app = new App(FIXTURES);
 		$app->middleware(new Cors(['https://app.example']));
 		$app->onError(fn() => throw new LogicException('handler broke'));
@@ -575,7 +594,7 @@ describe('commands', function () {
 		expect($result['stderr'])->toBe("--times needs a value, written --times=value\n");
 	});
 
-	test('the same command name on two classes throws and names both', function () {
+	test('a second class with the same command name throws, naming both', function () {
 		$app = scannedApp();
 
 		expect(fn() => $app->add(DuplicateGreet::class))

@@ -1,33 +1,52 @@
 <?php
 
 use Sapling\Http\HttpException;
+use Sapling\Tests\Fixtures\Priority;
 use Sapling\Value;
 
 test('e() escapes HTML, quotes included', function () {
 	expect(e('<a href="x">O\'Reilly & Co</a>'))->toBe('&lt;a href=&quot;x&quot;&gt;O&#039;Reilly &amp; Co&lt;/a&gt;');
 });
 
+test('e() prints a backed enum as its value', function () {
+	expect(e(Priority::High))->toBe('1');
+});
+
 test('e() refuses a Value', function () {
 	expect(fn() => e(new Value('Ann')))->toThrow(LogicException::class, 'not a Value');
 });
 
-test('abort() and abort_if() throw HttpException', function () {
-	expect(fn() => abort(404, 'gone', [
-		'X-Why' => 'deleted',
-	]))->toThrow(fn(HttpException $e) => expect([$e->status, $e->headers])->toBe([
-		404,
-		['X-Why' => 'deleted'],
-	]));
+test('abort() throws an HttpException with its status and headers', function () {
+	$abort = fn() => abort(404, 'gone', ['X-Why' => 'deleted']);
+
+	expect($abort)->toThrow(function (HttpException $e) {
+		expect($e->status)->toBe(404);
+		expect($e->headers)->toBe(['X-Why' => 'deleted']);
+	});
+});
+
+test('abort_if() throws only when its condition is true', function () {
 	expect(fn() => abort_if(true, 403))->toThrow(HttpException::class, 'Forbidden');
 	expect(abort_if(false, 403))->toBeNull();
 });
 
-test('attr() and attrs() escape values and leave out empty ones', function () {
-	expect(attr('title', '"><script>'))->toBe('title="&quot;&gt;&lt;script&gt;"');
-	expect(attr('class', ['col', '0', '', null]))->toBe('class="col 0"');
-	expect(attr('tabindex', 0))->toBe('tabindex="0"');
-	expect(attr('required', true))->toBe('required');
-	expect([attr('hidden', false), attr('id', null), attr('id', '')])->toBe([null, null, null]);
+test('attr() writes one escaped attribute, or null for an empty value', function (
+	string $key,
+	mixed $value,
+	?string $expected,
+) {
+	expect(attr($key, $value))->toBe($expected);
+})->with([
+	'a value to escape' => ['title', '"><script>', 'title="&quot;&gt;&lt;script&gt;"'],
+	'a list, without its empty items' => ['class', ['col', '0', '', null], 'class="col 0"'],
+	'0' => ['tabindex', 0, 'tabindex="0"'],
+	'true, as a bare attribute' => ['required', true, 'required'],
+	'false' => ['hidden', false, null],
+	'null' => ['id', null, null],
+	'an empty string' => ['id', '', null],
+]);
+
+test('attrs() joins the attributes, leaving out empty ones', function () {
 	expect(attrs(['class' => 'note', 'hidden' => false, 'data-id' => 7, 'open' => true]))
 		->toBe('class="note" data-id="7" open');
 });

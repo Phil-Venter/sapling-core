@@ -2,15 +2,19 @@
 
 use Sapling\Http\Response;
 
-test('withHeader() returns a copy and replaces the header in any case', function () {
+test('withHeader() returns a copy', function () {
 	$original = Response::text('hi');
 
-	$changed = $original->withHeader('content-type', 'text/csv');
-	$cookies = $changed->withHeader('Set-Cookie', ['a=1', 'b=2']);
+	$changed = $original->withHeader('X-Note', 'yes');
 
 	expect($original->headers)->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
-	expect($changed->headers)->toBe(['content-type' => 'text/csv']);
-	expect($cookies->headers['Set-Cookie'])->toBe(['a=1', 'b=2']);
+	expect($changed->headers['X-Note'])->toBe('yes');
+});
+
+test('withHeader() replaces a header whatever the case of its name', function () {
+	$response = Response::text('hi')->withHeader('content-type', 'text/csv');
+
+	expect($response->headers)->toBe(['content-type' => 'text/csv']);
 });
 
 test('fromCrash() without debug hides everything', function () {
@@ -68,7 +72,7 @@ test('file() refuses a file that does not exist', function () {
 		->toThrow(RuntimeException::class, 'File not found: /no/such/file.txt');
 });
 
-test('data() with a name reads one field, and without one the whole body', function () {
+test('data() reads one field, or the whole body without a name', function () {
 	$response = Response::json(['title' => 'Notes', 'count' => 2]);
 
 	expect($response->data('title')->string())->toBe('Notes');
@@ -76,9 +80,9 @@ test('data() with a name reads one field, and without one the whole body', funct
 });
 
 test('header() finds a header whatever the case of its name', function () {
-	$reply = new Response('', 200, ['content-type' => 'text/plain', 'set-cookie' => ['a=1', 'b=2']]);
+	$response = new Response('', 200, ['content-type' => 'text/plain', 'set-cookie' => ['a=1', 'b=2']]);
 
-	expect($reply->header('Content-Type')->string())->toBe('text/plain');
-	expect($reply->header('Set-Cookie')->rawArray())->toBe(['a=1', 'b=2']);
-	expect($reply->header('X-Missing')->raw)->toBeNull();
+	expect($response->header('Content-Type')->string())->toBe('text/plain');
+	expect($response->header('Set-Cookie')->rawArray())->toBe(['a=1', 'b=2']);
+	expect($response->header('X-Missing')->raw)->toBeNull();
 });

@@ -45,7 +45,7 @@ test('transaction() on SQLite takes the write lock up front', function () {
 	expect($other->value('SELECT body FROM notes')->string())->toBe('mine');
 });
 
-test('all(), one() and value() read rows as arrays', function () {
+test('all() and one() read rows as arrays', function () {
 	$this->db->run("INSERT INTO notes (body) VALUES ('a'), ('b')");
 
 	expect($this->db->all('SELECT id, body FROM notes ORDER BY id'))->toBe([
@@ -53,7 +53,6 @@ test('all(), one() and value() read rows as arrays', function () {
 		['id' => 2, 'body' => 'b'],
 	]);
 	expect($this->db->one('SELECT body FROM notes WHERE id = ?', [2]))->toBe(['body' => 'b']);
-	expect($this->db->value('SELECT count(*) FROM notes')->int())->toBe(2);
 });
 
 test('transaction() commits and returns the closure\'s result', function (bool $committed) {

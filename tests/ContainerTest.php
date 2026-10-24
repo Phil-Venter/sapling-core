@@ -62,20 +62,29 @@ test('a factory that needs its own class names the loop', function () {
 	expect(fn() => $container->get(Egg::class))->toThrow(LogicException::class, "Circular dependency: {$loop}");
 });
 
-test('#[Config] fills a parameter from the config', function () {
-	$settings = function (array $config): Settings {
-		$container = new Container();
-		$container->set(Config::class, new Config($config));
+test('#[Config] fills a parameter from the config, or from its default', function () {
+	$container = new Container();
+	$container->set(Config::class, new Config(['greeting' => 'hi']));
 
-		return $container->get(Settings::class);
-	};
-	$filled = $settings(['greeting' => 'hi']);
+	$settings = $container->get(Settings::class);
 
-	expect($filled->greeting)->toBe('hi');
-	expect($filled->retries)->toBe(3);
-	expect(fn() => $settings(['greeting' => 'hi', 'retries' => '5']))
+	expect($settings->greeting)->toBe('hi');
+	expect($settings->retries)->toBe(3);
+});
+
+test('#[Config] refuses a setting of the wrong type', function () {
+	$container = new Container();
+	$container->set(Config::class, new Config(['greeting' => 'hi', 'retries' => '5']));
+
+	expect(fn() => $container->get(Settings::class))
 		->toThrow(TypeError::class, 'Argument #2 ($retries) must be of type int, string given');
-	expect(fn() => $settings([]))->toThrow(LogicException::class, 'Missing config key: greeting');
+});
+
+test('#[Config] refuses a missing setting that has no default', function () {
+	$container = new Container();
+	$container->set(Config::class, new Config([]));
+
+	expect(fn() => $container->get(Settings::class))->toThrow(LogicException::class, 'Missing config key: greeting');
 });
 
 test('set() refuses to replace a class that another class was built with', function (Closure $build) {
@@ -94,6 +103,12 @@ test('set() refuses to replace a class that another class was built with', funct
 		function (Container $container): void {
 			$container->set(Profile::class, fn(Container $c) => new Profile($c->get(CurrentUser::class)));
 			$container->get(Profile::class);
+		},
+	],
+	'inside another build' => [
+		function (Container $container): void {
+			$container->set(ArrayObject::class, fn(Container $c) => new ArrayObject([$c->get(Profile::class)]));
+			$container->get(ArrayObject::class);
 		},
 	],
 ]);

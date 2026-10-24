@@ -28,8 +28,10 @@ test('int() takes whole numbers only', function (mixed $value, int $expected) {
 	expect(new Value($value)->int(-1))->toBe($expected);
 })->with([
 	'a numeric string' => ['12', 12],
+	'spaces around it' => [' 12 ', 12],
 	'an int' => [7, 7],
 	'trailing text' => ['12abc', -1],
+	'a decimal' => ['1.5', -1],
 	'missing' => [null, -1],
 	'an array' => [['1'], -1],
 	'true' => [true, -1],

@@ -60,7 +60,7 @@ test('a GET follows redirects and a POST doesn\'t', function () {
 	expect([$returned->status, $returned->headers['location']])->toBe([302, '/notes']);
 });
 
-test('HEAD returns headers without waiting for a body', function () {
+test('HEAD returns the headers with an empty body', function () {
 	$response = $this->client->send(new ClientRequest('HEAD', serverUrl('/notes')));
 
 	expect([$response->status, $response->body])->toBe([200, '']);
@@ -105,6 +105,15 @@ test('only http and https URLs are allowed', function () {
 	expect($reply->body)->toStartWith('GET file:///etc/hosts failed:');
 });
 
+test('a redirect to anything but http or https is refused', function () {
+	$url = serverUrl('/to-a-file');
+
+	$reply = $this->client->send(new ClientRequest('GET', $url));
+
+	expect($reply->status)->toBe(0);
+	expect($reply->body)->toStartWith("GET {$url} failed:");
+});
+
 test('sendAll() keeps the requests\' keys and order', function () {
 	$replies = $this->client->sendAll([
 		'listed' => new ClientRequest('GET', serverUrl('/notes')),
@@ -116,7 +125,7 @@ test('sendAll() keeps the requests\' keys and order', function () {
 	expect($replies['echo']->data()->get('name')->string())->toBe('Ann');
 });
 
-test('sendAll() queues requests past six connections to one host', function () {
+test('sendAll() answers twenty requests to one host', function () {
 	$requests = array_fill(0, 20, new ClientRequest('GET', serverUrl('/notes')));
 
 	$replies = $this->client->sendAll($requests);

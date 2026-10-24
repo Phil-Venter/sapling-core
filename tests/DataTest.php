@@ -67,5 +67,8 @@ test('decode() picks the format by Content-Type', function (string $type, string
 test('toXml() always writes one root element', function () {
 	expect(Data::toXml([]))->toContain('<root/>');
 	expect(Data::toXml(['tags' => []]))->toContain('<root><tags/></root>');
+});
+
+test('toXml() refuses a list', function () {
 	expect(fn() => Data::toXml(['a', 'b']))->toThrow(InvalidArgumentException::class, 'needs keys, not a list');
 });

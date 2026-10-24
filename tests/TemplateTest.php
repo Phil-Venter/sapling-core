@@ -82,6 +82,9 @@ test('prefix::name finds a template in the folder registered with prefix()', fun
 	$this->view->prefix('mine', FIXTURES . '/views/colocated/');
 
 	expect($this->view->render('mine::card', ['name' => 'Ann']))->toBe("<p>colocated Ann</p>\n");
+});
+
+test('an unknown prefix throws', function () {
 	expect(fn() => $this->view->render('other::card'))
 		->toThrow(LogicException::class, 'Unknown template prefix other in other::card');
 });

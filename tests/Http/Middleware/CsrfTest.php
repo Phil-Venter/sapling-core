@@ -3,7 +3,7 @@
 use Sapling\Http\Middleware\Csrf;
 use Sapling\Http\Request;
 
-test('Csrf lets same-origin, trusted and non-browser writes through', function (
+test('Csrf refuses only writes a browser sent from another site', function (
 	string $method,
 	array $headers,
 	array $cookies,
@@ -63,5 +63,13 @@ test('a refused write is a 403 that says why', function () {
 	$response = $app->handle(new Request('POST', '/notes', headers: ['Sec-Fetch-Site' => 'cross-site']));
 
 	expect([$response->status, $response->body])->toBe([403, 'Cross-site request refused']);
+});
+
+test('a refused write never starts the session', function () {
+	$app = scannedApp();
+	$app->middleware(Csrf::class);
+
+	$app->handle(new Request('POST', '/notes', headers: ['Sec-Fetch-Site' => 'cross-site']));
+
 	expect(session_status())->not->toBe(PHP_SESSION_ACTIVE);
 });

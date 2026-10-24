@@ -35,7 +35,6 @@ test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS', function (arr
 	new Session()->get('anything');
 
 	expect(session_get_cookie_params())->httponly->toBeTrue()->samesite->toBe('Lax')->secure->toBe($secure);
-	expect(ini_get('session.use_strict_mode'))->toBe('1');
 })->with([
 	'HTTPS' => [['HTTPS' => 'on'], true],
 	'behind a TLS proxy' => [['HTTP_X_FORWARDED_PROTO' => 'https'], true],
@@ -43,6 +42,12 @@ test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS', function (arr
 	'HTTPS empty' => [['HTTPS' => '', 'HTTP_X_FORWARDED_PROTO' => 'http'], false],
 	'plain HTTP' => [['HTTP_X_FORWARDED_PROTO' => 'http'], false],
 ]);
+
+test('the session runs in strict mode', function () {
+	new Session()->get('anything');
+
+	expect(ini_get('session.use_strict_mode'))->toBe('1');
+});
 
 test('get() and getFlash() take a path of keys, as Value::get() does', function () {
 	$session = new Session();

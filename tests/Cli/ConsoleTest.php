@@ -12,7 +12,7 @@ test('parses the command, options, flags and args', function () {
 	expect($console->arg(0)->string())->toBe('x');
 });
 
-test('a missing option or argument gives the default', function () {
+test('a missing or unreadable option or argument gives the default', function () {
 	$console = new Console(['bin/console', 'notes:prune', '--days=soon']);
 
 	expect($console->option('days')->int(30))->toBe(30);

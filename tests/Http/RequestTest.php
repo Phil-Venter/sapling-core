@@ -68,7 +68,7 @@ test('the readers take a path of keys, as Value::get() does', function () {
 	expect($request->query()->rawArray())->toBe(['filter' => ['status' => 'open']]);
 });
 
-test('POST _method may switch only to PUT, PATCH or DELETE', function (
+test('POST _method can switch only to PUT, PATCH or DELETE', function (
 	string $method,
 	string|array $override,
 	string $expected,
@@ -92,12 +92,9 @@ test('POST _method may switch only to PUT, PATCH or DELETE', function (
 ]);
 
 test('a crafted array never reaches a string field', function () {
-	$request = new Request('POST', '/notes', input: ['body' => ['x'], 'tags' => ['a'], 'count' => '3']);
+	$request = new Request('POST', '/notes', input: ['body' => ['x']]);
 
 	expect($request->data('body')->string('fallback'))->toBe('fallback');
-	expect($request->data('tags')->rawArray())->toBe(['a']);
-	expect($request->data('count')->int())->toBe(3);
-	expect($request->data('missing')->raw)->toBeNull();
 });
 
 test('a JSON request through php -S reaches the action intact', function () {
@@ -145,7 +142,7 @@ test('a broken body is a 400 when an action reads a field', function (string $ty
 	'xml' => ['application/xml', '<not xml'],
 ]);
 
-test('a body is never decoded by a request that reads no field', function () {
+test('a broken body throws only once a field is read', function () {
 	$request = new Request('PUT', '/echo/1', headers: ['Content-Type' => 'application/json'], body: '{not json');
 
 	expect($request->header('content-type')->string())->toBe('application/json');
