@@ -11,7 +11,7 @@
 
 ## Introduction
 
-`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken input always throws, whichever format it's in. The methods are static and need no app.
+`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken JSON or XML throws. The methods are static and need no app.
 
 ## JSON
 
@@ -69,7 +69,7 @@ A suffix counts too. `application/problem+json` is JSON. An empty body gives `nu
 
 ## Reading nested data
 
-Decoded data can hold anything, and a key you expect may be missing. Wrap it in a [`Value`](values.md) to read nested keys safely, with a default at the end:
+Decoded data can hold anything, and a key you expect may be missing. Wrap it in a [`Value`](values.md) to read nested keys safely:
 
 ```php
 $envelope = value(Data::fromXml($xml));

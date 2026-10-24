@@ -67,7 +67,7 @@ grep -rnoE '<\?= *[^ ]+' views | grep -vF -e '<?= e(' -e '<?= attrs(' -e '<?= $t
 
 ## Partials
 
-Pieces that several pages share, such as a navigation bar, go in their own file, named with a leading `_` by convention. Inside a template, `render()` prints one:
+Pieces that several pages share, such as a navigation bar, go in their own file, named with a leading `_` by convention. Inside a template, print one with `render()`:
 
 ```php
 <?= $this->render('_nav', ['active' => 'notes']) ?>

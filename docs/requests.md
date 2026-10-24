@@ -39,7 +39,7 @@ A request takes this path through the app:
 7. The response passes back out through each middleware.
 8. `run()` sends the response, without the body for a HEAD request.
 
-Errors take the same route back. An `HttpException`, such as one from `abort()`, becomes a response where it's thrown and passes back out through the middleware, while any other exception becomes a 500. [When things go wrong](errors.md) covers both.
+Errors take the same route back. An `HttpException`, such as one from `abort()`, becomes a response where it's thrown and passes back out through the middleware. Any other exception does the same, as a 500. [When things go wrong](errors.md) covers both.
 
 ## Accessing the request
 

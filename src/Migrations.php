@@ -21,8 +21,8 @@ final readonly class Migrations
 	 * Runs the files that haven't run yet and returns their names. An empty file is skipped and not recorded.
 	 *
 	 * @return list<string>
-	 * @throws \RuntimeException When a file fails. It names the file and is rolled back, and the files before it stay
-	 *     recorded.
+	 * @throws \RuntimeException When a file fails. The message names the file, which is rolled back, and the files before it
+	 *     stay recorded.
 	 * @throws \Throwable
 	 */
 	public function run(): array

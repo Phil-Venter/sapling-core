@@ -102,7 +102,7 @@ Compare a boolean instead of casting it, because `(bool) 'false'` is `true`.
 
 ## Configuration in production
 
-On a server, set real environment variables instead of deploying `.env`. A `.env` shipped by mistake can't switch production into debug mode.
+On a server, set real environment variables instead of deploying `.env`, `APP_ENV` included. A real variable wins over the same one in a `.env` shipped by mistake.
 
 > [!NOTE]
 > php-fpm hides environment variables by default (`clear_env = yes`). Pass them with `env[NAME]` in the pool config.

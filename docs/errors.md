@@ -70,7 +70,7 @@ $app->onError(function (HttpException $e, Request $request): Response {
 
 ## Crashes
 
-Any other exception is a crash. It's logged, and your error handler answers it as an `HttpException` with status 500. The default handler sends a plain-text "Internal Server Error". `getPrevious()` on that exception returns the crash. The response passes back out through the middleware like any other.
+Any other exception is a crash. It's logged, and outside debug mode your error handler answers it as an `HttpException` with status 500. The default handler sends a plain-text "Internal Server Error". `getPrevious()` on that exception returns the crash. If the handler itself crashes, the visitor gets the plain-text 500 instead. The response passes back out through the middleware.
 
 ### Debug mode
 
@@ -89,7 +89,7 @@ Deprecation notices don't throw, so a PHP upgrade can't take your pages down. PH
 Sapling writes one line per crash or 5xx `HttpException` with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there, which is usually where the fix belongs:
 
 ```text
-GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:70 from /srv/app/app/Notes/Download.php:21
+GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:57 from /srv/app/app/Notes/Download.php:21
 ```
 
 ### Where the log goes

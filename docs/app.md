@@ -217,7 +217,7 @@ Load `bootstrap.php` directly here. `testApp()` would empty the session, and the
 | `middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix` |
 | `onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response, see [errors](errors.md) |
 | `run()` | Answers the current request and sends it, or runs a command from the terminal |
-| `handle($request)` | Returns the `Response` for a `Request`. It never throws, since an error becomes a response too |
+| `handle($request)` | Returns the `Response` for a `Request`, even for an error or a crash. It never throws |
 | `runCommand($console)` | Runs a command and returns its exit code |
 | `path($relative = '')` | Returns an absolute path inside the app, such as `path('views')` |
 | `$app->container` | The [container](container.md) |

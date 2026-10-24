@@ -17,7 +17,7 @@
 
 `Sapling\Value` wraps data from outside the app and reads it as the type you ask for. A value that's missing, or of the wrong type, gives a default instead of an error.
 
-Outside data is loosely typed. A query parameter is always a string, and a form field sent as `body[]=x` arrives as an array. Passed to a `string` parameter, it's a 500.
+Outside data is loosely typed. A form field sent as `body[]=x` arrives as an array, which is a 500 when it reaches a `string` parameter.
 
 ## Where values come from
 

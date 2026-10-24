@@ -33,7 +33,7 @@ final class Template
 	public function __construct(private string $dir, private string $suffix = 'tmpl.php') {}
 
 	/**
-	 * Inside a template, it prints a partial, as in $this->render('_nav').
+	 * Inside a template, it returns a partial to print, as in <?= $this->render('_nav') ?>.
 	 *
 	 * @param array<string, mixed> $data
 	 * @throws \RuntimeException When the template file is missing.

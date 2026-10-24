@@ -200,7 +200,7 @@ final class App
 	}
 
 	/**
-	 * Turns a request into a response. An error becomes a response too, so it never throws.
+	 * Never throws. An error or a crash comes back as a response.
 	 */
 	public function handle(Request $request): Response
 	{
