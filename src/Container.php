@@ -23,13 +23,6 @@ final class Container
 	private array $building = [];
 
 	/**
-	 * For each class, the classes built with it, so set() can refuse to replace what they hold.
-	 *
-	 * @var array<string, list<string>>
-	 */
-	private array $dependents = [];
-
-	/**
 	 * The one shared instance of the class, built the first time. Constructor arguments come from their types,
 	 * #[Config] or their defaults.
 	 *
@@ -39,12 +32,6 @@ final class Container
 	 */
 	public function get(string $id): object
 	{
-		$dependent = array_key_last($this->building);
-
-		if ($dependent !== null) {
-			$this->dependents[$id][] = $dependent;
-		}
-
 		if (array_key_exists($id, $this->instances)) {
 			return $this->instances[$id];
 		}
@@ -55,23 +42,14 @@ final class Container
 	}
 
 	/**
-	 * Registers an object, or a closure that builds it the first time it's asked for. Throws a LogicException once a
-	 * class has been built with the one it would replace.
+	 * Registers an object, or a closure that builds it the first time it's asked for. Throws a LogicException once
+	 * get() has handed the class out.
 	 */
 	public function set(string $id, object $value): void
 	{
-		$built = array_filter($this->dependents[$id] ?? [], fn(string $dependent): bool => array_key_exists(
-			$dependent,
-			$this->instances,
-		));
-
-		if ($built !== []) {
-			$list = implode(', ', array_unique($built));
-
-			throw new \LogicException("Cannot replace {$id} after building {$list} with it");
+		if (array_key_exists($id, $this->instances)) {
+			throw new \LogicException("Cannot replace {$id} after handing it out");
 		}
-
-		unset($this->instances[$id], $this->factories[$id]);
 
 		if ($value instanceof \Closure) {
 			$this->factories[$id] = $value;
@@ -79,7 +57,8 @@ final class Container
 			return;
 		}
 
-		$this->instances[$id] = $value;
+		// A factory as well, so $instances holds only what get() has handed out.
+		$this->factories[$id] = fn(): object => $value;
 	}
 
 	/** @param class-string $id */

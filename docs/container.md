@@ -44,7 +44,13 @@ Some classes can't be built from types alone. A database connection needs to kno
 $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 ```
 
-The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it. Middleware can use this to [pass data to the action](middleware.md#passing-data-to-the-action). Once another class has been built with it, `set()` throws a `LogicException` instead of replacing it.
+The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it. Middleware can use this to [pass data to the action](middleware.md#passing-data-to-the-action). Once the container has handed a class out, `set()` throws a `LogicException` instead of replacing it.
+
+Sapling registers its own services the same way, such as `Template`, `Session` and `Csrf`. To replace one, call `set()` in `bootstrap.php` after `App::boot()`, above any line that gets it:
+
+```php
+$app->container->set(Template::class, fn() => new Template(__DIR__ . '/templates'));
+```
 
 ### Interfaces
 
@@ -107,5 +113,5 @@ Inside your own classes, ask for it in the constructor instead.
 | Method | What it does |
 | --- | --- |
 | `get($class)` | Returns the shared instance of the class, building it the first time |
-| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces an earlier `set()` of the same class. Throws a `LogicException` once another class has been built with it |
+| `set($id, $value)` | Registers an object, or a closure that builds it on first use. Replaces an earlier `set()` of the same class. Throws a `LogicException` once the class has been handed out |
 | `#[Config($key)]` | Fills a constructor parameter from a setting |

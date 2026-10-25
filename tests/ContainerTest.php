@@ -87,36 +87,18 @@ test('#[Config] refuses a missing setting that has no default', function () {
 	expect(fn() => $container->get(Settings::class))->toThrow(LogicException::class, 'Missing config key: greeting');
 });
 
-test('set() refuses to replace a class that another class was built with', function (Closure $build) {
+test('set() refuses to replace a class after handing it out', function () {
 	$container = new Container();
 	$container->set(CurrentUser::class, new CurrentUser('guest'));
-	$build($container);
+	$container->get(Profile::class);
 
 	expect(fn() => $container->set(CurrentUser::class, new CurrentUser('ann')))
-		->toThrow(
-			LogicException::class,
-			'Cannot replace ' . CurrentUser::class . ' after building ' . Profile::class . ' with it',
-		);
-})->with([
-	'autowired' => [fn(Container $container) => $container->get(Profile::class)],
-	'from a closure' => [
-		function (Container $container): void {
-			$container->set(Profile::class, fn(Container $c) => new Profile($c->get(CurrentUser::class)));
-			$container->get(Profile::class);
-		},
-	],
-	'inside another build' => [
-		function (Container $container): void {
-			$container->set(ArrayObject::class, fn(Container $c) => new ArrayObject([$c->get(Profile::class)]));
-			$container->get(ArrayObject::class);
-		},
-	],
-]);
+		->toThrow(LogicException::class, 'Cannot replace ' . CurrentUser::class . ' after handing it out');
+});
 
-test('set() can replace a class that nothing was built with', function () {
+test('set() replaces a class that has not been handed out', function () {
 	$container = new Container();
 	$container->set(CurrentUser::class, new CurrentUser('guest'));
-	$container->get(CurrentUser::class);
 
 	$container->set(CurrentUser::class, new CurrentUser('ann'));
 
