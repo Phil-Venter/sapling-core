@@ -119,20 +119,15 @@ final class HttpClient
 			CURLOPT_NOBODY => $request->method === 'HEAD',
 			CURLOPT_FOLLOWLOCATION => in_array($request->method, ['GET', 'HEAD'], true),
 			CURLOPT_MAXREDIRS => 5,
-			// Not the _STR options, which need libcurl 7.85, newer than Ubuntu 22.04 has.
 			CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 			CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 		]);
 
 		$hasBody = $request->body !== '' && $request->body !== [];
 
-		if ($hasBody) {
-			curl_setopt($handle, CURLOPT_POSTFIELDS, $request->body);
-		}
-
 		// Some servers refuse a POST, PUT or PATCH without a Content-Length, so an empty one still sends 0.
-		if (!$hasBody && in_array($request->method, ['POST', 'PUT', 'PATCH'], true)) {
-			curl_setopt($handle, CURLOPT_POSTFIELDS, '');
+		if ($hasBody || in_array($request->method, ['POST', 'PUT', 'PATCH'], true)) {
+			curl_setopt($handle, CURLOPT_POSTFIELDS, $request->body);
 		}
 
 		return $handle;
@@ -152,7 +147,6 @@ final class HttpClient
 		$lastBlock = strrpos($head, "\r\n\r\n");
 		$received = [];
 
-		// Every redirect adds a block of headers, and the last block is the final reply's.
 		if ($lastBlock !== false) {
 			$head = substr($head, $lastBlock + 4);
 		}

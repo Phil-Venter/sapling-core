@@ -40,6 +40,10 @@ test('namespaced XML keeps its prefixes', function () {
 	expect(Data::fromXml($soap))->toBe(['soap:Body' => ['GetPriceResponse' => ['Price' => '1.90']]]);
 });
 
+test('XML reads CDATA as text', function () {
+	expect(Data::fromXml('<item><title><![CDATA[Fish & Chips]]></title></item>'))->toBe(['title' => 'Fish & Chips']);
+});
+
 test('XML never fetches an external entity', function () {
 	$xxe = '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY e SYSTEM "file:///etc/passwd">]><x><y>&e;</y></x>';
 

@@ -71,7 +71,7 @@ final class Data
 	public static function fromXml(string $xml): array|string
 	{
 		$previous = libxml_use_internal_errors(true);
-		$element = simplexml_load_string($xml, options: LIBXML_NONET | LIBXML_NOCDATA);
+		$element = simplexml_load_string($xml, options: LIBXML_NONET);
 		$error = libxml_get_last_error();
 		libxml_clear_errors();
 		libxml_use_internal_errors($previous);

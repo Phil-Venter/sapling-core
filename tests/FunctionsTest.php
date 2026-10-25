@@ -35,6 +35,7 @@ test('attr() writes one escaped attribute, or null for an empty value', function
 })->with([
 	'a value to escape' => ['title', '"><script>', 'title="&quot;&gt;&lt;script&gt;"'],
 	'a list, without its empty items' => ['class', ['col', '0', '', null], 'class="col 0"'],
+	'a list of only empty items' => ['class', ['', null], null],
 	'0' => ['tabindex', 0, 'tabindex="0"'],
 	'true, as a bare attribute' => ['required', true, 'required'],
 	'false' => ['hidden', false, null],

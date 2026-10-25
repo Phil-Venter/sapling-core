@@ -15,11 +15,7 @@ final readonly class Value
 	 */
 	public function __construct(mixed $raw)
 	{
-		if ($raw instanceof self) {
-			$raw = $raw->raw;
-		}
-
-		$this->raw = $raw;
+		$this->raw = $raw instanceof self ? $raw->raw : $raw;
 	}
 
 	/**

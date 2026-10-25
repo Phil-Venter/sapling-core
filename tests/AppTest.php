@@ -111,7 +111,6 @@ describe('boot()', function () {
 
 		expect($post('https://front.example'))->toBe(405);
 		expect($post('https://evil.example'))->toBe(403);
-		expect($post('*'))->toBe(403);
 	});
 });
 

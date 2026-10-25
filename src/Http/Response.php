@@ -36,9 +36,7 @@ final class Response
 	/** @throws \JsonException When the data can't be encoded. */
 	public static function json(mixed $data, int $status = 200): self
 	{
-		$json = Data::toJson($data);
-
-		return new self($json, $status, ['Content-Type' => 'application/json']);
+		return new self(Data::toJson($data), $status, ['Content-Type' => 'application/json']);
 	}
 
 	public static function redirect(string $url, int $status = 302): self

@@ -15,8 +15,6 @@ final class Request
 
 	private mixed $data = null;
 
-	private bool $decoded = false;
-
 	/**
 	 * A request built by hand, for tests. Use fromGlobals() for the current request.
 	 *
@@ -126,12 +124,9 @@ final class Request
 			return $remote;
 		}
 
-		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added.
+		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. No address matches
+		// '*', which leaves the one the connecting proxy added.
 		$hops = array_map(trim(...), explode(',', $forwarded));
-
-		if ($any) {
-			return end($hops);
-		}
 
 		foreach (array_reverse($hops) as $hop) {
 			if (!in_array($hop, $trusted, true)) {
@@ -166,10 +161,7 @@ final class Request
 	 */
 	public function data(string|int ...$keys): Value
 	{
-		if (!$this->decoded) {
-			$this->data = $this->decode();
-			$this->decoded = true;
-		}
+		$this->data ??= $this->decode();
 
 		return new Value($this->data)->get(...$keys);
 	}

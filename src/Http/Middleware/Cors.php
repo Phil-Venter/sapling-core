@@ -30,11 +30,11 @@ final readonly class Cors
 				continue;
 			}
 
-			if (preg_match('#^https?://([a-z0-9.-]+|\[[0-9a-f:]+\])(:[0-9]{1,5})?$#', $origin) !== 1) {
-				throw new \InvalidArgumentException(
-					"cors_origins needs scheme://host[:port] in lowercase, got {$origin}",
-				);
+			if (preg_match('#^https?://([a-z0-9.-]+|\[[0-9a-f:]+\])(:[0-9]{1,5})?$#', $origin) === 1) {
+				continue;
 			}
+
+			throw new \InvalidArgumentException("cors_origins needs scheme://host[:port] in lowercase, got {$origin}");
 		}
 	}
 
@@ -48,12 +48,7 @@ final readonly class Cors
 			return $this->preflight($request, $origin, $method);
 		}
 
-		$allowed = null;
-
-		if ($origin !== '') {
-			$allowed = $this->allowedOrigin($origin);
-		}
-
+		$allowed = $this->allowedOrigin($origin);
 		$response = $next($request);
 
 		foreach ($this->corsHeaders($allowed, $response->headers) as $name => $value) {
@@ -113,7 +108,6 @@ final readonly class Cors
 	{
 		$headers = [];
 
-		// On every response, or a cache could serve one origin's answer to another.
 		if (!$this->anyOrigin) {
 			$headers['Vary'] = 'Origin';
 

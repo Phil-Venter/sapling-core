@@ -31,12 +31,14 @@ final class Router
 		$params = [];
 
 		foreach ($segments as $segment) {
-			$node = $this->branch($node, $segment);
-
 			if (!str_starts_with($segment, ':')) {
+				$node->fixed[$segment] ??= new RouteNode();
+				$node = $node->fixed[$segment];
 				continue;
 			}
 
+			$node->param ??= new RouteNode();
+			$node = $node->param;
 			$param = substr($segment, 1);
 
 			if (in_array($param, $params, true)) {
@@ -113,15 +115,6 @@ final class Router
 	public function all(): array
 	{
 		return iterator_to_array($this->routesBelow($this->tree), false);
-	}
-
-	private function branch(RouteNode $node, string $segment): RouteNode
-	{
-		if (str_starts_with($segment, ':')) {
-			return $node->param ??= new RouteNode();
-		}
-
-		return $node->fixed[$segment] ??= new RouteNode();
 	}
 
 	/**

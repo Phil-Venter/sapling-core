@@ -64,3 +64,15 @@ test('table() lines up columns by characters', function () {
 
 	expect(ob_get_clean())->toBe("Café   open\nBar    closed\n\nDiner  open\n");
 });
+
+test('table() leaves no spaces at the end of a line', function () {
+	$console = new Console(['bin/console', 'notes:list']);
+
+	ob_start();
+	$console->table([
+		['notes:list',  'List notes'],
+		['notes:prune', ''],
+	]);
+
+	expect(ob_get_clean())->toBe("notes:list   List notes\nnotes:prune\n");
+});

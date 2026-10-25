@@ -40,16 +40,16 @@ if (!function_exists('attr')) {
 	 */
 	function attr(string $key, mixed $value = null): ?string
 	{
+		if (is_array($value)) {
+			$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
+		}
+
 		if (blank($value) || $value === false) {
 			return null;
 		}
 
 		if ($value === true) {
 			return e($key);
-		}
-
-		if (is_array($value)) {
-			$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
 		}
 
 		return sprintf('%s="%s"', e($key), e($value));

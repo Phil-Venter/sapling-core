@@ -74,6 +74,7 @@ test('Cors varies on Origin unless it allows *', function (
 		'Origin',
 	],
 	'*, where every site gets the same answer' => [['*'], ['Origin' => 'https://any.example'], '*', null],
+	'*, without an Origin' => [['*'], [], '*', null],
 ]);
 
 test('a preflight varies on the request headers it echoes', function () {

@@ -29,8 +29,6 @@ final readonly class ListCommands
 			}
 
 			$previous = $domain;
-
-			// The empty first column indents each command by the gap between columns.
 			$rows[] = ['', $name, $command['description']];
 		}
 

@@ -1,6 +1,5 @@
 <?php
 
-// So a config value of the wrong type fails at boot, instead of being converted.
 declare(strict_types=1);
 
 namespace Sapling;
@@ -99,11 +98,7 @@ final class App
 			fn(): Cors => new Cors($config->get('cors_origins', []), $config->get('cors_credentials', false)),
 		);
 
-		$app->container->set(Csrf::class, function () use ($config): Csrf {
-			$trusted = array_diff($config->get('cors_origins', []), ['*']);
-
-			return new Csrf(array_values($trusted));
-		});
+		$app->container->set(Csrf::class, fn(): Csrf => new Csrf($config->get('cors_origins', [])));
 
 		$app->commands->add(NewMigration::NAME, NewMigration::class, NewMigration::DESCRIPTION);
 		$app->commands->add(RunMigrations::NAME, RunMigrations::class, RunMigrations::DESCRIPTION);

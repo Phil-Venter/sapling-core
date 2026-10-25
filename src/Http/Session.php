@@ -81,7 +81,6 @@ final class Session
 		$this->sendCookie('', 1);
 		session_destroy();
 		$this->started = false;
-		$this->flash = [];
 	}
 
 	private function start(): void

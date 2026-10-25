@@ -162,26 +162,19 @@ final readonly class Console
 
 		foreach ($rows as $row) {
 			foreach ($row as $column => $cell) {
-				// Counts characters, not bytes, without needing mbstring.
 				$widths[$column] = max($widths[$column] ?? 0, (int) preg_match_all('/./su', $cell));
 			}
 		}
 
 		foreach ($rows as $row) {
-			$last = array_key_last($row);
 			$cells = [];
 
 			foreach ($row as $column => $cell) {
-				if ($column === $last) {
-					$cells[] = $cell;
-					continue;
-				}
-
 				$padding = ($widths[$column] ?? 0) - (int) preg_match_all('/./su', $cell);
 				$cells[] = $cell . str_repeat(' ', max(0, $padding));
 			}
 
-			$this->line(implode('  ', $cells));
+			$this->line(rtrim(implode('  ', $cells)));
 		}
 	}
 }

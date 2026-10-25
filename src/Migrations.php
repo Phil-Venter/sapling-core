@@ -109,12 +109,7 @@ final readonly class Migrations
 		}
 	}
 
-	/**
-	 * Runs inside apply()'s transaction.
-	 *
-	 * @throws \PDOException When the SQL fails.
-	 * @throws \RuntimeException When the migration leaves a row whose foreign key points nowhere.
-	 */
+	/** @throws \PDOException|\RuntimeException */
 	private function migrate(string $name, string $migration, bool $foreignKeys): void
 	{
 		$this->db->pdo->exec($migration);

@@ -38,12 +38,6 @@ final readonly class NewMigration
 			mkdir($dir, recursive: true);
 		}
 
-		if (file_exists("{$dir}/{$file}")) {
-			$console->error("{$file} already exists");
-
-			return Console::FAILURE;
-		}
-
 		file_put_contents("{$dir}/{$file}", '');
 		$console->line('Created ' . RunMigrations::DIR . "/{$file}");
 
