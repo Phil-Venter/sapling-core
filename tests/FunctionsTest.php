@@ -12,10 +12,6 @@ test('e() prints a backed enum as its value', function () {
 	expect(e(Priority::High))->toBe('1');
 });
 
-test('e() refuses a Value', function () {
-	expect(fn() => e(new Value('Ann')))->toThrow(LogicException::class, 'not a Value');
-});
-
 test('abort() throws an HttpException with its status and headers', function () {
 	$abort = fn() => abort(404, 'gone', ['X-Why' => 'deleted']);
 

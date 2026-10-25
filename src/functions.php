@@ -141,10 +141,6 @@ if (!function_exists('e')) {
 	 */
 	function e(mixed $value): string
 	{
-		if ($value instanceof Sapling\Value) {
-			throw new LogicException('e() needs a typed value, such as $value->string(), not a Value');
-		}
-
 		if ($value instanceof BackedEnum) {
 			$value = $value->value;
 		}

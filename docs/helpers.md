@@ -24,7 +24,7 @@ Sapling has a few global functions for what almost every file does, such as esca
 <span class="status"><?= e($note['status']) ?></span>
 ```
 
-`e()` throws a `LogicException` when given a [`Value`](values.md). Read it as a type first, as in `e($request->query('q')->string())`.
+Read a [`Value`](values.md) as a type first, as in `e($request->query('q')->string())`. Passed as is, it throws an `Error`.
 
 ### Attributes
 
