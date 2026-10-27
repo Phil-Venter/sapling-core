@@ -55,7 +55,7 @@ test('all() and one() read rows as arrays', function () {
 	expect($this->db->one('SELECT body FROM notes WHERE id = ?', [2]))->toBe(['body' => 'b']);
 });
 
-test('transaction() commits and returns the closure\'s result', function (bool $committed) {
+test('transaction() commits the closure\'s writes', function (bool $committed) {
 	$id = $this->db->transaction(function (Db $db) use ($committed) {
 		$db->run("INSERT INTO notes (body) VALUES ('kept')");
 
@@ -72,7 +72,7 @@ test('transaction() commits and returns the closure\'s result', function (bool $
 	expect($this->db->pdo->inTransaction())->toBeFalse();
 })->with(['a plain transaction' => false, 'a statement that committed by itself' => true]);
 
-test('transaction() rolls back and rethrows', function () {
+test('transaction() rolls back when the closure throws', function () {
 	$failing = fn() => $this->db->transaction(function (Db $db) {
 		$db->run("INSERT INTO notes (body) VALUES ('lost')");
 

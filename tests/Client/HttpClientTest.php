@@ -51,7 +51,7 @@ test('send() passes a string body and its Content-Type as they are', function ()
 	]);
 });
 
-test('a GET follows redirects and a POST doesn\'t', function () {
+test('only a GET follows redirects', function () {
 	$followed = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
 	$returned = $this->client->send(ClientRequest::form('POST', serverUrl('/notes'), ['body' => 'x']));
 

@@ -10,16 +10,16 @@ beforeEach(function () {
 test('a page in a layout component fills its slots', function () {
 	$html = $this->view->render('page', ['name' => 'Ann']);
 
-	expect($html)
-		->toContain('<title>Page Ann</title>')
-		->toMatch('#<main>\s*<p>Hello Ann</p>\s*</main>#')
-		->toContain('<footer>Sapling</footer>');
+	expect($html)->toContain('<title>Page Ann</title>');
+	expect($html)->toMatch('#<main>\s*<p>Hello Ann</p>\s*</main>#');
+	expect($html)->toContain('<footer>Sapling</footer>');
 });
 
 test('shared data reaches partials', function () {
 	$list = $this->view->render('list', ['items' => ['a', 'b']]);
 
-	expect($list)->toContain('<li>a (Sapling)</li>')->toContain('<li>b (Sapling)</li>');
+	expect($list)->toContain('<li>a (Sapling)</li>');
+	expect($list)->toContain('<li>b (Sapling)</li>');
 });
 
 test('call data wins over shared data', function () {
@@ -28,10 +28,11 @@ test('call data wins over shared data', function () {
 	expect($plain)->toBe("<p>Ann on Override</p>\n");
 });
 
-test('layouts can nest and pass named slots on', function () {
-	expect($this->view->render('child'))
-		->toContain('<title>Child</title>')
-		->toMatch('#<main>\s*<section>\s*<p>child body</p>\s*</section>\s*</main>#');
+test('nested layouts pass named slots on', function () {
+	$html = $this->view->render('child');
+
+	expect($html)->toContain('<title>Child</title>');
+	expect($html)->toMatch('#<main>\s*<section>\s*<p>child body</p>\s*</section>\s*</main>#');
 });
 
 test('named slots do not leak into the next page', function () {

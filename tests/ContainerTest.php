@@ -47,7 +47,7 @@ test('an unresolvable scalar parameter names the class and the parameter', funct
 		->toThrow(LogicException::class, 'Cannot autowire $name in ' . NeedsName::class);
 });
 
-test('a circular dependency throws and names the loop', function () {
+test('a circular dependency names the loop', function () {
 	$loop = Chicken::class . ' -> ' . Egg::class . ' -> ' . Chicken::class;
 
 	expect(fn() => new Container()->get(Chicken::class))

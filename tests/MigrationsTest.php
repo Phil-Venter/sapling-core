@@ -43,7 +43,7 @@ test('all() gives each file the time it ran, or null while pending', function ()
 	expect($all['002_tags.sql'])->toBeNull();
 });
 
-test('an empty file is skipped and not recorded', function () {
+test('an empty file is not recorded', function () {
 	($this->migration)('001_notes.sql', "\n");
 
 	$empty = $this->migrations->run();

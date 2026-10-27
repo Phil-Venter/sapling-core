@@ -18,10 +18,11 @@ test('withHeader() replaces a header whatever the case of its name', function ()
 });
 
 test('fromCrash() without debug hides everything', function () {
-	expect(Response::fromCrash(new RuntimeException('secret path /etc'), false))
-		->status->toBe(500)
-		->body->toBe('Internal Server Error')
-		->headers->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
+	$response = Response::fromCrash(new RuntimeException('secret path /etc'), false);
+
+	expect($response->status)->toBe(500);
+	expect($response->body)->toBe('Internal Server Error');
+	expect($response->headers)->toBe(['Content-Type' => 'text/plain; charset=utf-8']);
 });
 
 test('send() skips the body for 1xx, 204 and 304', function (int $status) {

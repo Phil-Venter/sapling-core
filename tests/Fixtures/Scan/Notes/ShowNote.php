@@ -7,7 +7,7 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 #[Route('GET', '/notes/:id')]
-final class EditNote
+final class ShowNote
 {
 	public function __invoke(Request $request): Response
 	{

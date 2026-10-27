@@ -33,8 +33,11 @@ test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS', function (arr
 	unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
 	$_SERVER = [...$_SERVER, ...$server];
 	new Session()->get('anything');
+	$cookie = session_get_cookie_params();
 
-	expect(session_get_cookie_params())->httponly->toBeTrue()->samesite->toBe('Lax')->secure->toBe($secure);
+	expect($cookie['httponly'])->toBeTrue();
+	expect($cookie['samesite'])->toBe('Lax');
+	expect($cookie['secure'])->toBe($secure);
 })->with([
 	'HTTPS' => [['HTTPS' => 'on'], true],
 	'behind a TLS proxy' => [['HTTP_X_FORWARDED_PROTO' => 'https'], true],
@@ -94,7 +97,7 @@ test('with a lifetime, every visit renews the cookie', function () {
 	expect(headerValues($second, 'Set-Cookie')[0] ?? '')->toStartWith("{$cookie}; expires=");
 });
 
-test('a stale session id gets one new cookie, not a second renewal of it', function () {
+test('a stale session id gets one new cookie', function () {
 	$response = httpRequest('GET', '/visit', ['Cookie' => 'PHPSESSID=stale0000000000000000000000000000']);
 
 	expect($response['body'])->toBe('1');

@@ -36,10 +36,7 @@ test('fromGlobals() reads the request from PHP\'s globals', function () {
 	expect($request->ip)->toBe('203.0.113.7');
 });
 
-test('behind a trusted proxy, the ip is the visitor\'s from X-Forwarded-For', function (
-	array $trusted,
-	string $expected,
-) {
+test('the ip comes from X-Forwarded-For only behind a trusted proxy', function (array $trusted, string $expected) {
 	$_SERVER['REMOTE_ADDR'] = '10.0.0.2';
 	$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.7, 203.0.113.9, 10.0.0.1';
 
