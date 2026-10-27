@@ -81,7 +81,7 @@ final class Response
 	/**
 	 * A 500 for a crash. In debug mode it's the debug page, otherwise a plain Internal Server Error.
 	 */
-	public static function fromCrash(\Throwable $e, bool $debug, string $basePath = ''): self
+	public static function fromCrash(\Throwable $e, bool $debug, string $basePath): self
 	{
 		if (!$debug) {
 			return self::text('Internal Server Error', 500);

@@ -18,7 +18,7 @@ test('withHeader() replaces a header whatever the case of its name', function ()
 });
 
 test('fromCrash() without debug hides everything', function () {
-	$response = Response::fromCrash(new RuntimeException('secret path /etc'), false);
+	$response = Response::fromCrash(new RuntimeException('secret path /etc'), false, FIXTURES);
 
 	expect($response->status)->toBe(500);
 	expect($response->body)->toBe('Internal Server Error');
