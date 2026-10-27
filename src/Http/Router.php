@@ -108,7 +108,7 @@ final class Router
 	}
 
 	/**
-	 * Fixed segments come first. Actions are listed by class name.
+	 * Fixed segments come first, and each action is given as its class name.
 	 *
 	 * @return list<array{method: string, path: string, action: string}>
 	 */
