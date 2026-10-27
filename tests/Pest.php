@@ -2,7 +2,6 @@
 
 use Sapling\App;
 use Sapling\Cli\Console;
-use Sapling\Http\Response;
 
 const FIXTURES = __DIR__ . '/Fixtures';
 
@@ -63,14 +62,6 @@ function tempDir(): string
 	});
 
 	return $dir;
-}
-
-function sentBody(Response $response): string
-{
-	ob_start();
-	$response->send();
-
-	return ob_get_clean();
 }
 
 /**

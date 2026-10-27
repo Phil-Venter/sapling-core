@@ -26,7 +26,10 @@ test('fromCrash() without debug hides everything', function () {
 });
 
 test('send() skips the body for 1xx, 204 and 304', function (int $status) {
-	expect(sentBody(new Response('should not appear', $status)))->toBe('');
+	ob_start();
+	new Response('should not appear', $status)->send();
+
+	expect(ob_get_clean())->toBe('');
 })->with([101, 204, 304]);
 
 test('send(body: false) never reads a file', function () {
