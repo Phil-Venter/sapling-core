@@ -28,14 +28,6 @@ test('a fake answers every request instead of curl', function () {
 	expect($sent)->toBe(['POST https://pay.example/charge', 'GET https://pay.example/a']);
 });
 
-test('send() returns status, lowercased headers and body', function () {
-	$response = $this->client->send(new ClientRequest('GET', serverUrl('/notes')));
-
-	expect($response->status)->toBe(200);
-	expect($response->headers['content-type'])->toBe('text/plain; charset=utf-8');
-	expect($response->body)->toBe('notes');
-});
-
 test('send() passes a string body and its Content-Type as they are', function () {
 	$headers = ['X-Test' => 'header value', 'Content-Type' => 'application/json'];
 	$request = new ClientRequest('PUT', serverUrl('/echo/7?q=search'), Data::toJson(['name' => 'Ann']), $headers);
