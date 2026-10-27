@@ -10,7 +10,6 @@
 - [Output and exit codes](#output-and-exit-codes)
 - [Adding commands in code](#adding-commands-in-code)
 - [Built-in commands](#built-in-commands)
-- [Testing commands](#testing-commands)
 - [Method reference](#method-reference)
 
 ## Introduction
@@ -177,25 +176,6 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `migrations:list` | Lists every migration and when it ran, see [database](database.md#checking-what-has-run) |
 | `migrations:new <name>` | Creates an empty migration named by the UTC time, see [database](database.md#creating-a-migration) |
 
-## Testing commands
-
-A test runs a command with `$app->runCommand()`, which returns its exit code. `ob_start()` catches what `line()` prints, and a command that asks reads its answers from the stream given to `Console`:
-
-```php
-$answers = fopen('php://memory', 'r+');
-fwrite($answers, "yes\n");
-rewind($answers);
-
-ob_start();
-$code = $app->runCommand(new Console(['bin/console', 'notes:prune'], $answers));
-$output = ob_get_clean();
-
-expect($code)->toBe(Console::SUCCESS);
-expect($output)->toContain('Deleted 3 notes.');
-```
-
-`error()` writes to standard error, which the buffer doesn't catch.
-
 ## Method reference
 
 | Method | What it does |
@@ -209,7 +189,7 @@ expect($output)->toContain('Deleted 3 notes.');
 | `table($rows)` | Prints a list of rows as lined-up columns. An empty row prints a blank line |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
 | `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
-| `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as tests do |
+| `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as [tests](testing.md#running-a-command) do |
 | `$console->command` | The command name |
 | `$console->args` | Every argument after the command name, as a list of strings |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |

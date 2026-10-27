@@ -96,6 +96,7 @@ I've been fiddling with my own micro frameworks since early 2023, and Sapling is
 | [Converting data](docs/data.md) | JSON, XML and form data with `Data` |
 | [Helpers](docs/helpers.md) | `abort()`, `e()`, `attrs()` and the other global functions |
 | [When things go wrong](docs/errors.md) | `HttpException`, crashes, the error handler and logging |
+| [Testing](docs/testing.md) | Requests, signing in, flash values, faked services and commands in tests |
 | [Running in production](docs/production.md) | A checklist for the server |
 
 ## Not included, on purpose

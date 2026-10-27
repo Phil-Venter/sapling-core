@@ -8,16 +8,13 @@
     - [Scanning a folder](#scanning-a-folder)
     - [Adding one class](#adding-one-class)
 - [One-file apps](#one-file-apps)
-- [Testing the whole app](#testing-the-whole-app)
-    - [An app for each test](#an-app-for-each-test)
-    - [Checking a flash value](#checking-a-flash-value)
 - [Method reference](#method-reference)
 
 ## Introduction
 
 `Sapling\App` holds the [container](container.md) that builds your classes, the [routes](routing.md) and [commands](commands.md) they answer, and the [middleware](middleware.md) around them. The same object answers web requests and runs commands, depending on how PHP was started.
 
-An app lives for one request and has no static state. Each test builds its own.
+An app lives for one request and has no static state. Each test [builds its own](testing.md#an-app-for-each-test).
 
 ## Booting the app
 
@@ -128,83 +125,6 @@ $app->run();
 ```
 
 A bare app has none of what [booting sets up](#what-booting-sets-up). Pass `true` as the second argument to turn on debug mode.
-
-## Testing the whole app
-
-A test can load `bootstrap.php` and send requests straight through it. `handle()` returns the response instead of sending it:
-
-```php
-$app = require __DIR__ . '/../bootstrap.php';
-
-$response = $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy milk']));
-
-expect($response->status)->toBe(302);
-```
-
-The examples use [Pest](https://pestphp.com). The skeleton comes with it and a `composer test` script. In an app made without the skeleton, add it with `composer require --dev pestphp/pest`.
-
-`handle()` never throws. A 404, a crash or any other error comes back as the response a visitor would get.
-
-To act as a signed-in visitor, set the session before the request. The action sees the same values, since the app shares one `Session`:
-
-```php
-$app->container->get(Session::class)->set('user_id', 7);
-
-$response = $app->handle(new Request('GET', '/settings'));
-```
-
-PHP keeps that session for the rest of the test run. [The helper below](#an-app-for-each-test) empties it for each test.
-
-The session cookie never shows up on the response from `handle()`, since PHP sends it itself.
-
-To answer for another service, such as a payment provider, [fake its replies](http-client.md#faking-replies-in-tests).
-
-> [!NOTE]
-> Send one request per app, as the server does. A second request through the same app shares the first one's objects, so a [`set()` in middleware](middleware.md#passing-data-to-the-action) can throw.
-
-### An app for each test
-
-The skeleton's `tests/Pest.php` looks like this. Its `testApp()` helper empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
-
-```php
-use Sapling\App;
-use Sapling\Db;
-use Sapling\Migrations;
-
-pest()->beforeEach(function () {
-    error_reporting(E_ALL);
-});
-
-function testApp(): App
-{
-    $_SESSION = [];
-
-    $app = require __DIR__ . '/../bootstrap.php';
-    $db = Db::sqlite(':memory:');
-    new Migrations($db, $app->path('database/migrations'))->run();
-    $app->container->set(Db::class, $db);
-
-    return $app;
-}
-```
-
-> [!NOTE]
-> PHPUnit lowers `error_reporting()` while a test runs, which hides the [warnings](errors.md#warnings-and-notices) Sapling turns into crashes.
-
-### Checking a flash value
-
-To check what an action flashed, read it from a new app, as the next request would:
-
-```php
-$app = testApp();
-$app->handle(new Request('POST', '/notes', input: ['body' => 'Buy milk']));
-
-$next = require __DIR__ . '/../bootstrap.php';
-
-expect($next->container->get(Session::class)->getFlash('notice')->string())->toBe('Saved.');
-```
-
-Load `bootstrap.php` directly here. `testApp()` would empty the session, and the flash value with it.
 
 ## Method reference
 
