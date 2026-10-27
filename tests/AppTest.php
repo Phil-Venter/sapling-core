@@ -135,8 +135,7 @@ describe('registering in code', function () {
 	test('add() refuses a class with no #[Route] or #[Command]', function () {
 		$app = new App(FIXTURES);
 
-		expect(fn() => $app->add(Clock::class))
-			->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command] to add');
+		expect(fn() => $app->add(Clock::class))->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command]');
 	});
 
 	test('a closure route can have closure middleware', function () {
@@ -381,10 +380,9 @@ describe('errors', function () {
 
 		[, $log] = captureErrorLog(fn() => $app->handle(new Request('GET', '/report')));
 
-		expect($log[0])
-			->toContain('File not found: /no/such/report.pdf in ')
-			->toContain('src/Http/Response.php:')
-			->toEndWith(' from ' . FIXTURES . '/missing-download.php:5');
+		expect($log[0])->toContain('File not found: /no/such/report.pdf in ');
+		expect($log[0])->toContain('src/Http/Response.php:');
+		expect($log[0])->toEndWith(' from ' . FIXTURES . '/missing-download.php:5');
 	});
 });
 

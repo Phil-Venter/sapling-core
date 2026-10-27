@@ -36,7 +36,7 @@ final readonly class ListMigrations
 			$status = 'pending';
 
 			if (trim((string) file_get_contents("{$dir}/{$name}")) === '') {
-				$status = 'empty, so migrations:run skips it';
+				$status = 'empty, skipped';
 			}
 
 			if ($ranAt !== null) {

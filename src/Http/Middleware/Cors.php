@@ -22,7 +22,7 @@ final readonly class Cors
 		$this->anyOrigin = in_array('*', $origins, true);
 
 		if ($this->anyOrigin && $allowCredentials) {
-			throw new \InvalidArgumentException('cors_credentials needs cors_origins to list sites, not *');
+			throw new \InvalidArgumentException('Cannot use cors_credentials with cors_origins *');
 		}
 
 		foreach ($origins as $origin) {

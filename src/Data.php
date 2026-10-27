@@ -48,7 +48,7 @@ final class Data
 	public static function toXml(array $data, string $root = 'root'): string
 	{
 		if ($data !== [] && array_is_list($data)) {
-			throw new \InvalidArgumentException('toXml() needs keys, not a list, for its one root element');
+			throw new \InvalidArgumentException('toXml() was given a list');
 		}
 
 		$writer = new \XMLWriter();

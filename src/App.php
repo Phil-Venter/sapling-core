@@ -108,7 +108,7 @@ final class App
 	}
 
 	/**
-	 * Registers each class in the folder and its subfolders that has a #[Route], #[Middleware] or #[Command], as in
+	 * Registers each class in the folder and its subfolders that has a #[Route] or #[Command], as in
 	 * scan(__DIR__ . '/app', 'App').
 	 *
 	 * @throws \UnexpectedValueException When the folder doesn't exist.
@@ -147,7 +147,7 @@ final class App
 	public function add(string $class): void
 	{
 		if (!$this->register($class)) {
-			throw new \LogicException("{$class} has no #[Route] or #[Command] to add");
+			throw new \LogicException("{$class} has no #[Route] or #[Command]");
 		}
 	}
 
@@ -274,11 +274,7 @@ final class App
 		return "{$base}/{$relative}";
 	}
 
-	/**
-	 * Returns whether the class had a route or a command.
-	 *
-	 * @param class-string $class
-	 */
+	/** @param class-string $class */
 	private function register(string $class): bool
 	{
 		$reflection = new \ReflectionClass($class);

@@ -62,7 +62,7 @@ test('blank() tells empty values from falsy ones', function (mixed $value, bool 
 ]);
 
 test('blank() refuses a Value', function () {
-	expect(fn() => blank(new Value('')))->toThrow(LogicException::class, 'not a Value');
+	expect(fn() => blank(new Value('')))->toThrow(LogicException::class, 'was given a Value');
 });
 
 test('datetime() returns the date in the timezone asked for', function (

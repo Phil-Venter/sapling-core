@@ -78,7 +78,7 @@ if (!function_exists('blank')) {
 	function blank(mixed $value): bool
 	{
 		if ($value instanceof Sapling\Value) {
-			throw new LogicException('blank() needs a typed value, such as $value->string(), not a Value');
+			throw new LogicException('blank() was given a Value');
 		}
 
 		return match (true) {

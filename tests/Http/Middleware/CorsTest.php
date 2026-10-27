@@ -48,7 +48,7 @@ test('Cors refuses origins that could never match', function (array $origins, bo
 	],
 	'capitals' => [['https://App.example'], false, 'needs scheme://host[:port] in lowercase'],
 	'no scheme' => [['app.example'], false, 'needs scheme://host[:port] in lowercase'],
-	'* with credentials' => [['*'], true, 'cors_credentials needs cors_origins to list sites, not *'],
+	'* with credentials' => [['*'], true, 'Cannot use cors_credentials with cors_origins *'],
 ]);
 
 test('Cors varies on Origin unless it allows *', function (
@@ -88,18 +88,24 @@ test('a preflight varies on the request headers it echoes', function () {
 
 	$plain = $ask([]);
 	$withHeaders = $ask(['Access-Control-Request-Headers' => 'content-type, x-csrf-token']);
+
+	expect($plain->headers)->toMatchArray([
+		'Access-Control-Max-Age' => '7200',
+		'Vary' => 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
+	]);
+	expect($plain->headers)->not->toHaveKey('Access-Control-Allow-Headers');
+	expect($withHeaders->headers['Access-Control-Allow-Headers'])->toBe('content-type, x-csrf-token');
+});
+
+test('a preflight from an unlisted site is a 403', function () {
+	$app = scannedApp();
+	$app->middleware(new Cors(['https://app.example']));
+
 	$refused = $app->handle(new Request('OPTIONS', '/echo/1', headers: [
 		'Origin' => 'https://evil.example',
 		'Access-Control-Request-Method' => 'PUT',
 	]));
 
-	expect($plain->headers)
-		->toMatchArray([
-			'Access-Control-Max-Age' => '7200',
-			'Vary' => 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
-		])
-		->not->toHaveKey('Access-Control-Allow-Headers');
-	expect($withHeaders->headers['Access-Control-Allow-Headers'])->toBe('content-type, x-csrf-token');
 	expect($refused->status)->toBe(403);
 	expect($refused->headers['Vary'])->toBe('Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
 	expect($refused->headers)->not->toHaveKey('Access-Control-Allow-Origin');

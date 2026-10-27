@@ -30,7 +30,7 @@ test('migrations:list shows each file as ran, pending or empty, in name order', 
 	[$code, $output] = runInApp($this->app, 'migrations:list');
 
 	expect($code)->toBe(0);
-	expect($output)->toMatch('/^001_notes\.sql  ran \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC\n002_tags\.sql   pending\n003_later\.sql  empty, so migrations:run skips it\n$/');
+	expect($output)->toMatch('/^001_notes\.sql  ran \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC\n002_tags\.sql   pending\n003_later\.sql  empty, skipped\n$/');
 });
 
 test('migrations:list says so when there are no migrations', function () {

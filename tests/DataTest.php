@@ -74,5 +74,5 @@ test('toXml() always writes one root element', function () {
 });
 
 test('toXml() refuses a list', function () {
-	expect(fn() => Data::toXml(['a', 'b']))->toThrow(InvalidArgumentException::class, 'needs keys, not a list');
+	expect(fn() => Data::toXml(['a', 'b']))->toThrow(InvalidArgumentException::class, 'was given a list');
 });
