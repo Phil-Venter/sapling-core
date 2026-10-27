@@ -133,4 +133,4 @@ A path that no route fits is a 404, and a known path with the wrong method is a 
 | `#[Middleware($class)]` | Runs middleware around the class's routes. Repeat it for more, first outermost |
 | `$app->router->add($method, $path, $action, $middleware = [])` | Adds a route in code |
 | `$app->router->match($method, $path)` | Returns the route and its parameters. Throws a 404 or 405 `HttpException` |
-| `$app->router->all()` | Returns every route with its action's class name, as `routes:list` shows them |
+| `$app->router->all()` | Returns every route with its action's class name |
