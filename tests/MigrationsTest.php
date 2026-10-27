@@ -4,17 +4,11 @@ use Sapling\Db;
 use Sapling\Migrations;
 
 beforeEach(function () {
-	$this->dir = sys_get_temp_dir() . '/sapling-migrations-' . bin2hex(random_bytes(4));
-	mkdir("{$this->dir}/migrations", recursive: true);
+	$this->dir = tempDir();
+	mkdir("{$this->dir}/migrations");
 	$this->db = Db::sqlite("{$this->dir}/test.db");
 	$this->migrations = new Migrations($this->db, "{$this->dir}/migrations");
 	$this->migration = fn(string $name, string $sql) => file_put_contents("{$this->dir}/migrations/{$name}", $sql);
-});
-
-afterEach(function () {
-	array_map('unlink', [...glob("{$this->dir}/migrations/*"), ...glob("{$this->dir}/test.db*")]);
-	rmdir("{$this->dir}/migrations");
-	rmdir($this->dir);
 });
 
 test('run() runs new files in name order, once each', function () {

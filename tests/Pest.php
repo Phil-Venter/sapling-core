@@ -36,6 +36,35 @@ function captureErrorLog(Closure $fn): array
 	return [$result, $lines];
 }
 
+/**
+ * A new empty folder, removed with everything in it when the test run ends.
+ */
+function tempDir(): string
+{
+	$dir = sys_get_temp_dir() . '/sapling-' . bin2hex(random_bytes(4));
+	mkdir($dir);
+
+	register_shutdown_function(function () use ($dir) {
+		$paths = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST,
+		);
+
+		foreach ($paths as $path) {
+			if ($path->isDir()) {
+				rmdir($path->getPathname());
+				continue;
+			}
+
+			unlink($path->getPathname());
+		}
+
+		rmdir($dir);
+	});
+
+	return $dir;
+}
+
 function sentBody(Response $response): string
 {
 	ob_start();

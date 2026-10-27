@@ -5,7 +5,7 @@ use Sapling\Cli\Commands\RunMigrations;
 use Sapling\Db;
 
 beforeEach(function () {
-	$this->dir = sys_get_temp_dir() . '/sapling-migrate-' . bin2hex(random_bytes(4));
+	$this->dir = tempDir();
 	mkdir("{$this->dir}/database/migrations", recursive: true);
 	$this->app = new App($this->dir);
 	$this->app->container->set(Db::class, fn() => Db::sqlite("{$this->dir}/test.db"));
@@ -14,13 +14,6 @@ beforeEach(function () {
 		"{$this->dir}/database/migrations/{$name}",
 		$sql,
 	);
-});
-
-afterEach(function () {
-	array_map('unlink', [...glob("{$this->dir}/database/migrations/*"), ...glob("{$this->dir}/test.db*")]);
-	rmdir("{$this->dir}/database/migrations");
-	rmdir("{$this->dir}/database");
-	rmdir($this->dir);
 });
 
 test('migrations:run prints each file it ran', function () {

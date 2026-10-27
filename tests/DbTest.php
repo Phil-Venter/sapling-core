@@ -3,16 +3,9 @@
 use Sapling\Db;
 
 beforeEach(function () {
-	$this->dir = sys_get_temp_dir() . '/sapling-db-' . bin2hex(random_bytes(4));
-	mkdir($this->dir);
+	$this->dir = tempDir();
 	$this->db = Db::sqlite("{$this->dir}/test.db");
 	$this->db->run('CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL)');
-});
-
-afterEach(function () {
-	unset($this->db);
-	array_map('unlink', glob("{$this->dir}/*"));
-	rmdir($this->dir);
 });
 
 test('sqlite() sets its pragmas', function () {

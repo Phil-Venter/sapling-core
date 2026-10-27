@@ -4,25 +4,8 @@ use Sapling\App;
 use Sapling\Config;
 
 beforeEach(function () {
-	$this->dir = sys_get_temp_dir() . '/sapling-new-migration-' . bin2hex(random_bytes(4));
-	mkdir($this->dir);
+	$this->dir = tempDir();
 	$this->app = App::boot($this->dir, new Config([]));
-});
-
-afterEach(function () {
-	$files = glob("{$this->dir}/database/migrations/*");
-
-	if ($files !== false) {
-		array_map('unlink', $files);
-	}
-
-	foreach (['/database/migrations', '/database', ''] as $folder) {
-		if (!is_dir($this->dir . $folder)) {
-			continue;
-		}
-
-		rmdir($this->dir . $folder);
-	}
 });
 
 test('migrations:new creates an empty file named by time and its words', function () {
