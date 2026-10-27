@@ -104,7 +104,7 @@ final class Router
 
 		$allow = implode(', ', array_unique($allowed));
 
-		throw new HttpException(405, '', ['Allow' => $allow]);
+		throw new HttpException(405, headers: ['Allow' => $allow]);
 	}
 
 	/**

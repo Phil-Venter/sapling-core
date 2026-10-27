@@ -211,12 +211,11 @@ Load `bootstrap.php` directly here. `testApp()` would empty the session, and the
 | Method | What it does |
 | --- | --- |
 | `App::boot($basePath, $config)` | Builds an app from its config, as described in [What booting sets up](#what-booting-sets-up) |
-| `new App($basePath, $debug = false)` | Builds a bare app, for tests and one-file apps |
 | `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes, skipping classes without them |
 | `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes. Throws a `LogicException` when it has no route or command |
 | `middleware($middleware, $prefix = '')` | Adds middleware around every request, or every request under `$prefix` |
 | `onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response, see [errors](errors.md) |
-| `run()` | Answers the current request and sends it, or runs a command from the terminal |
+| `run()` | Answers the current request and sends the response, or runs a command from the terminal |
 | `handle($request)` | Returns the `Response` for a `Request`, even for an error or a crash. It never throws |
 | `runCommand($console)` | Runs a command and returns its exit code |
 | `path($relative = '')` | Returns an absolute path inside the app, such as `path('views')` |
@@ -224,3 +223,4 @@ Load `bootstrap.php` directly here. `testApp()` would empty the session, and the
 | `$app->router` | The router, see [routing](routing.md) |
 | `$app->commands` | The commands, see [commands](commands.md) |
 | `$app->basePath`, `$app->debug` | The app's folder, and whether debug mode is on |
+| `new App($basePath, $debug = false)` | Builds a bare app, for tests and one-file apps |

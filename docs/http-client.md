@@ -228,12 +228,12 @@ The client keeps the settings `bootstrap.php` gave it, and `sendAll()` calls the
 | `sendAll($requests)` | Sends `ClientRequest`s at once and returns their replies under the same keys |
 | `fake($answer)` | Answers every request with the closure `$answer` instead of curl, for tests. Returns the client |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
-| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
-| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` or `RuntimeException` when a JSON or XML body is invalid |
+| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 | `$reply->header($name)` | Returns a header, ignoring case, as a `Value`. A header sent more than once is a list |
+| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` or `RuntimeException` when a JSON or XML body is invalid |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
 | `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests or from a cache |

@@ -17,8 +17,6 @@
 
 `Sapling\Value` wraps data from outside the app and reads it as the type you ask for. A value that's missing, or of the wrong type, gives a default instead of an error.
 
-Outside data is loosely typed. A form field sent as `body[]=x` arrives as an array, which is a 500 when it reaches a `string` parameter.
-
 ## Where values come from
 
 Everything in Sapling that hands you outside data returns a `Value`:
@@ -26,7 +24,7 @@ Everything in Sapling that hands you outside data returns a `Value`:
 | Method | What it holds |
 | --- | --- |
 | `$request->param()`, `query()`, `data()`, `header()`, `cookie()` | A route parameter, query string value, body field, header or cookie |
-| `$console->arg()`, `option()` | A command-line argument or option |
+| `$console->arg()`, `option()`, `ask()` | A command-line argument, option or answer |
 | `$session->get()`, `getFlash()` | A session value, or one stored for the next request |
 | `$db->value()` | The first column of the first row |
 | `$response->data()`, `header()` | A response's decoded body or a header, such as in a test |
@@ -46,7 +44,7 @@ $count = $db->value($sql)->int();
 ```
 
 > [!WARNING]
-> A `Value` isn't a string. `e($request->data('q'))` throws a `LogicException`, `"Hello {$request->param('name')}"` throws an `Error`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
+> A `Value` isn't a string. `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
 
 ### Strings
 

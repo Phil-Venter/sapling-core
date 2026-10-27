@@ -19,7 +19,7 @@
 
 ## Introduction
 
-`Sapling\Db` is a thin layer over PDO for SQL you write yourself. Each query is one call with `?` placeholders, and rows come back as arrays keyed by column name.
+`Sapling\Db` wraps PDO for SQL you write yourself. Each query is one call with `?` placeholders, and rows come back as arrays keyed by column name.
 
 ## Connecting
 
@@ -162,7 +162,7 @@ Each schema change is a migration, a plain SQL file in `database/migrations/`, a
 php bin/console migrations:new add notes
 ```
 
-This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort correctly.
+This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starting the name with the UTC time sorts the files in the order they were made, on any machine. Zero-padded names such as `001_notes.sql` sort in order too.
 
 ### Running migrations
 
@@ -222,15 +222,15 @@ $app->container->set(Db::class, function () use ($config): Db {
 
 | Method | What it does |
 | --- | --- |
+| `Db::sqlite($file)` | Opens a SQLite file with the settings above |
 | `all($sql, $params = [])` | Returns every row, as a list of arrays |
 | `one($sql, $params = [])` | Returns the first row, or `null` |
 | `value($sql, $params = [])` | Returns the first column of the first row as a [`Value`](values.md) |
 | `run($sql, $params = [])` | Runs a statement and returns how many rows it changed |
 | `lastId()` | Returns the id of the last inserted row, as a string |
 | `transaction($fn)` | Runs `$fn` with the `Db` in a transaction and returns its result. Rolls back if it throws |
-| `Db::sqlite($file)` | Opens a SQLite file with the settings above |
-| `new Db($pdo)` | Wraps any PDO connection, set to throw on errors, fetch rows by name and use real prepared statements |
 | `$db->pdo` | The PDO connection, for anything the methods don't cover |
+| `new Db($pdo)` | Wraps any PDO connection, set to throw on errors, fetch rows by name and use real prepared statements |
 | `$migrations->run()` | Runs the migrations that haven't run yet and returns their file names |
 | `$migrations->all()` | Returns each migration's file name with the UTC time it ran, or `null` while it's pending |
 | `new Migrations($db, $dir)` | The `.sql` files in `$dir`, to run on `$db` |

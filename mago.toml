@@ -23,8 +23,8 @@ use-tabs = true
 minimum-fail-level = "Note"
 
 [linter.rules]
-# Off on purpose: complexity scores, named literals, boolean flags such as send($body), static closures, and
-# strict_types, which only App.php declares.
+# Off or loosened here: complexity scores, long parameter lists, method counts, named literals, boolean flags such
+# as send($body), ini_set(), static closures, and strict_types, which only App.php and Container.php declare.
 cyclomatic-complexity = { enabled = false }
 excessive-parameter-list = { enabled = false }
 function-name = { either = true }

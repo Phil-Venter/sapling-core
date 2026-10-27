@@ -19,7 +19,7 @@ Sapling's templates are plain PHP files in `views/`, rendered by `Sapling\Templa
 
 ## Rendering a template
 
-An action asks for `Template` in its constructor, renders a page with the variables it needs, and returns the HTML:
+An action asks for `Template` in its constructor, renders a template with the variables it needs, and returns the HTML:
 
 ```php
 #[Route('GET', '/notes')]
@@ -63,7 +63,7 @@ To review the prints that use neither, list them:
 grep -rnoE '<\?= *[^ ]+' views | grep -vF -e '<?= e(' -e '<?= attrs(' -e '<?= $this->'
 ```
 
-[Plain-text templates](#plain-text) show up too, since they leave out `e()` on purpose.
+[Plain-text templates](#plain-text) show up too, since they leave out `e()`.
 
 ## Partials
 

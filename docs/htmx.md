@@ -16,7 +16,7 @@
 
 ## The htmx middleware
 
-Two of the fixes belong on every response. They fit in one small middleware in your app:
+Redirects and caching need a fix on every response. Both fit in one small middleware in your app:
 
 ```php
 use Closure;

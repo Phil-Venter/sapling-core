@@ -18,7 +18,7 @@ An action is the class that answers a request, what other frameworks call a cont
 
 ## Writing an action
 
-An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. Here's one that shows a note from the [database](database.md), with [`abort_if()`](helpers.md) for a missing one:
+An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. This one shows a note from the [database](database.md), with [`abort_if()`](helpers.md) for a missing one:
 
 ```php
 namespace App\Notes;
@@ -99,7 +99,7 @@ Like `#[Route]`, it can be repeated. The first one is outermost, so the login ch
 
 ## Adding routes in code
 
-Routes can also be added in code, which suits one-file apps and tests. `$app->router->add()` takes a class name, an object or a closure:
+Routes can also be added in code, for one-file apps and tests. `$app->router->add()` takes a class name, an object or a closure:
 
 ```php
 $app->router->add('GET', '/hello/:name', function (Request $request): Response {

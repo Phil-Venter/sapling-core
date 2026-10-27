@@ -72,7 +72,7 @@ $debug = $config->get('debug');
 
 ### Missing settings
 
-`get()` throws a `LogicException` that names a missing setting, since that's usually a typo. When a setting is optional, pass a default:
+`get()` throws a `LogicException` that names a missing setting. When a setting is optional, pass a default:
 
 ```php
 $lifetime = $config->get('session_lifetime', 0);

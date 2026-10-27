@@ -155,7 +155,7 @@ Any other exception, such as an `InvalidArgumentException` from a bug, is a cras
 
 ## Adding commands in code
 
-Like routes, commands can also be added in code, which suits one-file apps. `$app->commands->add()` takes a class name, an object or a closure:
+Like routes, commands can also be added in code, for one-file apps. `$app->commands->add()` takes a class name, an object or a closure:
 
 ```php
 $app->commands->add('greet', function (Console $console): int {

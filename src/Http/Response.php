@@ -13,7 +13,7 @@ final class Response
 	public private(set) ?string $file = null;
 
 	/**
-	 * Use html(), text(), json(), redirect() or file() for the common cases, which also set the Content-Type.
+	 * Use html(), text(), json(), redirect() or file() for the common cases.
 	 *
 	 * @param array<string, string|list<string>> $headers
 	 */
@@ -91,6 +91,20 @@ final class Response
 	}
 
 	/**
+	 * The name is case-insensitive. One set to a list, such as several Set-Cookie values, is read with rawArray().
+	 */
+	public function header(string $name): Value
+	{
+		foreach ($this->headers as $key => $value) {
+			if (strcasecmp($key, $name) === 0) {
+				return new Value($value);
+			}
+		}
+
+		return new Value(null);
+	}
+
+	/**
 	 * A copy with the header set, replacing any of the same name, ignoring case.
 	 *
 	 * @param string|list<string> $value
@@ -111,20 +125,6 @@ final class Response
 		$copy->headers[$name] = $value;
 
 		return $copy;
-	}
-
-	/**
-	 * The name is case-insensitive. One set to a list, such as several Set-Cookie values, is read with rawArray().
-	 */
-	public function header(string $name): Value
-	{
-		foreach ($this->headers as $key => $value) {
-			if (strcasecmp($key, $name) === 0) {
-				return new Value($value);
-			}
-		}
-
-		return new Value(null);
 	}
 
 	/**

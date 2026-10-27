@@ -26,7 +26,7 @@ abort_if($note === null, 404, 'That note does not exist.');
 abort_if($note['user_id'] !== $userId, 403);
 ```
 
-Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response. Error pages get the [security headers](middleware.md#security-headers) like any other page.
+Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. The error then passes back out through the middleware as a response. Error responses get the [security headers](middleware.md#security-headers) like any other response.
 
 > [!WARNING]
 > The message is shown to the visitor. Keep internal details, like another exception's message, out of it.
@@ -86,10 +86,10 @@ Deprecation notices don't throw. PHP still reports them. Fatal errors, such as r
 
 ## Logging
 
-Sapling writes one line per crash or 5xx `HttpException` with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there, which is usually where the fix belongs:
+Sapling writes one line per crash or 5xx `HttpException` with PHP's `error_log()`. When the error was thrown inside Sapling or a package, the line also names the line of your own code that led there:
 
 ```text
-GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:57 from /srv/app/app/Notes/Download.php:21
+GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:55 from /srv/app/app/Notes/Download.php:21
 ```
 
 ### Where the log goes

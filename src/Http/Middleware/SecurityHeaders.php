@@ -22,7 +22,7 @@ final readonly class SecurityHeaders
 	];
 
 	/**
-	 * The content_policy setting. Each directive replaces the default of the same name, such as script-src.
+	 * The content_policy setting. Each directive replaces the default of the same name, such as style-src.
 	 *
 	 * @param array<string, string> $policy
 	 */

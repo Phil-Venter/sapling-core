@@ -160,7 +160,7 @@ Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.p
 
 | Middleware | What it does | Settings |
 | --- | --- | --- |
-| `SecurityHeaders` | Sets the browser security headers and a content policy | Policy directives, passed to its constructor |
+| `SecurityHeaders` | Sets the browser security headers and a content policy | `content_policy` |
 | `Csrf` | Refuses writes that a browser sent from another site | `cors_origins`, whose sites can also write |
 | `Cors` | Lets sites on other domains call the app from a browser | `cors_origins`, `cors_credentials` |
 

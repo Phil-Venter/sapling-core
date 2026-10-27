@@ -206,7 +206,7 @@ return Response::redirect($next);
 
 ### Error responses
 
-For an error, you don't build a response. `abort()` stops the request with an error status from anywhere, including middleware and templates:
+For an error, `abort()` stops the request with an error status from anywhere, including middleware and templates:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
@@ -251,7 +251,7 @@ find public/downloads -mindepth 1 -maxdepth 1 -type d -mmin +60 -exec rm -rf {} 
 
 ## Reading a response
 
-Middleware reads what the action returned, and tests read what `handle()` gives back. Both can use `status`, `headers` and `body`, and two methods mirror the request's. `data()` decodes the body by its `Content-Type`, and `header()` reads a header case-insensitively:
+Middleware reads what the action returned, and tests read what `handle()` gives back. Both can use `status`, `headers` and `body`. As on the request, `data()` decodes the body by its `Content-Type`, and `header()` reads a header case-insensitively:
 
 ```php
 $response = $app->handle(new Request('GET', '/api/notes/7'));
@@ -290,9 +290,9 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | `Response::redirect($url, $status = 302)` | Returns a redirect |
 | `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent. Throws `RuntimeException` when the file is missing |
 | `Response::error($e)` | Returns plain text with an `HttpException`'s status and message, for an [error handler](errors.md#showing-your-own-error-page) |
-| `new Response($body, $status = 200, $headers = [])` | Returns any other response |
-| `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
+| `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
 | `send($body = true)` | Sends the response. `App::run()` calls it |
 | `$response->status`, `headers`, `body`, `file` | Read-only. `headers` keeps each name as it was set, and `file` holds a download's path |
+| `new Response($body, $status = 200, $headers = [])` | Builds any other response |

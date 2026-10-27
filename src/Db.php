@@ -3,7 +3,7 @@
 namespace Sapling;
 
 /**
- * A thin layer over PDO that runs SQL with ? placeholders.
+ * Wraps PDO to run SQL with ? placeholders.
  */
 final readonly class Db
 {
