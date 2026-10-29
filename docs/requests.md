@@ -241,6 +241,9 @@ function publish(string $file, string $public): string
 }
 ```
 
+> [!WARNING]
+> Publish only files your app wrote itself, such as an export, and send uploads with `Response::file()`. The web server sends a published file as its extension says, without the download headers of `Response::file()` or the [security headers](middleware.md#security-headers), which lets an uploaded `.html` or `.svg` file run as a page on your site and a `.php` file run as PHP.
+
 The action [asks for `App`](container.md#asking-for-what-you-need) in its constructor, as `private App $app`, to find `public/`, and redirects to the URL:
 
 ```php
