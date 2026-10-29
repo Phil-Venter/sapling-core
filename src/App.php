@@ -272,19 +272,14 @@ final class App
 		return $routes !== [] || $commands !== [];
 	}
 
-	/** @throws HttpException */
-	private function dispatch(Request $request): Response
+	/** @param class-string|object $handler */
+	private function resolve(string|object $handler): callable
 	{
-		$route = $this->router->match($request->method, $request->path);
-		$request->params = $route['params'];
-		$action = function (Request $request) use ($route): Response {
-			/** @var callable(Request): Response $handler */
-			$handler = $this->resolve($route['action']);
+		if (!is_string($handler)) {
+			return $handler;
+		}
 
-			return $handler($request);
-		};
-
-		return $this->pipeline($route['middleware'], $action)($request);
+		return $this->container->get($handler);
 	}
 
 	/**
@@ -305,6 +300,20 @@ final class App
 		}
 
 		return $next;
+	}
+
+	/** @throws HttpException */
+	private function dispatch(Request $request): Response
+	{
+		$route = $this->router->match($request->method, $request->path);
+		$request->params = $route['params'];
+		$action = function (Request $request) use ($route): Response {
+			/** @var callable(Request): Response $handler */
+			$handler = $this->resolve($route['action']);
+			return $handler($request);
+		};
+
+		return $this->pipeline($route['middleware'], $action)($request);
 	}
 
 	/**
@@ -359,16 +368,6 @@ final class App
 		}
 
 		return $this->answerError(new HttpException(500, previous: $e), $request);
-	}
-
-	/** @param class-string|object $handler */
-	private function resolve(string|object $handler): callable
-	{
-		if (is_string($handler)) {
-			return $this->container->get($handler);
-		}
-
-		return $handler;
 	}
 
 	private function throwOnError(int $severity, string $message, string $file, int $line): bool
