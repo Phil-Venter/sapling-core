@@ -82,11 +82,11 @@ final class Response
 	 */
 	public static function fromCrash(\Throwable $e, bool $debug, string $basePath): self
 	{
-		if (!$debug) {
-			return self::text('Internal Server Error', 500);
+		if ($debug) {
+			return self::html(DebugPage::render($e, $basePath), 500);
 		}
 
-		return self::html(DebugPage::render($e, $basePath), 500);
+		return self::text('Internal Server Error', 500);
 	}
 
 	/**
