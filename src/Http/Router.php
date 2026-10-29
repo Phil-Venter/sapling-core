@@ -3,7 +3,7 @@
 namespace Sapling\Http;
 
 /**
- * Matches a method and path to a route. A fixed segment wins over a :param at the same level, so /notes/new matches before /notes/:id.
+ * Matches a method and path to a route. Among the routes for a method, a fixed segment wins over a :param at the same level, so /notes/new matches before /notes/:id.
  */
 final class Router
 {
