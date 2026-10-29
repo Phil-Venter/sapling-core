@@ -43,13 +43,11 @@ test('send() passes a string body and its Content-Type as they are', function ()
 	]);
 });
 
-test('only a GET follows redirects', function () {
-	$followed = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
-	$returned = $this->client->send(ClientRequest::form('POST', serverUrl('/notes'), ['body' => 'x']));
+test('a redirect comes back as the reply', function () {
+	$reply = $this->client->send(new ClientRequest('GET', serverUrl('/old-address')));
 
-	expect([$followed->status, $followed->body])->toBe([200, 'notes']);
-	expect($followed->headers)->not->toHaveKey('location');
-	expect([$returned->status, $returned->headers['location']])->toBe([302, '/notes']);
+	expect($reply->status)->toBe(301);
+	expect($reply->headers['location'])->toBe('/notes');
 });
 
 test('HEAD returns the headers with an empty body', function () {
@@ -95,15 +93,6 @@ test('only http and https URLs are allowed', function () {
 
 	expect($reply->status)->toBe(0);
 	expect($reply->body)->toStartWith('GET file:///etc/hosts failed:');
-});
-
-test('a redirect to anything but http or https is refused', function () {
-	$url = serverUrl('/to-a-file');
-
-	$reply = $this->client->send(new ClientRequest('GET', $url));
-
-	expect($reply->status)->toBe(0);
-	expect($reply->body)->toStartWith("GET {$url} failed:");
 });
 
 test('sendAll() keeps the requests\' keys and order', function () {

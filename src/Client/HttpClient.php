@@ -16,7 +16,7 @@ final class HttpClient
 	public function __construct(private readonly int $timeout = 30) {}
 
 	/**
-	 * Follows redirects for GET and HEAD. An error status is a normal reply. A connection that fails or times out gives status 0, with the error as the body.
+	 * A redirect or an error status is a normal reply. A connection that fails or times out gives status 0, with the error as the body.
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{
@@ -109,10 +109,7 @@ final class HttpClient
 			CURLOPT_TIMEOUT => $this->timeout,
 			CURLOPT_ENCODING => '',
 			CURLOPT_NOBODY => $request->method === 'HEAD',
-			CURLOPT_FOLLOWLOCATION => in_array($request->method, ['GET', 'HEAD'], true),
-			CURLOPT_MAXREDIRS => 5,
 			CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-			CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 		]);
 
 		$hasBody = $request->body !== '' && $request->body !== [];

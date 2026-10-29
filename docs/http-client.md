@@ -144,10 +144,10 @@ A request gives up after 30 seconds. When a visitor waits on it, register a clie
 $app->container->set(HttpClient::class, fn(): HttpClient => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects, while other methods get the redirect back as the reply. Only `http` and `https` URLs are allowed, even for a redirect. TLS certificates are always checked, and compressed replies are unpacked.
+A redirect comes back as the reply, as an error status does. To follow one, send a new request to its `Location` header, which can also be a path on the same host. Only `http` and `https` URLs are allowed, TLS certificates are always checked, and compressed replies are unpacked.
 
 > [!WARNING]
-> A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.
+> A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it, and again for each redirect you follow.
 
 ## Method reference
 
