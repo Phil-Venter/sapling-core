@@ -98,19 +98,15 @@ strict-array-index-existence = true
 # Public methods list what they throw with @throws. Exceptions that mean a bug or a broken server aren't listed: LogicException covers duplicate routes, missing settings and a bad app_key or CORS setting, and Error covers TypeError.
 check-throws = true
 unchecked-exceptions = ["LogicException", "Error"]
-unchecked-exception-classes = [
-	"ErrorException",
-	"Random\\RandomException",
-	"ReflectionException",
-	"SodiumException",
-]
+unchecked-exception-classes = ["ErrorException", "Random\\RandomException", "ReflectionException", "SodiumException"]
 check-missing-override = true
 find-unused-parameters = true
 strict-list-index-checks = true
 no-boolean-literal-comparison = true
 check-missing-type-hints = true
-check-closure-missing-type-hints = true
-check-arrow-function-missing-type-hints = true
+# Closures can leave out their return type. These settings cover parameter types too.
+check-closure-missing-type-hints = false
+check-arrow-function-missing-type-hints = false
 register-super-globals = true
 find-overly-wide-return-types = true
 check-property-initialization = true

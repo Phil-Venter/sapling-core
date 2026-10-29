@@ -57,7 +57,7 @@ final class App
 		$this->container->set(Container::class, $this->container);
 		$this->container->set(Router::class, $this->router);
 		$this->container->set(CommandList::class, $this->commands);
-		$this->container->set(Template::class, fn(): Template => new Template($this->path('views')));
+		$this->container->set(Template::class, fn() => new Template($this->path('views')));
 
 		$this->commands->add(ListCommands::NAME, ListCommands::class, ListCommands::DESCRIPTION);
 		$this->commands->add(ListRoutes::NAME, ListRoutes::class, ListRoutes::DESCRIPTION);
@@ -82,20 +82,14 @@ final class App
 		$app->trustedProxies = $config->get('trusted_proxies', []);
 
 		$app->container->set(Config::class, $config);
-		$app->container->set(Session::class, fn(): Session => new Session($config->get('session_lifetime', 0)));
-		$app->container->set(Crypto::class, fn(): Crypto => new Crypto($config->get('app_key')));
-
-		$app->container->set(
-			SecurityHeaders::class,
-			fn(): SecurityHeaders => new SecurityHeaders($config->get('content_policy', [])),
-		);
-
+		$app->container->set(Session::class, fn() => new Session($config->get('session_lifetime', 0)));
+		$app->container->set(Crypto::class, fn() => new Crypto($config->get('app_key')));
+		$app->container->set(SecurityHeaders::class, fn() => new SecurityHeaders($config->get('content_policy', [])));
 		$app->container->set(
 			Cors::class,
-			fn(): Cors => new Cors($config->get('cors_origins', []), $config->get('cors_credentials', false)),
+			fn() => new Cors($config->get('cors_origins', []), $config->get('cors_credentials', false)),
 		);
-
-		$app->container->set(Csrf::class, fn(): Csrf => new Csrf($config->get('cors_origins', [])));
+		$app->container->set(Csrf::class, fn() => new Csrf($config->get('cors_origins', [])));
 
 		$app->commands->add(NewMigration::NAME, NewMigration::class, NewMigration::DESCRIPTION);
 		$app->commands->add(RunMigrations::NAME, RunMigrations::class, RunMigrations::DESCRIPTION);
