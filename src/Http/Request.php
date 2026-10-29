@@ -39,8 +39,7 @@ final class Request
 	}
 
 	/**
-	 * A POST with _method set to PUT, PATCH or DELETE becomes that method. When the connection comes from one of
-	 * $trustedProxies, or any with ['*'], the ip is the visitor's, from X-Forwarded-For.
+	 * A POST with _method set to PUT, PATCH or DELETE becomes that method. When the connection comes from one of $trustedProxies, or any with ['*'], the ip is the visitor's, from X-Forwarded-For.
 	 *
 	 * @param list<string> $trustedProxies
 	 */
@@ -118,8 +117,7 @@ final class Request
 			return $remote;
 		}
 
-		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. No address matches
-		// '*', which leaves the one the connecting proxy added.
+		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. No address matches '*', which leaves the one the connecting proxy added.
 		$hops = array_map(trim(...), explode(',', $forwarded));
 		foreach (array_reverse($hops) as $hop) {
 			if (!in_array($hop, $trusted, true)) {
@@ -147,8 +145,7 @@ final class Request
 	}
 
 	/**
-	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read
-	 * deeper, as Value::get() does.
+	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
 	 *
 	 * @throws HttpException 400 when the body doesn't decode.
 	 */

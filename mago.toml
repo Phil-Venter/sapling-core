@@ -21,8 +21,7 @@ use-tabs = true
 minimum-fail-level = "Note"
 
 [linter.rules]
-# Off or loosened here: complexity scores, long parameter lists, method counts, named literals, boolean flags such
-# as send($body), ini_set(), static closures, and strict_types, which only App.php and Container.php declare.
+# Off or loosened here: complexity scores, long parameter lists, method counts, named literals, boolean flags such as send($body), ini_set(), static closures, and strict_types, which only App.php and Container.php declare.
 cyclomatic-complexity = { enabled = false }
 excessive-parameter-list = { enabled = false }
 function-name = { either = true }
@@ -96,9 +95,7 @@ find-unused-expressions = true
 analyze-dead-code = true
 memoize-properties = true
 strict-array-index-existence = true
-# Public methods list what they throw with @throws. Exceptions that mean a bug or a broken server aren't listed:
-# LogicException covers duplicate routes, missing settings and a bad app_key or CORS setting, and Error covers
-# TypeError.
+# Public methods list what they throw with @throws. Exceptions that mean a bug or a broken server aren't listed: LogicException covers duplicate routes, missing settings and a bad app_key or CORS setting, and Error covers TypeError.
 check-throws = true
 unchecked-exceptions = ["LogicException", "Error"]
 unchecked-exception-classes = [

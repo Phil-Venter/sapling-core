@@ -7,8 +7,7 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 /**
- * Turns away a POST, PUT, PATCH or DELETE that a browser sent from another site. Browsers say where a request comes
- * from in Sec-Fetch-Site, or in Origin when they're older.
+ * Turns away a POST, PUT, PATCH or DELETE that a browser sent from another site. Browsers say where a request comes from in Sec-Fetch-Site, or in Origin when they're older.
  */
 final readonly class Csrf
 {

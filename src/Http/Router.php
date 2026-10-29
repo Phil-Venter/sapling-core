@@ -3,8 +3,7 @@
 namespace Sapling\Http;
 
 /**
- * Matches a method and path to a route. A fixed segment wins over a :param at the same level, so /notes/new matches
- * before /notes/:id.
+ * Matches a method and path to a route. A fixed segment wins over a :param at the same level, so /notes/new matches before /notes/:id.
  */
 final class Router
 {
@@ -16,8 +15,7 @@ final class Router
 	}
 
 	/**
-	 * Throws a LogicException when the method and path are already taken, or a :param name is used twice or isn't a
-	 * plain name.
+	 * Throws a LogicException when the method and path are already taken, or a :param name is used twice or isn't a plain name.
 	 *
 	 * @param class-string|object $action
 	 * @param list<class-string|object> $middleware

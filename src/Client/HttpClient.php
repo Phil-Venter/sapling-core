@@ -16,8 +16,7 @@ final class HttpClient
 	public function __construct(private readonly int $timeout = 30) {}
 
 	/**
-	 * Follows redirects for GET and HEAD. An error status is a normal reply. A connection that fails or times out
-	 * gives status 0, with the error as the body.
+	 * Follows redirects for GET and HEAD. An error status is a normal reply. A connection that fails or times out gives status 0, with the error as the body.
 	 */
 	public function send(ClientRequest $request): ClientResponse
 	{

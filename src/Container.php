@@ -23,8 +23,7 @@ final class Container
 	private array $building = [];
 
 	/**
-	 * The one shared instance of the class, built the first time. Constructor arguments come from their types,
-	 * #[Config] or their defaults.
+	 * The one shared instance of the class, built the first time. Constructor arguments come from their types, #[Config] or their defaults.
 	 *
 	 * @template T of object
 	 * @param class-string<T> $id
@@ -42,8 +41,7 @@ final class Container
 	}
 
 	/**
-	 * Registers an object, or a closure that builds it the first time it's asked for. Throws a LogicException once
-	 * get() has handed the class out.
+	 * Registers an object, or a closure that builds it the first time it's asked for. Throws a LogicException once get() has handed the class out.
 	 */
 	public function set(string $id, object $value): void
 	{

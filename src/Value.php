@@ -3,8 +3,7 @@
 namespace Sapling;
 
 /**
- * A value from outside the app, such as a form field, query parameter, cookie or command-line option, read as the
- * type you need. A value that's missing, or can't be read as that type, gives the default.
+ * A value from outside the app, such as a form field, query parameter, cookie or command-line option, read as the type you need. A value that's missing, or can't be read as that type, gives the default.
  */
 final readonly class Value
 {
@@ -67,8 +66,7 @@ final readonly class Value
 	}
 
 	/**
-	 * The default picks the enum. enum(Sort::Newest) reads 'oldest' as Sort::Oldest and anything else as
-	 * Sort::Newest. An int-backed enum reads the value as int() does.
+	 * The default picks the enum. enum(Sort::Newest) reads 'oldest' as Sort::Oldest and anything else as Sort::Newest. An int-backed enum reads the value as int() does.
 	 *
 	 * @template T of \BackedEnum
 	 * @param T $default

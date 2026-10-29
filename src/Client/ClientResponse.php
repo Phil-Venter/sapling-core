@@ -32,8 +32,7 @@ final readonly class ClientResponse
 	}
 
 	/**
-	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read
-	 * deeper, as Value::get() does.
+	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
 	 *
 	 * @throws \JsonException When a JSON body is invalid.
 	 * @throws \RuntimeException When an XML body is invalid.

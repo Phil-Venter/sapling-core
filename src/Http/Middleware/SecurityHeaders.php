@@ -6,8 +6,7 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 
 /**
- * Sets the browser security headers and a content policy, unless the response already has them. It allows inline
- * styles but not inline scripts.
+ * Sets the browser security headers and a content policy, unless the response already has them. It allows inline styles but not inline scripts.
  */
 final readonly class SecurityHeaders
 {

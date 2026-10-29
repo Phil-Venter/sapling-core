@@ -85,8 +85,7 @@ final class Data
 	}
 
 	/**
-	 * Decodes a body by its Content-Type, as JSON, XML or a form. An empty body gives null, and any other type gives
-	 * the body as it is.
+	 * Decodes a body by its Content-Type, as JSON, XML or a form. An empty body gives null, and any other type gives the body as it is.
 	 *
 	 * @throws \JsonException When a JSON body is invalid.
 	 * @throws \RuntimeException When an XML body is invalid.

@@ -35,8 +35,7 @@ if (!function_exists('abort_if')) {
 
 if (!function_exists('attr')) {
 	/**
-	 * One HTML attribute, escaped, such as attr('class', ['note', 'pinned']) for class="note pinned". true gives a
-	 * bare attribute, and null, false or an empty value gives null.
+	 * One HTML attribute, escaped, such as attr('class', ['note', 'pinned']) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value gives null.
 	 */
 	function attr(string $key, mixed $value = null): ?string
 	{
@@ -71,8 +70,7 @@ if (!function_exists('attrs')) {
 
 if (!function_exists('blank')) {
 	/**
-	 * Whether the value is empty, meaning null, a blank string or an empty array or Countable. '0', 0 and false
-	 * aren't blank. A Value has to be read as a type first, as in blank($value->string()).
+	 * Whether the value is empty, meaning null, a blank string or an empty array or Countable. '0', 0 and false aren't blank. A Value has to be read as a type first, as in blank($value->string()).
 	 */
 	function blank(mixed $value): bool
 	{
@@ -90,8 +88,7 @@ if (!function_exists('blank')) {
 
 if (!function_exists('datetime')) {
 	/**
-	 * A DateTimeImmutable in $timezone, or in the default timezone. A date string without its own zone is read in
-	 * $timezone.
+	 * A DateTimeImmutable in $timezone, or in the default timezone. A date string without its own zone is read in $timezone.
 	 *
 	 * @throws DateInvalidTimeZoneException When $timezone isn't a known timezone.
 	 * @throws DateMalformedStringException When $value is a string PHP can't read as a date.
@@ -134,8 +131,7 @@ if (!function_exists('dd')) {
 
 if (!function_exists('e')) {
 	/**
-	 * Escapes a value for HTML. A backed enum prints its value. A Value has to be read as a type first, as in
-	 * e($value->string()).
+	 * Escapes a value for HTML. A backed enum prints its value. A Value has to be read as a type first, as in e($value->string()).
 	 */
 	function e(mixed $value): string
 	{

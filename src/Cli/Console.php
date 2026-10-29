@@ -28,8 +28,7 @@ final readonly class Console
 	private mixed $input;
 
 	/**
-	 * The first word is the command, --name=value is an option, --name is a flag and the rest are arguments, as is
-	 * every word after --. Tests can pass $input to stand in for standard input.
+	 * The first word is the command, --name=value is an option, --name is a flag and the rest are arguments, as is every word after --. Tests can pass $input to stand in for standard input.
 	 *
 	 * @param list<string> $argv
 	 * @param resource|null $input

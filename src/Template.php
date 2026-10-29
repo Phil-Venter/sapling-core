@@ -77,8 +77,7 @@ final class Template
 	}
 
 	/**
-	 * Starts a component, as in component('_card', ['title' => 'Notes']). What's printed until end() is its default
-	 * slot.
+	 * Starts a component, as in component('_card', ['title' => 'Notes']). What's printed until end() is its default slot.
 	 *
 	 * @param array<string, mixed> $data
 	 */
@@ -89,8 +88,7 @@ final class Template
 	}
 
 	/**
-	 * Sets a named slot of the component it's in, as in slot('title', 'Notes'), or starts one that end() closes, as
-	 * in slot('footer').
+	 * Sets a named slot of the component it's in, as in slot('title', 'Notes'), or starts one that end() closes, as in slot('footer').
 	 */
 	public function slot(string $name, mixed $content = null): void
 	{
@@ -134,8 +132,7 @@ final class Template
 	}
 
 	/**
-	 * A slot of the component being rendered, or $default when it wasn't set. yield() is the default slot, and
-	 * yield('title') a named one.
+	 * A slot of the component being rendered, or $default when it wasn't set. yield() is the default slot, and yield('title') a named one.
 	 */
 	public function yield(string $name = '', mixed $default = null): mixed
 	{
@@ -151,8 +148,7 @@ final class Template
 	}
 
 	/**
-	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for
-	 * render('notes::list').
+	 * Lets prefix::name find templates in another folder, as in prefix('notes', __DIR__ . '/app/Notes') for render('notes::list').
 	 */
 	public function prefix(string $prefix, string $dir): void
 	{

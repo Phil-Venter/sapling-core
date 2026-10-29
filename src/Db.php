@@ -20,8 +20,7 @@ final readonly class Db
 	}
 
 	/**
-	 * Opens a SQLite file with WAL, synchronous NORMAL, foreign keys, a 5 second busy timeout and a 64 MB journal
-	 * size limit.
+	 * Opens a SQLite file with WAL, synchronous NORMAL, foreign keys, a 5 second busy timeout and a 64 MB journal size limit.
 	 *
 	 * @throws \RuntimeException When the file can't be opened.
 	 */

@@ -13,8 +13,7 @@ final readonly class ClientRequest
 	public array $headers;
 
 	/**
-	 * A string body goes as it is, so pass its Content-Type. An array goes as multipart form data, which can hold
-	 * CURLFile uploads. A header named twice in different cases keeps the last one.
+	 * A string body goes as it is, so pass its Content-Type. An array goes as multipart form data, which can hold CURLFile uploads. A header named twice in different cases keeps the last one.
 	 *
 	 * @param string|array<string, mixed> $body
 	 * @param array<string, string> $headers

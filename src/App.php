@@ -45,8 +45,7 @@ final class App
 	private array $trustedProxies = [];
 
 	/**
-	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build
-	 * an app from its config.
+	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build an app from its config.
 	 */
 	public function __construct(public readonly string $basePath, public readonly bool $debug = false)
 	{
@@ -67,8 +66,7 @@ final class App
 	}
 
 	/**
-	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders,
-	 * Cors, Csrf and the migrations commands.
+	 * Builds the app from its config: debug mode, the timezone, trusted proxies, Session, Crypto, SecurityHeaders, Cors, Csrf and the migrations commands.
 	 *
 	 * @throws \DateInvalidTimeZoneException When the timezone setting isn't a known timezone.
 	 */
@@ -107,8 +105,7 @@ final class App
 	}
 
 	/**
-	 * Registers each class in the folder and its subfolders that has a #[Route] or #[Command], as in
-	 * scan(__DIR__ . '/app', 'App').
+	 * Registers each class with a #[Route] or #[Command] in the folder and its subfolders, as in scan(__DIR__ . '/app', 'App').
 	 *
 	 * @throws \UnexpectedValueException When the folder doesn't exist.
 	 */
@@ -163,8 +160,7 @@ final class App
 	}
 
 	/**
-	 * Sets what turns an HttpException into a response. It's called with the exception and the request. The default
-	 * answers in plain text. Outside debug mode, a crash reaches it as a 500 whose previous exception is the crash.
+	 * Sets the handler that turns an HttpException into a response, given the exception and the request. The default answers in plain text. Outside debug mode, a crash reaches it as a 500 whose previous exception is the crash.
 	 *
 	 * @param class-string|object $handler
 	 */

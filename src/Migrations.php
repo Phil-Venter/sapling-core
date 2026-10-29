@@ -3,8 +3,7 @@
 namespace Sapling;
 
 /**
- * The .sql files in a folder, run on a database in name order, each in a transaction, and recorded in its migrations
- * table.
+ * The .sql files in a folder, run on a database in name order, each in a transaction, and recorded in its migrations table.
  */
 final readonly class Migrations
 {
