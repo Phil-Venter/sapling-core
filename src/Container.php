@@ -31,13 +31,7 @@ final class Container
 	 */
 	public function get(string $id): object
 	{
-		if (array_key_exists($id, $this->instances)) {
-			return $this->instances[$id];
-		}
-
-		$this->instances[$id] = $this->build($id);
-
-		return $this->instances[$id];
+		return $this->instances[$id] ??= $this->build($id);
 	}
 
 	/**
