@@ -26,7 +26,7 @@ if ($note === null) abort(404, 'That note does not exist.');
 if ($note['user_id'] !== $userId) abort(403);
 ```
 
-Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. Either way, the error passes back out through the middleware [as a response](middleware.md#answering-early), and gets the [security headers](middleware.md#security-headers) like any other.
+Without a message, the response uses the standard phrase for the status, such as Forbidden, or Error for a status Sapling doesn't know. The router throws the same kind of error for a 404 or a 405. Either way, the error passes back out through the middleware [as a response](middleware.md#answering-early), and gets the [security headers](middleware.md#security-headers) like any other.
 
 > [!WARNING]
 > The message is shown to the visitor.
@@ -115,6 +115,6 @@ ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 | --- | --- |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
-| `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
+| `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found, or Error for a status it doesn't know |
 | `$app->onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response |
 | `Response::error($e)` | The default answer, in plain text with the error's status and message |

@@ -28,7 +28,7 @@ final class HttpException extends \RuntimeException
 	];
 
 	/**
-	 * Without a message, the standard phrase for the status, such as Not Found.
+	 * Without a message, the standard phrase for the status, such as Not Found, or Error for one it doesn't know.
 	 *
 	 * @param array<string, string> $headers
 	 */
