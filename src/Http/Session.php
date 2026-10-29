@@ -88,6 +88,7 @@ final class Session
 		}
 
 		$https = !in_array($_SERVER['HTTPS'] ?? '', ['', 'off'], true);
+		// Taken from any client, not only trusted proxies, since it can only add Secure, and a forged one breaks only the sender's own session.
 		$proxiedHttps = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 
 		$options = [
