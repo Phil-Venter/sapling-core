@@ -32,7 +32,6 @@ final readonly class Value
 	public function int(int $default = 0): int
 	{
 		$int = $this->filter(FILTER_VALIDATE_INT);
-
 		if (!is_int($int)) {
 			return $default;
 		}
@@ -43,7 +42,6 @@ final readonly class Value
 	public function float(float $default = 0.0): float
 	{
 		$float = $this->filter(FILTER_VALIDATE_FLOAT);
-
 		if (!is_float($float)) {
 			return $default;
 		}
@@ -61,7 +59,6 @@ final readonly class Value
 		}
 
 		$bool = $this->filter(FILTER_VALIDATE_BOOL);
-
 		if (!is_bool($bool)) {
 			return $default;
 		}
@@ -80,7 +77,6 @@ final readonly class Value
 	public function enum(\BackedEnum $default): \BackedEnum
 	{
 		$value = $this->text();
-
 		if (is_int($default->value)) {
 			$value = $this->filter(FILTER_VALIDATE_INT);
 		}
@@ -91,7 +87,6 @@ final readonly class Value
 
 		/** @var T|null $case */
 		$case = $default::tryFrom($value);
-
 		return $case ?? $default;
 	}
 
@@ -111,7 +106,6 @@ final readonly class Value
 	public function get(string|int ...$keys): self
 	{
 		$value = $this->raw;
-
 		foreach ($keys as $key) {
 			if (is_object($value)) {
 				$value = get_object_vars($value);
@@ -158,7 +152,6 @@ final readonly class Value
 	private function filter(int $filter): int|float|bool|null
 	{
 		$text = $this->text();
-
 		if ($text === null) {
 			return null;
 		}

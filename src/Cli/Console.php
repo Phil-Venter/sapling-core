@@ -43,7 +43,6 @@ final readonly class Console
 		$words = array_slice($argv, 1);
 		$literal = [];
 		$end = array_search('--', $words, true);
-
 		if ($end !== false) {
 			$literal = array_slice($words, $end + 1);
 			$words = array_slice($words, 0, $end);
@@ -53,7 +52,6 @@ final readonly class Console
 			if (str_starts_with($word, '--')) {
 				$name = substr($word, 2);
 				$equals = strpos($name, '=');
-
 				if ($equals === false) {
 					$flags[$name] = true;
 					continue;
@@ -125,12 +123,10 @@ final readonly class Console
 		// At the end of input, the cursor is still after the question.
 		if ($line === false) {
 			echo PHP_EOL;
-
 			return new Value(null);
 		}
 
 		$answer = trim($line);
-
 		if ($answer === '') {
 			return new Value(null);
 		}
@@ -159,7 +155,6 @@ final readonly class Console
 	public function table(array $rows): void
 	{
 		$widths = [];
-
 		foreach ($rows as $row) {
 			foreach ($row as $column => $cell) {
 				$widths[$column] = max($widths[$column] ?? 0, (int) preg_match_all('/./su', $cell));
@@ -168,7 +163,6 @@ final readonly class Console
 
 		foreach ($rows as $row) {
 			$cells = [];
-
 			foreach ($row as $column => $cell) {
 				$padding = ($widths[$column] ?? 0) - (int) preg_match_all('/./su', $cell);
 				$cells[] = $cell . str_repeat(' ', max(0, $padding));

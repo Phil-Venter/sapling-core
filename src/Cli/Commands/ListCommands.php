@@ -20,10 +20,8 @@ final readonly class ListCommands
 	{
 		$rows = [];
 		$previous = null;
-
 		foreach ($this->commands->all() as $name => $command) {
 			$domain = strstr($name, ':', true);
-
 			if ($previous !== null && $domain !== $previous) {
 				$rows[] = [];
 			}
@@ -34,7 +32,6 @@ final readonly class ListCommands
 
 		$console->line('Commands:');
 		$console->table($rows);
-
 		return Console::SUCCESS;
 	}
 }

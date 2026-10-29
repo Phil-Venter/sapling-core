@@ -44,7 +44,6 @@ final readonly class ClientResponse
 		$type = $this->header('content-type');
 		$first = $type->get(0)->string();
 		$contentType = $type->string($first);
-
 		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 	}
 }

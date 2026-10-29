@@ -21,7 +21,6 @@ final class CommandList
 			$taken = $this->commands[$name]['action'];
 			$first = is_object($taken) ? $taken::class : $taken;
 			$second = is_object($action) ? $action::class : $action;
-
 			throw new \LogicException("Duplicate command {$name}: {$first} and {$second}");
 		}
 
@@ -43,7 +42,6 @@ final class CommandList
 	{
 		$commands = $this->commands;
 		ksort($commands);
-
 		return $commands;
 	}
 }

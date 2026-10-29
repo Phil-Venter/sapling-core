@@ -13,10 +13,8 @@ break-promoted-properties-list = false
 empty-line-after-class-like-constant = true
 empty-line-after-control-structure = true
 empty-line-after-property = true
-empty-line-before-return = true
 inline-single-breaking-value-argument = true
 separate-attributes = true
-sort-uses = "alpha-ascending"
 use-tabs = true
 
 [linter]

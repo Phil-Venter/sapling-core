@@ -25,7 +25,6 @@ final readonly class Config
 		$load =
 			/** @param array<string, string> $env */
 			static fn(string $__file, array $env): mixed => require $__file;
-
 		return new self($load($configFile, $env));
 	}
 
@@ -41,20 +40,17 @@ final readonly class Config
 
 		$env = [];
 		$lines = file($file);
-
 		if ($lines === false) {
 			throw new \RuntimeException("Cannot read {$file}");
 		}
 
 		foreach ($lines as $index => $line) {
 			$line = trim($line);
-
 			if ($line === '' || $line[0] === '#') {
 				continue;
 			}
 
 			$equals = strpos($line, '=');
-
 			if ($equals === false) {
 				$number = $index + 1;
 				throw new \RuntimeException("Expected KEY=value in {$file} on line {$number}");
@@ -70,7 +66,6 @@ final readonly class Config
 	private static function envValue(string $value): string
 	{
 		$quoted = [];
-
 		if (preg_match('/^(["\'])(.*?)\1(\s+#.*)?$/', $value, $quoted) === 1) {
 			return $quoted[2] ?? '';
 		}

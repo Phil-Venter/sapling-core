@@ -27,14 +27,12 @@ final readonly class Migrations
 	public function run(): array
 	{
 		$ran = [];
-
 		foreach ($this->all() as $name => $ranAt) {
 			if ($ranAt !== null) {
 				continue;
 			}
 
 			$sql = (string) file_get_contents("{$this->dir}/{$name}");
-
 			if (trim($sql) === '') {
 				continue;
 			}
@@ -63,7 +61,6 @@ final readonly class Migrations
 		$rows = $this->db->all($sql);
 		$ran = new Value(array_column($rows, 'ran_at', 'name'));
 		$all = [];
-
 		if ($files === false) {
 			$files = [];
 		}
@@ -72,7 +69,6 @@ final readonly class Migrations
 			$name = basename($file);
 			$ranAt = $ran->get($name)->string();
 			$all[$name] = null;
-
 			if ($ranAt !== '') {
 				$all[$name] = $ranAt;
 			}
@@ -87,7 +83,6 @@ final readonly class Migrations
 		// SQLite ignores foreign_keys inside a transaction.
 		$sqlite = $this->db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
 		$foreignKeys = $sqlite && $this->db->value('PRAGMA foreign_keys')->int() === 1;
-
 		if ($foreignKeys) {
 			$this->db->run('PRAGMA foreign_keys = OFF');
 		}
@@ -113,7 +108,6 @@ final readonly class Migrations
 	{
 		$this->db->pdo->exec($migration);
 		$broken = null;
-
 		if ($foreignKeys) {
 			$broken = $this->db->one('PRAGMA foreign_key_check');
 		}
@@ -122,7 +116,6 @@ final readonly class Migrations
 			$check = new Value($broken);
 			$table = $check->get('table')->string();
 			$parent = $check->get('parent')->string();
-
 			throw new \RuntimeException("{$name} leaves a row in {$table} that points at a missing row in {$parent}");
 		}
 

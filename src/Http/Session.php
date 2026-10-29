@@ -27,7 +27,6 @@ final class Session
 	public function get(string|int ...$keys): Value
 	{
 		$this->start();
-
 		return new Value($_SESSION)->get(...$keys);
 	}
 
@@ -49,7 +48,6 @@ final class Session
 	public function getFlash(string|int ...$keys): Value
 	{
 		$this->start();
-
 		return new Value($this->flash)->get(...$keys);
 	}
 
@@ -109,7 +107,6 @@ final class Session
 
 		// PHP only sends the cookie for a new id. Renewing a kept one keeps an active visitor signed in past $lifetime.
 		$kept = ($_COOKIE[(string) session_name()] ?? null) === session_id();
-
 		if ($this->lifetime > 0 && $kept) {
 			$this->sendCookie((string) session_id(), time() + $this->lifetime);
 		}

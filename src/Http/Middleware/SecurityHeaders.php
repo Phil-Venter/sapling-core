@@ -32,7 +32,6 @@ final readonly class SecurityHeaders
 	public function __invoke(Request $request, \Closure $next): Response
 	{
 		$policy = [];
-
 		foreach ([...self::POLICY, ...$this->policy] as $name => $sources) {
 			$policy[] = trim("{$name} {$sources}");
 		}

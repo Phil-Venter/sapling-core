@@ -66,7 +66,6 @@ final class Response
 		]);
 
 		$response->file = $path;
-
 		return $response;
 	}
 
@@ -113,7 +112,6 @@ final class Response
 	public function withHeader(string $name, string|array $value): self
 	{
 		$copy = clone $this;
-
 		foreach (array_keys($copy->headers) as $existing) {
 			if (strcasecmp($existing, $name) !== 0) {
 				continue;
@@ -123,7 +121,6 @@ final class Response
 		}
 
 		$copy->headers[$name] = $value;
-
 		return $copy;
 	}
 
@@ -137,7 +134,6 @@ final class Response
 	public function data(string|int ...$keys): Value
 	{
 		$contentType = $this->header('content-type')->string();
-
 		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 	}
 
@@ -148,7 +144,6 @@ final class Response
 	{
 		foreach ($this->headers as $name => $values) {
 			$replace = strcasecmp($name, 'Set-Cookie') !== 0;
-
 			foreach ((array) $values as $value) {
 				header("{$name}: {$value}", $replace);
 				$replace = false;
@@ -159,14 +154,12 @@ final class Response
 		http_response_code($this->status);
 
 		$bodiless = $this->status < 200 || $this->status === 204 || $this->status === 304;
-
 		if (!$body || $bodiless) {
 			return;
 		}
 
 		if ($this->file !== null) {
 			readfile($this->file);
-
 			return;
 		}
 

@@ -63,13 +63,11 @@ final class Request
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 		$override = $_POST['_method'] ?? null;
-
 		if ($method !== 'POST' || !is_string($override)) {
 			return $method;
 		}
 
 		$override = strtoupper($override);
-
 		if (!in_array($override, ['PUT', 'PATCH', 'DELETE'], true)) {
 			return $method;
 		}
@@ -82,7 +80,6 @@ final class Request
 		$uri = $_SERVER['REQUEST_URI'] ?? '/';
 		$path = explode('?', $uri, 2)[0];
 		$path = (string) preg_replace('#/+#', '/', $path);
-
 		return '/' . trim($path, '/');
 	}
 
@@ -90,7 +87,6 @@ final class Request
 	private static function readHeaders(): array
 	{
 		$headers = [];
-
 		foreach ($_SERVER as $key => $value) {
 			if (!str_starts_with($key, 'HTTP_') || !is_string($value)) {
 				continue;
@@ -103,7 +99,6 @@ final class Request
 		// PHP leaves these two out of the HTTP_ keys.
 		foreach (['CONTENT_TYPE' => 'content-type', 'CONTENT_LENGTH' => 'content-length'] as $key => $name) {
 			$value = $_SERVER[$key] ?? null;
-
 			if (is_string($value)) {
 				$headers[$name] = $value;
 			}
@@ -119,7 +114,6 @@ final class Request
 		$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
 		$any = in_array('*', $trusted, true);
 		$fromProxy = $any || in_array($remote, $trusted, true);
-
 		if (!is_string($forwarded) || !$fromProxy) {
 			return $remote;
 		}
@@ -127,7 +121,6 @@ final class Request
 		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. No address matches
 		// '*', which leaves the one the connecting proxy added.
 		$hops = array_map(trim(...), explode(',', $forwarded));
-
 		foreach (array_reverse($hops) as $hop) {
 			if (!in_array($hop, $trusted, true)) {
 				return $hop;
@@ -162,7 +155,6 @@ final class Request
 	public function data(string|int ...$keys): Value
 	{
 		$this->data ??= $this->decode();
-
 		return new Value($this->data)->get(...$keys);
 	}
 
@@ -191,7 +183,6 @@ final class Request
 		}
 
 		$type = $this->headers['content-type'] ?? '';
-
 		try {
 			return Data::decode($this->body, $type);
 		} catch (\JsonException|\RuntimeException $e) {

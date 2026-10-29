@@ -53,7 +53,6 @@ final class Container
 
 		if ($value instanceof \Closure) {
 			$this->factories[$id] = $value;
-
 			return;
 		}
 
@@ -66,13 +65,11 @@ final class Container
 	{
 		if (array_key_exists($id, $this->building)) {
 			$loop = implode(' -> ', [...array_keys($this->building), $id]);
-
 			throw new \LogicException("Circular dependency: {$loop}");
 		}
 
 		$this->building[$id] = true;
 		$arguments = [];
-
 		try {
 			if (array_key_exists($id, $this->factories)) {
 				return $this->factories[$id]($this);
@@ -80,7 +77,6 @@ final class Container
 
 			$reflection = new \ReflectionClass($id);
 			$parameters = $reflection->getConstructor()?->getParameters() ?? [];
-
 			foreach ($parameters as $parameter) {
 				$arguments[] = $this->argument($parameter, $id);
 			}
@@ -96,11 +92,9 @@ final class Container
 	private function argument(\ReflectionParameter $parameter, string $id): mixed
 	{
 		$attribute = $parameter->getAttributes(Attributes\Config::class)[0] ?? null;
-
 		if ($attribute !== null) {
 			$key = $attribute->newInstance()->key;
 			$config = $this->get(Config::class);
-
 			if ($parameter->isDefaultValueAvailable()) {
 				return $config->get($key, $parameter->getDefaultValue());
 			}
@@ -109,7 +103,6 @@ final class Container
 		}
 
 		$type = $parameter->getType();
-
 		if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
 			return $this->get($type->getName());
 		}

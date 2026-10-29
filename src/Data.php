@@ -40,7 +40,6 @@ final class Data
 	{
 		$data = [];
 		parse_str($form, $data);
-
 		return $data;
 	}
 
@@ -58,7 +57,6 @@ final class Data
 		self::writeElement($writer, $root, $data);
 
 		$writer->endDocument();
-
 		return $writer->outputMemory();
 	}
 
@@ -75,7 +73,6 @@ final class Data
 		$error = libxml_get_last_error();
 		libxml_clear_errors();
 		libxml_use_internal_errors($previous);
-
 		if ($element === false && $error !== false) {
 			throw new \RuntimeException('Invalid XML: ' . trim($error->message));
 		}
@@ -102,7 +99,6 @@ final class Data
 
 		$mime = strtolower(trim(explode(';', $contentType)[0]));
 		$format = preg_replace('#^.*[/+]#', '', $mime);
-
 		return match ($format) {
 			'json' => self::fromJson($body),
 			'xml' => self::fromXml($body),
@@ -126,10 +122,8 @@ final class Data
 		}
 
 		$writer->startElement($name);
-
 		foreach ($value as $key => $child) {
 			$key = (string) $key;
-
 			if (str_starts_with($key, '@')) {
 				$writer->writeAttribute(substr($key, 1), self::text($child));
 			}
@@ -137,7 +131,6 @@ final class Data
 
 		foreach ($value as $key => $child) {
 			$key = (string) $key;
-
 			if (str_starts_with($key, '@')) {
 				continue;
 			}
@@ -172,17 +165,14 @@ final class Data
 	private static function readElement(\SimpleXMLElement $element): array|string
 	{
 		$data = [];
-
 		foreach ($element->attributes() ?? [] as $name => $value) {
 			$data["@{$name}"] = (string) $value;
 		}
 
 		$prefixes = array_keys($element->getNamespaces(true) + ['' => '']);
-
 		foreach ($prefixes as $prefix) {
 			$children = $element->children($prefix, true) ?? [];
 			$counts = [];
-
 			/** @var \SimpleXMLElement $child */
 			foreach ($children as $child) {
 				$name = $child->getName();
@@ -192,7 +182,6 @@ final class Data
 			/** @var \SimpleXMLElement $child */
 			foreach ($children as $name => $child) {
 				$key = $name;
-
 				if ($prefix !== '') {
 					$key = "{$prefix}:{$name}";
 				}
@@ -207,7 +196,6 @@ final class Data
 		}
 
 		$text = trim((string) $element);
-
 		if ($data === []) {
 			return $text;
 		}

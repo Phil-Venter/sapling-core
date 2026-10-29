@@ -23,18 +23,14 @@ final readonly class ListMigrations
 	{
 		$dir = $this->app->path(RunMigrations::DIR);
 		$migrations = new Migrations($this->db, $dir)->all();
-
 		if ($migrations === []) {
 			$console->line('No migrations in ' . RunMigrations::DIR . '.');
-
 			return Console::SUCCESS;
 		}
 
 		$rows = [];
-
 		foreach ($migrations as $name => $ranAt) {
 			$status = 'pending';
-
 			if (trim((string) file_get_contents("{$dir}/{$name}")) === '') {
 				$status = 'empty, skipped';
 			}
@@ -47,7 +43,6 @@ final readonly class ListMigrations
 		}
 
 		$console->table($rows);
-
 		return Console::SUCCESS;
 	}
 }

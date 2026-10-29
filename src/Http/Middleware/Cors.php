@@ -20,7 +20,6 @@ final readonly class Cors
 	public function __construct(private array $origins, private bool $allowCredentials = false)
 	{
 		$this->anyOrigin = in_array('*', $origins, true);
-
 		if ($this->anyOrigin && $allowCredentials) {
 			throw new \InvalidArgumentException('Cannot use cors_credentials with cors_origins *');
 		}
@@ -43,14 +42,12 @@ final readonly class Cors
 	{
 		$origin = $request->header('origin')->string();
 		$method = $request->header('access-control-request-method')->string();
-
 		if ($origin !== '' && $request->method === 'OPTIONS' && $method !== '') {
 			return $this->preflight($request, $origin, $method);
 		}
 
 		$allowed = $this->allowedOrigin($origin);
 		$response = $next($request);
-
 		foreach ($this->corsHeaders($allowed, $response->headers) as $name => $value) {
 			$response = $response->withHeader($name, $value);
 		}
@@ -62,7 +59,6 @@ final readonly class Cors
 	{
 		$allowed = $this->allowedOrigin($origin);
 		$vary = 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers';
-
 		if ($allowed === null) {
 			return new Response('', 403, ['Vary' => $vary]);
 		}
@@ -75,7 +71,6 @@ final readonly class Cors
 		];
 
 		$requested = $request->header('access-control-request-headers')->string();
-
 		if ($requested !== '') {
 			$headers['Access-Control-Allow-Headers'] = $requested;
 		}
@@ -107,10 +102,8 @@ final readonly class Cors
 	private function corsHeaders(?string $allowed, array $existing): array
 	{
 		$headers = [];
-
 		if (!$this->anyOrigin) {
 			$headers['Vary'] = 'Origin';
-
 			foreach ($existing as $name => $value) {
 				if (strcasecmp($name, 'Vary') !== 0) {
 					continue;
@@ -125,7 +118,6 @@ final readonly class Cors
 		}
 
 		$headers['Access-Control-Allow-Origin'] = $allowed;
-
 		if ($this->allowCredentials) {
 			$headers['Access-Control-Allow-Credentials'] = 'true';
 		}

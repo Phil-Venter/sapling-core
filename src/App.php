@@ -76,7 +76,6 @@ final class App
 	{
 		$app = new self($basePath, $config->get('debug', false));
 		$timezone = $config->get('timezone', null);
-
 		if ($timezone !== null) {
 			$zone = new \DateTimeZone($timezone);
 			date_default_timezone_set($zone->getName());
@@ -119,11 +118,9 @@ final class App
 		$namespace = rtrim($namespace, '\\') . '\\';
 		$classes = [];
 		$directory = new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS);
-
 		/** @var \SplFileInfo $file */
 		foreach (new \RecursiveIteratorIterator($directory) as $file) {
 			$name = $file->getBasename('.php');
-
 			if ($file->getExtension() !== 'php' || preg_match('/^[A-Z]/', $name) !== 1 || str_contains($name, '.')) {
 				continue;
 			}
@@ -133,7 +130,6 @@ final class App
 		}
 
 		sort($classes);
-
 		foreach ($classes as $class) {
 			$this->register($class);
 		}
@@ -159,7 +155,6 @@ final class App
 	public function middleware(string|object $middleware, string $prefix = ''): void
 	{
 		$prefix = trim($prefix, '/');
-
 		if ($prefix !== '') {
 			$prefix = "/{$prefix}";
 		}
@@ -190,7 +185,6 @@ final class App
 
 		$request = Request::fromGlobals($this->trustedProxies);
 		$response = $this->handle($request);
-
 		$response->send(body: $request->method !== 'HEAD');
 	}
 
@@ -200,7 +194,6 @@ final class App
 	public function handle(Request $request): Response
 	{
 		$middleware = [];
-
 		foreach ($this->middleware as $registered) {
 			if (!str_starts_with("{$request->path}/", "{$registered['prefix']}/")) {
 				continue;
@@ -210,7 +203,6 @@ final class App
 		}
 
 		set_error_handler($this->throwOnError(...));
-
 		try {
 			return $this->pipeline($middleware, $this->dispatch(...))($request);
 		} finally {
@@ -224,31 +216,25 @@ final class App
 	public function runCommand(Console $console): int
 	{
 		$name = $console->command;
-
 		if ($name === '') {
 			$name = ListCommands::NAME;
 		}
 
 		$action = $this->commands->find($name);
-
 		if ($action === null) {
 			$console->error("Unknown command: {$name}");
 			$list = $this->resolve(ListCommands::class);
 			$list($console);
-
 			return Console::FAILURE;
 		}
 
 		set_error_handler($this->throwOnError(...));
-
 		try {
 			/** @var callable(Console): int $command */
 			$command = $this->resolve($action);
-
 			return $command($console);
 		} catch (UsageException $e) {
 			$console->error($e->getMessage());
-
 			return Console::FAILURE;
 		} catch (\Throwable $e) {
 			if (ini_get('error_log') !== '') {
@@ -256,7 +242,6 @@ final class App
 			}
 
 			$console->error((string) $e);
-
 			return Console::FAILURE;
 		} finally {
 			restore_error_handler();
@@ -270,7 +255,6 @@ final class App
 	{
 		$base = rtrim($this->basePath, '/\\');
 		$relative = ltrim($relative, '/\\');
-
 		return "{$base}/{$relative}";
 	}
 
@@ -281,7 +265,6 @@ final class App
 		$routes = $reflection->getAttributes(Route::class);
 		$commands = $reflection->getAttributes(Command::class);
 		$middleware = [];
-
 		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
 			$middleware[] = $attribute->newInstance()->class;
 		}
@@ -322,13 +305,11 @@ final class App
 	private function pipeline(array $middleware, \Closure $next): \Closure
 	{
 		$next = $this->answerErrors($next);
-
 		foreach (array_reverse($middleware) as $layer) {
 			$inner = $next;
 			$next = $this->answerErrors(function (Request $request) use ($layer, $inner): Response {
 				/** @var callable(Request, \Closure): Response $middleware */
 				$middleware = $this->resolve($layer);
-
 				return $middleware($request, $inner);
 			});
 		}
@@ -366,7 +347,6 @@ final class App
 		} catch (\Throwable $crash) {
 			// Not answerCrash(), which would call the broken handler again.
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $crash);
-
 			return Response::fromCrash($crash, $this->debug, $this->basePath);
 		}
 
@@ -384,7 +364,6 @@ final class App
 	private function answerCrash(\Throwable $e, Request $request): Response
 	{
 		new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
-
 		if ($this->debug) {
 			return Response::fromCrash($e, true, $this->basePath);
 		}

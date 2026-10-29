@@ -52,17 +52,14 @@ final class Template
 			};
 
 		ob_start();
-
 		try {
 			$run($file, $data + $this->shared);
-
 			if (count($this->open) < $opened) {
 				throw new \LogicException("end() in {$template} closes a component or slot it didn't open");
 			}
 
 			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
 			$unclosed = $this->open[$opened] ?? null;
-
 			if ($unclosed !== null) {
 				$kind = ucfirst($unclosed['kind']);
 				throw new \LogicException("{$kind} {$unclosed['name']} in {$template} has no end()");
@@ -73,7 +70,6 @@ final class Template
 			}
 
 			array_splice($this->open, $opened);
-
 			throw $e;
 		}
 
@@ -99,11 +95,9 @@ final class Template
 	public function slot(string $name, mixed $content = null): void
 	{
 		$component = $this->openComponent();
-
 		if (func_num_args() === 1) {
 			$this->open[] = ['kind' => 'slot', 'name' => $name, 'data' => [], 'slots' => []];
 			ob_start();
-
 			return;
 		}
 
@@ -119,23 +113,19 @@ final class Template
 	public function end(): void
 	{
 		$open = array_pop($this->open);
-
 		if ($open === null) {
 			throw new \LogicException('end() without an open slot() or component()');
 		}
 
 		$content = (string) ob_get_clean();
-
 		if ($open['kind'] === 'slot') {
 			$component = $this->openComponent();
 			$this->open[$component]['slots'][$open['name']] = $content;
-
 			return;
 		}
 
 		$outer = $this->slots;
 		$this->slots = ['' => $content, ...$open['slots']];
-
 		try {
 			echo $this->render($open['name'], $open['data']);
 		} finally {
@@ -176,11 +166,9 @@ final class Template
 		$name = $template;
 
 		$separator = strpos($template, '::');
-
 		if ($separator !== false) {
 			$prefix = substr($template, 0, $separator);
 			$name = substr($template, $separator + 2);
-
 			if (!array_key_exists($prefix, $this->prefixes)) {
 				throw new \LogicException("Unknown template prefix {$prefix} in {$template}");
 			}
@@ -189,7 +177,6 @@ final class Template
 		}
 
 		$file = "{$dir}/{$name}.{$this->suffix}";
-
 		if (!is_file($file)) {
 			throw new \RuntimeException("Template not found: {$file}");
 		}

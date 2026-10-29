@@ -65,7 +65,6 @@ if (!function_exists('attrs')) {
 	function attrs(array $attrs): string
 	{
 		$parts = array_map(attr(...), array_keys($attrs), $attrs);
-
 		return implode(' ', array_filter($parts, fn(?string $part): bool => $part !== null));
 	}
 }
@@ -107,7 +106,6 @@ if (!function_exists('datetime')) {
 		}
 
 		$zone = $timezone ?? date_default_timezone_get();
-
 		if (is_string($zone)) {
 			$zone = new DateTimeZone($zone);
 		}
@@ -158,7 +156,6 @@ if (!function_exists('uuid')) {
 		$time = str_pad(dechex((int) (microtime(true) * 1000)), 12, '0', STR_PAD_LEFT);
 		$random = bin2hex(random_bytes(10));
 		$variant = dechex(8 | (hexdec($random[3]) & 3));
-
 		return sprintf(
 			'%s-%s-7%s-%s%s-%s',
 			substr($time, 0, 8),

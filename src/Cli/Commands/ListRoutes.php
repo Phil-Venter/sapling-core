@@ -24,13 +24,11 @@ final readonly class ListRoutes
 		usort($routes, $this->byPathThenMethod(...));
 
 		$rows = [];
-
 		foreach ($routes as $route) {
 			$rows[] = [$route['method'], $route['path'], $route['action']];
 		}
 
 		$console->table($rows);
-
 		return Console::SUCCESS;
 	}
 
@@ -41,7 +39,6 @@ final readonly class ListRoutes
 	private function byPathThenMethod(array $a, array $b): int
 	{
 		$byPath = strnatcmp($a['path'], $b['path']);
-
 		if ($byPath !== 0) {
 			return $byPath;
 		}

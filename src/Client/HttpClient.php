@@ -27,7 +27,6 @@ final class HttpClient
 
 		$handle = $this->handle($request);
 		$content = (string) curl_exec($handle);
-
 		return $this->response($request, $handle, $content);
 	}
 
@@ -45,10 +44,9 @@ final class HttpClient
 		}
 
 		$multi = curl_multi_init();
-		$pairs = [];
-
 		curl_multi_setopt($multi, CURLMOPT_MAX_HOST_CONNECTIONS, 6);
 
+		$pairs = [];
 		foreach ($requests as $key => $request) {
 			$handle = $this->handle($request);
 			$pairs[$key] = [$request, $handle];
@@ -56,10 +54,8 @@ final class HttpClient
 		}
 
 		$running = 0;
-
 		do {
 			$status = curl_multi_exec($multi, $running);
-
 			if ($running > 0) {
 				curl_multi_select($multi);
 			}
@@ -71,7 +67,6 @@ final class HttpClient
 		}
 
 		$responses = [];
-
 		foreach ($pairs as $key => [$request, $handle]) {
 			$content = (string) curl_multi_getcontent($handle);
 			$responses[$key] = $this->response($request, $handle, $content);
@@ -88,7 +83,6 @@ final class HttpClient
 	public function fake(\Closure $answer): self
 	{
 		$this->fake = $answer;
-
 		return $this;
 	}
 
@@ -102,7 +96,6 @@ final class HttpClient
 		}
 
 		$lines = [];
-
 		foreach ($headers as $name => $value) {
 			$lines[] = "{$name}: {$value}";
 		}
@@ -137,7 +130,6 @@ final class HttpClient
 	{
 		if (curl_errno($handle) !== 0) {
 			$error = "{$request->method} {$request->url} failed: " . curl_error($handle);
-
 			return new ClientResponse($error, 0, []);
 		}
 
@@ -146,14 +138,12 @@ final class HttpClient
 		$head = trim(substr($content, 0, $size));
 		$lastBlock = strrpos($head, "\r\n\r\n");
 		$received = [];
-
 		if ($lastBlock !== false) {
 			$head = substr($head, $lastBlock + 4);
 		}
 
 		foreach (explode("\r\n", $head) as $line) {
 			$colon = strpos($line, ':');
-
 			if ($colon === false) {
 				continue;
 			}
@@ -163,7 +153,6 @@ final class HttpClient
 		}
 
 		$headers = [];
-
 		foreach ($received as $name => $values) {
 			if (count($values) === 1) {
 				$values = $values[0];

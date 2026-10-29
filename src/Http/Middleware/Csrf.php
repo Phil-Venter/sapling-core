@@ -37,13 +37,11 @@ final readonly class Csrf
 	private function allowed(Request $request): bool
 	{
 		$origin = $request->header('origin')->string();
-
 		if ($origin !== '' && in_array($origin, $this->trustedOrigins, true)) {
 			return true;
 		}
 
 		$site = $request->header('sec-fetch-site')->string();
-
 		if ($site !== '') {
 			return $site === 'same-origin' || $site === 'none';
 		}
@@ -59,7 +57,6 @@ final readonly class Csrf
 	{
 		$host = parse_url($origin, PHP_URL_HOST);
 		$port = parse_url($origin, PHP_URL_PORT);
-
 		if (!is_string($host)) {
 			return '';
 		}

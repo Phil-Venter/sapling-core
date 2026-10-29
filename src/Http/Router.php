@@ -29,7 +29,6 @@ final class Router
 		$path = '/' . implode('/', $segments);
 		$node = $this->tree;
 		$params = [];
-
 		foreach ($segments as $segment) {
 			if (!str_starts_with($segment, ':')) {
 				$node->fixed[$segment] ??= new RouteNode();
@@ -40,7 +39,6 @@ final class Router
 			$node->param ??= new RouteNode();
 			$node = $node->param;
 			$param = substr($segment, 1);
-
 			if (in_array($param, $params, true)) {
 				throw new \LogicException("Route {$method} {$path} uses :{$param} twice");
 			}
@@ -53,11 +51,9 @@ final class Router
 		}
 
 		$taken = $node->routes[$method]['action'] ?? null;
-
 		if ($taken !== null) {
 			$first = is_object($taken) ? $taken::class : $taken;
 			$second = is_object($action) ? $action::class : $action;
-
 			throw new \LogicException("Duplicate route {$method} {$path}: {$first} and {$second}");
 		}
 
@@ -77,17 +73,14 @@ final class Router
 	{
 		$allowed = [];
 		$segments = explode('/', trim($path, '/'));
-
 		foreach ($this->walk($this->tree, $segments) as [$node, $values]) {
 			$route = $node->routes[$method] ?? null;
-
 			if ($route === null && $method === 'HEAD') {
 				$route = $node->routes['GET'] ?? null;
 			}
 
 			if ($route !== null) {
 				$params = array_combine($route['params'], $values);
-
 				return ['action' => $route['action'], 'middleware' => $route['middleware'], 'params' => $params];
 			}
 
@@ -103,7 +96,6 @@ final class Router
 		}
 
 		$allow = implode(', ', array_unique($allowed));
-
 		throw new HttpException(405, headers: ['Allow' => $allow]);
 	}
 
@@ -126,19 +118,16 @@ final class Router
 	{
 		if ($segments === []) {
 			yield [$node, $values];
-
 			return;
 		}
 
 		$segment = array_shift($segments);
 		$fixed = $node->fixed[$segment] ?? null;
-
 		if ($fixed !== null) {
 			yield from $this->walk($fixed, $segments, $values);
 		}
 
 		$value = rawurldecode($segment);
-
 		if ($node->param !== null && $value !== '' && !str_contains($value, '/')) {
 			yield from $this->walk($node->param, $segments, [...$values, $value]);
 		}
@@ -149,7 +138,6 @@ final class Router
 	{
 		foreach ($node->routes as $method => $route) {
 			$action = is_object($route['action']) ? $route['action']::class : $route['action'];
-
 			yield ['method' => $method, 'path' => $route['path'], 'action' => $action];
 		}
 

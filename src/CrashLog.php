@@ -28,7 +28,6 @@ final readonly class CrashLog
 
 		$where = "{$e->getFile()}:{$e->getLine()}";
 		$appLine = $this->firstAppLine($e);
-
 		if ($appLine !== '') {
 			$where .= " from {$appLine}";
 		}
@@ -45,7 +44,6 @@ final readonly class CrashLog
 		/** @var array{file?: string, line?: int} $frame */
 		foreach ($e->getTrace() as $frame) {
 			$file = $frame['file'] ?? '';
-
 			if ($this->inApp($file)) {
 				return "{$file}:" . ($frame['line'] ?? 0);
 			}

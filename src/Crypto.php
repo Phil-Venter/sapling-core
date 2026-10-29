@@ -19,7 +19,6 @@ final readonly class Crypto
 	public function __construct(#[\SensitiveParameter] string $key)
 	{
 		$decoded = base64_decode($key, true);
-
 		if ($decoded === false || strlen($decoded) !== self::KEY_BYTES) {
 			throw new \InvalidArgumentException('app_key must be 32 bytes, base64-encoded');
 		}
@@ -34,7 +33,6 @@ final readonly class Crypto
 	{
 		$nonce = random_bytes(self::NONCE_BYTES);
 		$cipher = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt($secret, $context, $nonce, $this->key);
-
 		return base64_encode($nonce . $cipher);
 	}
 
@@ -53,7 +51,6 @@ final readonly class Crypto
 		$nonce = substr($raw, 0, self::NONCE_BYTES);
 		$cipher = substr($raw, self::NONCE_BYTES);
 		$secret = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($cipher, $context, $nonce, $this->key);
-
 		if ($secret === false) {
 			return null;
 		}

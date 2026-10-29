@@ -28,7 +28,6 @@ final readonly class RunMigrations
 	{
 		$migrations = new Migrations($this->db, $this->app->path(self::DIR));
 		$ran = $migrations->run();
-
 		foreach ($ran as $name) {
 			$console->line("Migrated {$name}");
 		}

@@ -18,7 +18,6 @@ final class DebugPage
 		$title = self::e($e::class);
 		$sections = self::exceptionHtml($e, $root, '');
 		$previous = $e->getPrevious();
-
 		while ($previous !== null) {
 			$sections .= self::exceptionHtml($previous, $root, 'Caused by ');
 			$previous = $previous->getPrevious();
@@ -58,7 +57,6 @@ final class DebugPage
 		$where = self::e(self::relative($e->getFile(), $root) . ':' . $e->getLine());
 		$code = self::excerpt($e->getFile(), $e->getLine());
 		$trace = self::trace($e, $root);
-
 		return <<<HTML
 			<h1>{$class}</h1>
 			<p class="message">{$message}</p>
@@ -76,18 +74,15 @@ final class DebugPage
 		}
 
 		$lines = file($file, FILE_IGNORE_NEW_LINES);
-
 		if ($lines === false) {
 			return '';
 		}
 
 		$html = '';
-
 		for ($number = max(1, $line - 5); $number <= min(count($lines), $line + 5); $number++) {
 			$text = self::e(sprintf('%4d  %s', $number, $lines[$number - 1] ?? ''));
 
 			$class = '';
-
 			if ($number === $line) {
 				$class = ' class="here"';
 			}
@@ -102,11 +97,9 @@ final class DebugPage
 	{
 		$html = '';
 		$hidden = [];
-
 		/** @var array{function: string, line?: int, file?: string, class?: string, type?: string} $frame */
 		foreach (array_values($e->getTrace()) as $index => $frame) {
 			$line = self::frame($index, $frame, $root);
-
 			if (self::fromApp($frame, $root)) {
 				$html .= self::fold($hidden) . "<div>{$line}</div>";
 				$hidden = [];
@@ -117,7 +110,6 @@ final class DebugPage
 		}
 
 		$html .= self::fold($hidden);
-
 		return "<div class=\"trace\">{$html}</div>";
 	}
 
@@ -127,7 +119,6 @@ final class DebugPage
 		$location = self::relative($frame['file'] ?? '', $root) . ':' . ($frame['line'] ?? '');
 		$call = ($frame['class'] ?? '') . ($frame['type'] ?? '') . $frame['function'];
 		$call = str_replace("{$root}/", '', $call);
-
 		return self::e("#{$index}  {$location}  {$call}()");
 	}
 
@@ -137,7 +128,6 @@ final class DebugPage
 		$files = [$frame['file'] ?? ''];
 		$class = $frame['class'] ?? '';
 		$match = [];
-
 		if (class_exists($class, false)) {
 			$files[] = (string) new \ReflectionClass($class)->getFileName();
 		}
@@ -159,19 +149,16 @@ final class DebugPage
 	private static function fold(array $lines): string
 	{
 		$count = count($lines);
-
 		if ($count === 0) {
 			return '';
 		}
 
 		if ($count === 1) {
 			$line = $lines[0] ?? '';
-
 			return "<div class=\"vendor\">{$line}</div>";
 		}
 
 		$inner = '<div>' . implode('</div><div>', $lines) . '</div>';
-
 		return "<details class=\"vendor\"><summary>{$count} frames</summary>{$inner}</details>";
 	}
 
