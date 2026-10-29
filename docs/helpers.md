@@ -2,52 +2,30 @@
 
 - [Introduction](#introduction)
 - [Escaping HTML](#escaping-html)
-    - [Attributes](#attributes)
 - [Stopping with an error](#stopping-with-an-error)
 - [Checking for empty values](#checking-for-empty-values)
-- [Reading loosely typed data](#reading-loosely-typed-data)
 - [Dates and times](#dates-and-times)
-- [Ids and debugging](#ids-and-debugging)
+- [Generating ids](#generating-ids)
+- [Dumping values](#dumping-values)
 - [Replacing a helper](#replacing-a-helper)
 - [Function reference](#function-reference)
 
 ## Introduction
 
-Sapling has a few global functions for common jobs, such as escaping a value or stopping with an error. They need no app.
+Sapling has a few global functions for common jobs, such as escaping a value or stopping with an error, and they work without an app.
 
 ## Escaping HTML
 
-`e()` escapes a value for HTML, quotes included, and prints a backed enum as its value:
-
-```php
-<p><?= e($note['body']) ?></p>
-<span class="status"><?= e($note['status']) ?></span>
-```
-
-Read a [`Value`](values.md) as a type first, as in `e($request->query('q')->string())`. Passed as is, it throws an `Error`.
-
-### Attributes
-
-`attrs()` builds attributes from an array and escapes each one:
-
-```php
-<li <?= attrs(['class' => ['note', 'pinned'], 'data-id' => 7, 'hidden' => true, 'title' => null]) ?>>
-
-// <li class="note pinned" data-id="7" hidden>
-```
-
-`true` gives a bare attribute such as `hidden`, while `null`, `false` and empty values leave the attribute out, and an array is joined with spaces. `attr()` builds a single attribute the same way.
+`e()` escapes a value for HTML, and `attrs()` and `attr()` build escaped attributes, as [Printing values](templates.md#printing-values) shows. Read a [`Value`](values.md#reading-a-value) as a type first, as in `e($request->query('q')->string())`.
 
 ## Stopping with an error
 
-When the visitor asks for something that doesn't exist or isn't theirs, `abort()` stops the request with an error status. `abort_if()` does the same when its condition is true:
+`abort()` stops the request with an [error status](errors.md#errors-the-visitor-causes), and `abort_if()` does the same when its condition is true:
 
 ```php
 abort_if($note === null, 404, 'That note does not exist.');
 abort(403);
 ```
-
-Both throw an `HttpException`, which becomes the response. [Errors the visitor causes](errors.md#errors-the-visitor-causes) covers the details.
 
 ## Checking for empty values
 
@@ -61,7 +39,7 @@ blank(0);        // false
 blank(false);    // false
 ```
 
-`blank()` throws a `LogicException` when given a [`Value`](values.md), which never looks empty. Read it as a type first:
+As with `e()`, read a [`Value`](values.md#reading-a-value) as a type first:
 
 ```php
 $email = $console->arg(0)->string();
@@ -69,14 +47,6 @@ $email = $console->arg(0)->string();
 if (blank($email)) {
     throw new UsageException('Usage: php bin/console users:add <email>');
 }
-```
-
-## Reading loosely typed data
-
-`value()` wraps data in a [`Value`](values.md), as `new Value()` does:
-
-```php
-$city = value($order)->get('shipping', 'city')->string('Unknown');
 ```
 
 ## Dates and times
@@ -89,7 +59,7 @@ $meeting = datetime('2026-10-15 09:00', 'Africa/Johannesburg');
 $created = datetime($row['created_at'], 'UTC');
 ```
 
-Without a timezone it uses the [`timezone` setting](config.md#settings-sapling-reads). A date string without a zone is read in the same timezone.
+When you don't pass a timezone, it uses the [`timezone` setting](config.md#settings-sapling-reads). Either way, a date string without a zone of its own is read in that timezone.
 
 An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`. Catch them where a visitor supplies the value:
 
@@ -101,9 +71,25 @@ try {
 }
 ```
 
-## Ids and debugging
+## Generating ids
 
-`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys. It's safe to show in a URL, though anyone who sees it can tell when it was made. Only 74 of its bits are random, too few for a secret such as the token in an invite link. Use `bin2hex(random_bytes(32))` for that.
+`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys:
+
+```php
+$sql = <<<SQL
+    INSERT INTO files (id, name)
+    VALUES (?, ?)
+    SQL;
+
+$this->db->run($sql, [uuid(), $name]);
+```
+
+It's safe to show in a URL, though anyone who sees it can tell when it was made.
+
+> [!WARNING]
+> Only 74 of its bits are random, too few for a secret such as the token in an invite link.
+
+## Dumping values
 
 `dd()` dumps its values and stops:
 
@@ -113,7 +99,7 @@ dd($request, $note);
 
 ## Replacing a helper
 
-Each helper is skipped when a function with its name already exists. An app can replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()` and follow your versions.
+Each helper is skipped when a function with its name already exists, which lets an app replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()`, and use your versions of them.
 
 ## Function reference
 
@@ -125,7 +111,7 @@ Each helper is skipped when a function with its name already exists. An app can 
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
-| `value($raw)` | Returns `new Value($raw)` |
+| `value($raw)` | Returns `new Value($raw)`, for [wrapping your own data](values.md#wrapping-your-own-data) |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `uuid()` | Returns a version 7 UUID, which sorts by creation time |
 | `dd($value, ...$more)` | Dumps the values and stops |

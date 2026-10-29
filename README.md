@@ -1,16 +1,22 @@
 # Sapling
 
-Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies. You can read the whole core, about 2,300 lines of code, in a day.
+Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies, and you can read the whole core, about 2,300 lines of code, in a day.
 
 Each action or command is one class in one file, with an attribute that declares its route or command name:
 
 ```php
-#[Route('GET', '/ping')]
-final class Ping
+namespace App;
+
+use Sapling\Attributes\Route;
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+
+#[Route('GET', '/hello/:name')]
+final class Hello
 {
     public function __invoke(Request $request): Response
     {
-        return Response::text('pong');
+        return Response::text("Hello {$request->param('name')->string()}");
     }
 }
 ```
@@ -19,7 +25,7 @@ final class Ping
 
 Sapling hasn't been tested in production environments yet. Use it at your own risk.
 
-Sapling was built with AI assistance. All of the code was reviewed by its author.
+Sapling was built with AI assistance, and its author reviewed all of the code.
 
 ## Getting started
 
@@ -31,36 +37,9 @@ cd my-app
 composer serve
 ```
 
-It has the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`), an `app/` folder for your actions, a `tests/` folder that `composer test` runs with Pest, and a `.env` for development with a fresh `APP_KEY`. Errors are plain text until you [set an error handler](docs/errors.md).
+It has the four files a Sapling app needs (`bootstrap.php`, `config.php`, `public/index.php` and `bin/console`), an `app/` folder for your actions, a `tests/` folder that `composer test` runs with Pest, and a `.env` for development with a fresh `APP_KEY`. Errors are plain text until you [set an error handler](docs/errors.md). A small app can also [fit in one file](docs/app.md#one-file-apps), without the skeleton.
 
-A Sapling app can also fit in one file:
-
-```php
-<?php
-
-require __DIR__ . '/vendor/autoload.php';
-
-use Sapling\App;
-use Sapling\Cli\Console;
-use Sapling\Http\Request;
-use Sapling\Http\Response;
-
-$app = new App(__DIR__);
-
-$app->router->add('GET', '/hello/:name', function (Request $request): Response {
-    return Response::text("Hello {$request->param('name')->string()}");
-});
-
-$app->commands->add('greet', function (Console $console): int {
-    $console->line('Hello');
-
-    return Console::SUCCESS;
-}, 'Say hello');
-
-$app->run();
-```
-
-To try it, install Sapling in an empty folder with `composer require sapling/core:dev-main`, serve the file with `php -S localhost:8080 app.php`, and run its commands with `php app.php greet`.
+To add your first action, save the `Hello` class above as `app/Hello.php` and open `http://localhost:8080/hello/Ann`. The guides below are in reading order, starting with the app.
 
 ## Why Sapling
 
@@ -86,22 +65,22 @@ I've been fiddling with my own micro frameworks since early 2023, and Sapling is
 | [Requests and responses](docs/requests.md) | The request lifecycle, `Request`, `Response` and downloads |
 | [Values](docs/values.md) | Reading outside data safely with `Value`, from requests, commands, sessions and replies |
 | [Middleware](docs/middleware.md) | Writing middleware, and the built-in `SecurityHeaders`, `Csrf` and `Cors` |
+| [When things go wrong](docs/errors.md) | `HttpException`, crashes, the error handler and logging |
+| [Sessions](docs/sessions.md) | Session values, flash values, signing in and out, and how long a session lasts |
 | [Templates](docs/templates.md) | Partials, components, layouts and escaping |
 | [htmx](docs/htmx.md) | Fragments, redirects, errors, scripts and sessions with htmx |
-| [Sessions](docs/sessions.md) | Session values, flash values and the cookie |
 | [Database](docs/database.md) | `Db`, SQLite and migrations |
 | [Encrypting secrets](docs/encryption.md) | `Crypto` and `app_key` |
 | [Commands](docs/commands.md) | `#[Command]`, `Console` and the built-in commands |
 | [Talking to other services](docs/http-client.md) | `HttpClient`, `ClientRequest` and `ClientResponse`, one request at a time or several at once |
 | [Converting data](docs/data.md) | JSON, XML and form data with `Data` |
 | [Helpers](docs/helpers.md) | `abort()`, `e()`, `attrs()` and the other global functions |
-| [When things go wrong](docs/errors.md) | `HttpException`, crashes, the error handler and logging |
 | [Testing](docs/testing.md) | Requests, signing in, flash values, faked services and commands in tests |
 | [Running in production](docs/production.md) | A checklist for the server |
 
 ## Not included, on purpose
 
-There's no ORM, query builder, validation or caching, and no route groups. Every route spells out its full path, so you can grep for it. There are no events, queues, long-running workers, mail or PSR interfaces. When an app needs one of these, write the code it needs.
+There's no ORM, query builder, validation, caching or route groups, and there are no events, queues, long-running workers, mail or PSR interfaces. When your app needs one of these, you write the code for it. Without route groups, every route spells out its full path and you can grep for it.
 
 ## Requirements
 
@@ -127,13 +106,13 @@ Some parts need extensions that most PHP installs already have:
 | `composer check` | Checks formatting, runs mago's linter and static analyzer, then the tests |
 | `composer mutate` | Runs mutation testing, to find code the tests don't check (needs Xdebug or PCOV) |
 
-Core never calls the global helpers, which an app can replace.
+Core never calls the global helpers, since an app can replace them.
 
-Tests mirror `src/`, as in `tests/Http/RouterTest.php` for `src/Http/Router.php`. Write one `expect()` per line.
+Tests mirror `src/`, as `tests/Http/RouterTest.php` does for `src/Http/Router.php`, with one `expect()` per line.
 
-The analyzer skips the tests, since it can't follow Pest's closures. `analyzer-baseline.toml` lists the reviewed findings in `src/`, and only new ones are reported. After a fix, regenerate it with `vendor/bin/mago analyze --generate-baseline` and diff it before committing.
+The analyzer skips the tests, since it can't follow Pest's closures. `analyzer-baseline.toml` lists the findings in `src/` that have been reviewed, and only new ones are reported. After a fix, regenerate it with `vendor/bin/mago analyze --generate-baseline` and diff it before committing.
 
-Each guide in `docs/` has a table of contents, an introduction, sections named after tasks, and a method reference. Update a guide in the same change as the behaviour it describes.
+Each guide in `docs/` has a table of contents, an introduction, sections named after tasks, and a method reference. Update a guide in the same change as the behaviour it describes. Code for a job Sapling leaves to apps, such as retrying a request, is a short example in the guide it belongs to.
 
 ## License
 

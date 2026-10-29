@@ -5,13 +5,15 @@
     - [Sending data](#sending-data)
     - [Headers](#headers)
     - [Uploading files](#uploading-files)
-- [Sending requests at once](#sending-requests-at-once)
 - [Reading the reply](#reading-the-reply)
     - [Errors](#errors)
-- [Retrying a request](#retrying-a-request)
-- [Caching replies](#caching-replies)
+- [Sending requests at once](#sending-requests-at-once)
+- [Retrying and caching](#retrying-and-caching)
 - [Timeouts, redirects and TLS](#timeouts-redirects-and-tls)
 - [Method reference](#method-reference)
+    - [HttpClient](#httpclient)
+    - [ClientRequest](#clientrequest)
+    - [ClientResponse](#clientresponse)
 
 ## Introduction
 
@@ -40,7 +42,7 @@ ClientRequest::text('PUT', 'https://api.example.com/notes/7/body', 'Buy milk');
 
 ### Headers
 
-Headers are the last argument of every constructor. One you pass replaces the default of the same name, ignoring case:
+Headers are the last argument of every constructor, and one you pass replaces the default of the same name, whatever its case:
 
 ```php
 $me = $this->http->send(new ClientRequest('GET', 'https://api.example.com/me', headers: ['Authorization' => "Bearer {$token}"]));
@@ -61,19 +63,6 @@ $body = [
 $reply = $this->http->send(new ClientRequest('POST', 'https://api.example.com/uploads', $body));
 ```
 
-## Sending requests at once
-
-`sendAll()` sends several requests at once and returns the replies under the same keys. An action that calls several services waits only for the slowest:
-
-```php
-[$weather, $news] = $this->http->sendAll([
-    new ClientRequest('GET', 'https://weather.example.com/today'),
-    new ClientRequest('GET', 'https://news.example.com/top'),
-]);
-```
-
-`sendAll(['weather' => $a, 'news' => $b])` returns its replies as `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest. A failed connection comes back with status 0, as from `send()`, without losing the other replies.
-
 ## Reading the reply
 
 A reply has its `status`, `headers` and `body`. `data()` decodes the body by its `Content-Type` and returns a [`Value`](values.md), and more keys read deeper:
@@ -84,7 +73,7 @@ $name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"n
 
 A JSON or XML body that doesn't decode, such as a cut-off reply, makes `data()` throw a `JsonException` or `RuntimeException`, which is a crash.
 
-A reply's header names are lowercase, and a header the service sent more than once is a list. `header()` ignores case:
+A reply's header names are lowercase, and a header the service sent more than once is a list, read with `rawArray()`. The name you pass to `header()` is case-insensitive:
 
 ```php
 $retryAfter = $reply->header('Retry-After')->int(60);
@@ -102,13 +91,28 @@ if ($reply->status !== 200) {
 }
 ```
 
-## Retrying a request
+## Sending requests at once
 
-`HttpClient` sends each request once. Retry only requests that change nothing, such as a GET, and keep retries out of actions a visitor is waiting for.
-
-This function tries a GET up to 3 times, waiting 1 second and then 2, when the connection fails or the service answers 429, 502, 503 or 504:
+`sendAll()` sends several requests at once and returns the replies under the same keys. An action that calls several services waits only for the slowest:
 
 ```php
+[$weather, $news] = $this->http->sendAll([
+    new ClientRequest('GET', 'https://weather.example.com/today'),
+    new ClientRequest('GET', 'https://news.example.com/top'),
+]);
+```
+
+Named keys work the same way, and `sendAll(['weather' => $a, 'news' => $b])` returns `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest, and a failed connection comes back with status 0, as from `send()`, without losing the other replies.
+
+## Retrying and caching
+
+`HttpClient` sends each request once and keeps no replies. Retry only requests that change nothing, such as a GET. This function tries one up to 3 times, waiting 1 second and then 2, while the connection fails or the service answers 429, 502, 503 or 504:
+
+```php
+use Sapling\Client\ClientRequest;
+use Sapling\Client\ClientResponse;
+use Sapling\Client\HttpClient;
+
 function fetch(HttpClient $http, string $url, int $tries = 3): ClientResponse
 {
     $delay = 1;
@@ -128,77 +132,26 @@ function fetch(HttpClient $http, string $url, int $tries = 3): ClientResponse
 }
 ```
 
-The last try returns its reply, whatever its status.
+The last try returns its reply, whatever its status. The waits hold up a visitor, which makes it a better fit for commands than for actions.
 
-## Caching replies
-
-Sapling doesn't cache replies. A small class around `HttpClient` can keep them in the database. This one keeps successful GET replies for a day:
-
-```php
-final readonly class CachedHttp
-{
-    public function __construct(private Db $db, private HttpClient $http) {}
-
-    public function get(string $url): ClientResponse
-    {
-        $sql = <<<SQL
-            SELECT body, headers
-            FROM http_cache
-            WHERE url = ?
-            AND cached_at > ?
-            SQL;
-
-        $row = $this->db->one($sql, [$url, time() - 86400]);
-
-        if ($row !== null) {
-            return new ClientResponse($row['body'], 200, Data::fromJson($row['headers']));
-        }
-
-        $reply = $this->http->send(new ClientRequest('GET', $url));
-
-        if ($reply->status !== 200) {
-            return $reply;
-        }
-
-        $sql = <<<SQL
-            INSERT OR REPLACE INTO http_cache (url, body, headers, cached_at)
-            VALUES (?, ?, ?, ?)
-            SQL;
-
-        $this->db->run($sql, [$url, $reply->body, Data::toJson($reply->headers), time()]);
-
-        return $reply;
-    }
-}
-```
-
-It needs a table, created in a [migration](database.md#migrations):
-
-```sql
-CREATE TABLE http_cache (
-    url TEXT PRIMARY KEY,
-    body TEXT NOT NULL,
-    headers TEXT NOT NULL,
-    cached_at INTEGER NOT NULL
-);
-```
-
-Only 200 replies are cached. Keeping the headers lets `data()` decode a cached reply by its `Content-Type`.
+To cache a reply, store its body with its `Content-Type`. A reply rebuilt from both with `new ClientResponse()` decodes with `data()` as the original did.
 
 ## Timeouts, redirects and TLS
 
 A request gives up after 30 seconds. When a visitor waits on it, register a client with a shorter timeout in `bootstrap.php`:
 
 ```php
-$app->container->set(HttpClient::class, fn() => new HttpClient(timeout: 5));
+$app->container->set(HttpClient::class, fn(): HttpClient => new HttpClient(timeout: 5));
 ```
 
-GET and HEAD requests follow up to 5 redirects. Other methods get the redirect back as the reply. Only `http` and `https` URLs are allowed, redirects included. TLS certificates are always checked, and compressed replies are unpacked.
+GET and HEAD requests follow up to 5 redirects, while other methods get the redirect back as the reply. Only `http` and `https` URLs are allowed, even for a redirect. TLS certificates are always checked, and compressed replies are unpacked.
 
 > [!WARNING]
 > A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it.
 
 ## Method reference
+
+### HttpClient
 
 | Method | What it does |
 | --- | --- |
@@ -206,12 +159,22 @@ GET and HEAD requests follow up to 5 redirects. Other methods get the redirect b
 | `sendAll($requests)` | Sends `ClientRequest`s at once and returns their replies under the same keys |
 | `fake($answer)` | Answers every request with the closure `$answer` instead of curl, for [tests](testing.md#faking-other-services). Returns the client |
 | `new HttpClient($timeout = 30)` | A client whose requests give up after `$timeout` seconds |
+
+### ClientRequest
+
+| Method | What it does |
+| --- | --- |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
 | `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
-| `$reply->header($name)` | Returns a header, ignoring case, as a `Value`. A header sent more than once is a list |
+
+### ClientResponse
+
+| Method | What it does |
+| --- | --- |
+| `$reply->header($name)` | Returns a header as a `Value`. The name is case-insensitive, and a header sent more than once is a list, read with `rawArray()` |
 | `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` or `RuntimeException` when a JSON or XML body is invalid |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
 | `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests or from a cache |

@@ -6,12 +6,11 @@
 - [XML](#xml)
     - [How XML maps to arrays](#how-xml-maps-to-arrays)
 - [Decoding by content type](#decoding-by-content-type)
-- [Reading nested data](#reading-nested-data)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-`Sapling\Data` converts arrays to and from JSON, XML and form strings, with one pair of methods per format. Broken JSON or XML throws. The methods are static and need no app.
+`Sapling\Data` converts arrays to and from JSON, XML and form strings, with a pair of static methods for each format that work without an app. Broken JSON or XML throws.
 
 ## JSON
 
@@ -29,7 +28,7 @@ $user = Data::fromJson($json);
 
 ## Forms and query strings
 
-A URL-encoded form body and a query string are the same format. One pair of methods covers both:
+A URL-encoded form body and a query string are the same format, and one pair of methods covers both:
 
 ```php
 $query = Data::toForm(['q' => 'notes', 'page' => 2]); // q=notes&page=2
@@ -45,7 +44,7 @@ $xml = Data::toXml(['id' => 7, 'items' => ['item' => ['Pen', 'Paper']]], root: '
 $order = Data::fromXml($xml);
 ```
 
-`toXml()` needs keys at the top, since a document has one root element. An empty list becomes an empty element. Invalid XML throws a `RuntimeException`, and nothing external is ever fetched while parsing.
+`toXml()` turns an empty list into an empty element, and needs keys at the top level, since a document has one root element. `fromXml()` throws a `RuntimeException` for invalid XML, and never fetches anything external while parsing.
 
 ### How XML maps to arrays
 
@@ -65,16 +64,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-A `+json` or `+xml` suffix counts, as in `application/problem+json`. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services uses it.
-
-## Reading nested data
-
-Decoded data can hold anything, and a key you expect may be missing. Wrap it in a [`Value`](values.md) to read nested keys safely:
-
-```php
-$envelope = value(Data::fromXml($xml));
-$price = $envelope->get('soap:Body', 'Price')->string();
-```
+A `+json` or `+xml` suffix counts, as in `application/problem+json`. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services decodes the same way and returns a `Value`. For data you decode yourself, where a key you expect may be missing, [wrap it in a `Value`](values.md#wrapping-your-own-data) to read nested keys safely.
 
 ## Method reference
 

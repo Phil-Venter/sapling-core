@@ -3,11 +3,11 @@
 - [Introduction](#introduction)
 - [Rendering a template](#rendering-a-template)
 - [Printing values](#printing-values)
+    - [Plain text](#plain-text)
 - [Partials](#partials)
 - [Components](#components)
     - [Named slots](#named-slots)
 - [Layouts](#layouts)
-- [Plain text](#plain-text)
 - [Sharing data with every template](#sharing-data-with-every-template)
 - [Templates next to their classes](#templates-next-to-their-classes)
 - [When something is wrong](#when-something-is-wrong)
@@ -15,32 +15,44 @@
 
 ## Introduction
 
-Sapling's templates are plain PHP files in `views/`, rendered by `Sapling\Template`. It adds partials, components and layouts. Inside a template, `$this` is the `Template`.
+Sapling's templates are plain PHP files in `views/`, rendered by `Sapling\Template`, which adds partials, components and layouts. Inside a template, `$this` is the `Template`.
 
 ## Rendering a template
 
 An action asks for `Template` in its constructor, renders a template with the variables it needs, and returns the HTML:
 
 ```php
+use Sapling\Attributes\Route;
+use Sapling\Db;
+use Sapling\Http\Response;
+use Sapling\Template;
+
 #[Route('GET', '/notes')]
 final class ListNotes
 {
-    public function __construct(private NoteRepository $notes, private Template $view) {}
+    public function __construct(private Db $db, private Template $view) {}
 
     public function __invoke(): Response
     {
-        $html = $this->view->render('notes', ['notes' => $this->notes->all()]);
+        $sql = <<<SQL
+            SELECT id, body
+            FROM notes
+            ORDER BY created_at DESC
+            SQL;
+
+        $notes = $this->db->all($sql);
+        $html = $this->view->render('notes', ['notes' => $notes]);
 
         return Response::html($html);
     }
 }
 ```
 
-`render('notes')` runs `views/notes.tmpl.php` with each array key as a variable, and a name with a slash, such as `notes/show`, looks in a subfolder. The `.tmpl.php` suffix keeps templates apart from classes.
+`render('notes')` runs `views/notes.tmpl.php` with each array key as a variable, and a name with a slash, such as `notes/show`, looks in a subfolder. The `.tmpl.php` suffix keeps templates apart from classes. To use another suffix, such as plain `.php`, [register `Template` yourself](container.md#replacing-saplings-services) with `new Template(__DIR__ . '/views', suffix: 'php')`.
 
 ## Printing values
 
-Inside a template, values are printed with `<?= ?>`. Escape every one of them with `e()`:
+Inside a template, print values with `<?= ?>` and escape every one with `e()`, which covers quotes and prints a backed enum as its value:
 
 ```php
 <?php foreach ($notes as $note): ?>
@@ -48,10 +60,12 @@ Inside a template, values are printed with `<?= ?>`. Escape every one of them wi
 <?php endforeach ?>
 ```
 
-For attributes, `attrs()` builds the escaped list and leaves out the ones that are empty or false:
+For attributes, `attrs()` builds the escaped list from an array, and `attr()` builds one attribute. `true` gives a bare attribute such as `hidden`, while `null`, `false` and empty values leave the attribute out, and an array is joined with spaces:
 
 ```php
-<li <?= attrs(['class' => 'note', 'data-id' => $note['id'], 'hidden' => !$note['visible']]) ?>>
+<li <?= attrs(['class' => ['note', 'pinned'], 'data-id' => $note['id'], 'hidden' => true, 'title' => null]) ?>>
+
+// <li class="note pinned" data-id="7" hidden>
 ```
 
 > [!WARNING]
@@ -64,6 +78,19 @@ grep -rnoE '<\?= *[^ ]+' views | grep -vF -e '<?= e(' -e '<?= attrs(' -e '<?= $t
 ```
 
 [Plain-text templates](#plain-text) show up too, since they leave out `e()`.
+
+### Plain text
+
+A template can render plain text as well as HTML, such as a command's output or the text part of an email. Leave out `e()` there, or `O'Brien` prints as `O&#039;Brien`.
+
+PHP drops the newline straight after a closing `?>`. HTML hides the difference, but plain text runs the two lines together. A line that prints a value needs its newline inside the tag, while lines that hold only `foreach` or `if` need nothing:
+
+```php
+<?php foreach ($notes as $note): ?>
+<?= $note['body'], "\n" ?>
+<?php endforeach ?>
+Total: <?= count($notes), "\n" ?>
+```
 
 ## Partials
 
@@ -94,7 +121,7 @@ The component template prints the default slot with `yield()`:
 </article>
 ```
 
-A slot is HTML the page has already printed. Don't escape it again.
+Don't escape a slot again, since it's HTML the page has already printed.
 
 ### Named slots
 
@@ -126,11 +153,11 @@ A component can take more than one piece of content. `slot()` with only a name c
 <?php endforeach ?>
 ```
 
-A slot belongs to the component it's set in. Another component never sees it.
+A slot belongs to the component it's set in, and no other component sees it.
 
 ## Layouts
 
-Most pages share the same outer HTML. A layout is a component that wraps the whole page, opened on its first line and closed on its last:
+A layout is a component that wraps the whole page in the outer HTML your pages share, and a page opens it on its first line and closes it on its last:
 
 ```php
 <?php $this->component('layout') ?>
@@ -149,20 +176,7 @@ Most pages share the same outer HTML. A layout is a component that wraps the who
 <main><?= $this->yield() ?></main>
 ```
 
-A layout can wrap itself in another the same way, such as an admin layout inside the main one. It passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
-
-## Plain text
-
-A template can render plain text as well as HTML, such as a command's output or the text part of an email. PHP drops the newline straight after a closing `?>`. A browser never shows the difference, but in plain text two lines run together. A line that prints a value needs its newline inside the tag, while lines that hold only `foreach` or `if` need nothing:
-
-```php
-<?php foreach ($notes as $note): ?>
-<?= $note['title'], "\n" ?>
-<?php endforeach ?>
-Total: <?= count($notes), "\n" ?>
-```
-
-Leave out `e()` in plain text, or `O'Brien` prints as `O&#039;Brien`.
+A layout can wrap itself in another the same way, such as an admin layout inside the main one, and passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
 
 ## Sharing data with every template
 
@@ -191,11 +205,11 @@ $view->share('flash', function (string $key) use ($app): string {
 <?php endif ?>
 ```
 
-If a variable passed to `render()` has the same name as a shared one, the variable wins.
+If a variable passed to `render()` has the same name as a shared one, the one passed to `render()` wins.
 
 ## Templates next to their classes
 
-Templates don't have to live in `views/`. A feature's templates can sit next to its actions, since [`scan()`](app.md#scanning-a-folder) skips `.tmpl.php` files. Register the folder under a prefix in `bootstrap.php`:
+A feature's templates can sit next to its actions instead of in `views/`, since [`scan()`](app.md#scanning-a-folder) skips `.tmpl.php` files. Register the folder under a prefix in `bootstrap.php`:
 
 ```php
 $view = $app->container->get(Template::class);
@@ -208,12 +222,10 @@ $view->prefix('notes', __DIR__ . '/app/Notes');
 return Response::html($this->view->render('notes::list', ['notes' => $notes]));
 ```
 
-An unknown prefix throws a `LogicException`. To use another suffix, such as plain `.php`, register `Template` yourself with `new Template($app->path('views'), suffix: 'php')`.
-
 ## When something is wrong
 
 - A missing template throws a `RuntimeException`.
-- An unclosed component or slot, `end()` with nothing open, or `slot()` outside a component throws a `LogicException`.
+- An unknown prefix, an unclosed component or slot, `end()` with nothing open, or `slot()` outside a component throws a `LogicException`.
 
 ## Method reference
 

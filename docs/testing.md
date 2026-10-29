@@ -13,11 +13,11 @@
 
 Your tests load `bootstrap.php`, as the web server and `bin/console` do, and send requests and commands straight through the app.
 
-The examples use [Pest](https://pestphp.com). The skeleton comes with it and a `composer test` script. In an app made without the skeleton, add it with `composer require --dev pestphp/pest`.
+The examples use [Pest](https://pestphp.com), which comes with the skeleton along with a `composer test` script. In an app made without the skeleton, add it with `composer require --dev pestphp/pest`.
 
 ## An app for each test
 
-The skeleton's `tests/Pest.php` looks like this. Its `testApp()` helper empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
+In the skeleton's `tests/Pest.php`, the `testApp()` helper empties the session, loads the app, and gives it an in-memory SQLite database with the migrations run:
 
 ```php
 use Sapling\App;
@@ -55,6 +55,18 @@ test('a new note goes back to the list', function () {
     $response = testApp()->handle(new Request('POST', '/notes', input: ['body' => 'Buy milk']));
 
     expect($response->status)->toBe(302);
+    expect($response->header('Location')->string())->toBe('/notes');
+});
+```
+
+`header()` and `data()` read the response as a [`Value`](values.md), and `data()` decodes a JSON body:
+
+```php
+test('the API answers a new note with its id', function () {
+    $response = testApp()->handle(new Request('POST', '/api/notes', input: ['body' => 'Buy milk']));
+
+    expect($response->status)->toBe(201);
+    expect($response->data('id')->int())->toBe(1);
 });
 ```
 
@@ -63,26 +75,32 @@ test('a new note goes back to the list', function () {
 The session cookie never shows up on the response from `handle()`, since PHP sends it itself.
 
 > [!NOTE]
-> Send one request per app, as the server does. A second request through the same app shares the first one's objects, so a [`set()` in middleware](middleware.md#passing-data-to-the-action) can throw.
+> Send one request per app, as the server does. A second request through the same app shares the first one's objects, so a [`set()` in middleware](container.md#registering-services) can throw.
 
 ### Signing in
 
-To act as a signed-in visitor, set the session before the request. The action sees the same values, since the app shares one `Session`:
+To act as a signed-in visitor, set the session before the request. The app shares one `Session`, and the action sees the same values:
 
 ```php
+use Sapling\Http\Request;
+use Sapling\Http\Session;
+
 $app = testApp();
 $app->container->get(Session::class)->set('user_id', 7);
 
 $response = $app->handle(new Request('GET', '/settings'));
 ```
 
-PHP keeps that session for the rest of the test run. `testApp()` empties it for each test.
+PHP keeps that session for the rest of the test run, which is why `testApp()` empties it for each test.
 
 ### Checking a flash value
 
 To check what an action flashed, read it from a new app, as the next request would:
 
 ```php
+use Sapling\Http\Request;
+use Sapling\Http\Session;
+
 $app = testApp();
 $app->handle(new Request('POST', '/notes', input: ['body' => 'Buy milk']));
 
@@ -91,7 +109,7 @@ $next = require __DIR__ . '/../bootstrap.php';
 expect($next->container->get(Session::class)->getFlash('notice')->string())->toBe('Saved.');
 ```
 
-Load `bootstrap.php` directly here. `testApp()` would empty the session, and the flash value with it.
+`testApp()` would empty the session, and the flash value with it, so load `bootstrap.php` directly here.
 
 ## Faking other services
 
@@ -112,26 +130,37 @@ $app->container->get(HttpClient::class)->fake(function (ClientRequest $request):
 $response = $app->handle(new Request('POST', '/billing/charge'));
 ```
 
-The client keeps the settings `bootstrap.php` gave it, and `sendAll()` calls the closure once per request.
+The client keeps the timeout `bootstrap.php` gave it, and `sendAll()` calls the closure once per request.
 
 ## Running a command
 
-`runCommand()` runs a [command](commands.md) and returns its exit code. `ob_start()` catches what `line()` prints, and a command that asks reads its answers from the stream given to `Console`:
+`runCommand()` runs a [command](commands.md) and returns its exit code. `ob_start()` catches what `line()` prints, and the rows a command needs go in through the test's `Db`:
 
 ```php
-$answers = fopen('php://memory', 'r+');
-fwrite($answers, "yes\n");
-rewind($answers);
+use Sapling\Cli\Console;
+use Sapling\Db;
 
-ob_start();
-$code = testApp()->runCommand(new Console(['bin/console', 'notes:prune'], $answers));
-$output = ob_get_clean();
+test('notes:prune deletes old notes', function () {
+    $app = testApp();
+    $db = $app->container->get(Db::class);
+    $sql = <<<SQL
+        INSERT INTO notes (body, created_at)
+        VALUES (?, datetime('now', '-60 days'))
+        SQL;
 
-expect($code)->toBe(Console::SUCCESS);
-expect($output)->toContain('Deleted 3 notes.');
+    $db->run($sql, ['Buy milk']);
+    $db->run($sql, ['Call Ann']);
+
+    ob_start();
+    $code = $app->runCommand(new Console(['bin/console', 'notes:prune']));
+    $output = ob_get_clean();
+
+    expect($code)->toBe(Console::SUCCESS);
+    expect($output)->toContain('Deleted 2 notes.');
+});
 ```
 
-`error()` writes to standard error, which the buffer doesn't catch.
+A command that asks a question reads its answers from the stream passed as `Console`'s second argument, such as one opened on `php://memory`. `error()` writes to standard error, which the buffer doesn't catch.
 
 ## Method reference
 

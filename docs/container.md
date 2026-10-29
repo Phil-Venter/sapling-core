@@ -4,6 +4,7 @@
 - [Asking for what you need](#asking-for-what-you-need)
 - [Registering services](#registering-services)
     - [Interfaces](#interfaces)
+    - [Replacing Sapling's services](#replacing-saplings-services)
 - [Settings in constructors](#settings-in-constructors)
 - [How a class is built](#how-a-class-is-built)
 - [Getting a class by hand](#getting-a-class-by-hand)
@@ -11,13 +12,17 @@
 
 ## Introduction
 
-`Sapling\Container` builds your classes. It reads each constructor's parameter types, builds what they ask for, and hands out one shared instance of each class. An action that asks for `Db` in its constructor gets it, and most classes never need to be registered.
+`Sapling\Container` builds your classes from their constructors' parameter types and hands out one shared instance of each. An action that asks for `Db` in its constructor gets it, and most classes never need to be registered.
 
 ## Asking for what you need
 
 A class lists what it needs as typed constructor parameters, and the container fills them in:
 
 ```php
+use Sapling\Attributes\Route;
+use Sapling\Db;
+use Sapling\Template;
+
 final class NoteRepository
 {
     public function __construct(private Db $db) {}
@@ -34,27 +39,23 @@ final class ListNotes
 
 Neither class is registered anywhere. The container builds `NoteRepository` because `ListNotes` asks for it, and `Db` because `NoteRepository` does. Actions, middleware and commands are all built this way.
 
-Each class is built once and then shared. Everything that asks for `Db` during a request gets the same connection.
+Each class is built once and then shared, and everything that asks for `Db` during a request gets the same connection.
+
+A class can ask for the `App` itself too, such as to find a folder with [`path()`](app.md#method-reference).
 
 ## Registering services
 
-Some classes can't be built from types alone. A database connection needs to know where the database is, for example. Register those in `bootstrap.php` with `set()`:
+Some classes can't be built from types alone, such as a database connection, which needs to know where the database is. Register those in `bootstrap.php` with `set()`:
 
 ```php
-$app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
+$app->container->set(Db::class, fn(): Db => Db::sqlite($config->get('db_file')));
 ```
 
-The closure runs once, the first time the class is needed. `set()` also takes a built object, and setting the same class again replaces it. Middleware can use this to [pass data to the action](middleware.md#passing-data-to-the-action). Once the container has handed a class out, `set()` throws a `LogicException` instead of replacing it.
-
-Sapling registers its own services the same way, such as `Template`, `Session` and `Csrf`. To replace one, call `set()` in `bootstrap.php` after `App::boot()`, above any line that gets it:
-
-```php
-$app->container->set(Template::class, fn() => new Template(__DIR__ . '/templates'));
-```
+The closure runs once, the first time the class is needed. `set()` also takes a built object, which is how middleware [passes data to the action](middleware.md#passing-data-to-the-action). Setting a class again replaces it, unless the container has already handed it out, in which case `set()` throws a `LogicException`.
 
 ### Interfaces
 
-The container can't guess which class to use for an interface. Register the one you want under the interface's name. The closure receives the container:
+The container can't guess which class to use for an interface. Register the one you want under the interface's name, with a closure that receives the container:
 
 ```php
 $app->container->set(Mailer::class, function (Container $c): Mailer {
@@ -64,9 +65,17 @@ $app->container->set(Mailer::class, function (Container $c): Mailer {
 });
 ```
 
+### Replacing Sapling's services
+
+Sapling registers its own services, such as `Template`, `Session` and `Csrf`, the same way. To replace one, call `set()` in `bootstrap.php` after `App::boot()`, above any line that gets it:
+
+```php
+$app->container->set(Template::class, fn(): Template => new Template(__DIR__ . '/templates'));
+```
+
 ## Settings in constructors
 
-The container can't find a setting by its type. `#[Config]` names the [setting](config.md) a parameter should get instead:
+`#[Config]` names the [setting](config.md) a parameter gets, since the container can't find one by its type:
 
 ```php
 use Sapling\Attributes\Config;
@@ -83,7 +92,7 @@ final class Weather
 }
 ```
 
-When the setting is missing, the parameter's default is used, and without a default the container throws a `LogicException`. A setting of the wrong type throws a `TypeError`. [Convert `.env` strings](config.md#settings-sapling-reads) in `config.php`.
+When the setting is missing, the parameter gets its default, and without one the container throws a `LogicException`. A setting of the wrong type [throws a `TypeError`](config.md#converting-env-values).
 
 ## How a class is built
 

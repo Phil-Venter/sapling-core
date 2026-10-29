@@ -1,10 +1,10 @@
 # htmx
 
 - [Introduction](#introduction)
-- [The htmx middleware](#the-htmx-middleware)
 - [Fragments and full pages](#fragments-and-full-pages)
 - [Redirects](#redirects)
-- [Forms and methods](#forms-and-methods)
+- [The htmx middleware](#the-htmx-middleware)
+- [Reading PUT, PATCH and DELETE values](#reading-put-patch-and-delete-values)
 - [Errors and validation](#errors-and-validation)
 - [Scripts](#scripts)
 - [Sessions](#sessions)
@@ -12,11 +12,31 @@
 
 ## Introduction
 
-[htmx](https://htmx.org) swaps HTML from your actions into the page. It works with Sapling as it is, apart from a few defaults that trip it up.
+[htmx](https://htmx.org) swaps HTML from your actions into the page, and works with Sapling as it is, apart from a few defaults that trip it up. [`Csrf`](middleware.md#cross-site-request-protection) lets htmx's requests through without a token, since browsers mark requests from your own pages as same-origin.
+
+## Fragments and full pages
+
+htmx sends `HX-Request: true` with every request it makes. An action can answer it with only the part of the page that changes, and with the whole page otherwise:
+
+```php
+$template = 'notes';
+
+if ($request->header('HX-Request')->bool()) {
+    $template = 'notes/_list';
+}
+
+return Response::html($this->view->render($template, ['notes' => $notes]));
+```
+
+That gives one URL two different bodies, and the [htmx middleware](#the-htmx-middleware) below adds `Vary: HX-Request` to keep the back button from showing a cached fragment in place of the page.
+
+## Redirects
+
+The browser follows a redirect before htmx sees it, and htmx would then swap the whole page it lands on into the target. For htmx requests, the middleware below turns a redirect into a normal response with `HX-Redirect`, which loads the new page in full, while actions keep returning `Response::redirect()`. To have htmx fetch and swap the page instead, as a boosted link does, send `HX-Location` from the action.
 
 ## The htmx middleware
 
-Redirects and caching need a fix on every response. Both fit in one small middleware in your app:
+This small middleware fixes [caching](#fragments-and-full-pages) and [redirects](#redirects) for htmx on every response:
 
 ```php
 use Closure;
@@ -43,33 +63,11 @@ final class Htmx
 }
 ```
 
-Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check. That way a login redirect reaches htmx as `HX-Redirect`.
+Add it in `bootstrap.php` with `$app->middleware(Htmx::class)`, after the built-in middleware and before any login check, so that a login redirect reaches htmx as `HX-Redirect`.
 
-## Fragments and full pages
+## Reading PUT, PATCH and DELETE values
 
-htmx sends `HX-Request: true` with every request it makes. An action can answer it with only the part of the page that changes, and with the whole page otherwise:
-
-```php
-$template = 'notes';
-
-if ($request->header('HX-Request')->bool()) {
-    $template = 'notes/_list';
-}
-
-return Response::html($this->view->render($template, ['notes' => $notes]));
-```
-
-That gives one URL two different bodies. The middleware adds `Vary: HX-Request`. Without it, the back button can show a cached fragment in place of the page.
-
-## Redirects
-
-The browser follows a redirect before htmx sees it. htmx would then swap the whole page it lands on into the target. For htmx requests, the middleware turns a redirect into a normal response with `HX-Redirect`, which loads the new page in full. Actions keep returning `Response::redirect()`. To have htmx fetch and swap the page instead, as a boosted link does, send `HX-Location` from the action.
-
-## Forms and methods
-
-`Csrf` lets htmx's requests through without a token. They come from your own pages, and browsers mark them as same-origin.
-
-`hx-put` and `hx-patch` send their values in the body. PHP only reads POST bodies, but `$request->data()` decodes these too. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET. Read them with `query()`:
+`hx-put` and `hx-patch` send their values in the body, where [`$request->data()`](requests.md#body-fields) reads them. `hx-delete` is different. htmx 2 sends a DELETE's values in the query string, as for a GET, so read them with `query()`:
 
 ```php
 $id = $request->query('id')->int();
@@ -77,7 +75,7 @@ $id = $request->query('id')->int();
 
 ## Errors and validation
 
-By default htmx doesn't swap a 4xx or 5xx response. A page from your [error handler](errors.md#showing-your-own-error-page) never appears, and neither does a form sent back with a 422 to show its errors. htmx's `responseHandling` setting decides what gets swapped. This one adds 422 to the defaults:
+By default htmx doesn't swap a 4xx or 5xx response, which means a page from your [error handler](errors.md#showing-your-own-error-page) never appears, and neither does a form sent back with a 422 to show its errors. htmx's `responseHandling` setting decides what gets swapped, and this one adds 422 to the defaults:
 
 ```html
 <meta name="htmx-config" content='{"responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "422", "swap": true}, {"code": "[45]..", "swap": false, "error": true}]}'>
@@ -85,15 +83,13 @@ By default htmx doesn't swap a 4xx or 5xx response. A page from your [error hand
 
 ## Scripts
 
-htmx is a script file, and `hx-*` attributes aren't scripts. Most pages work with [`SecurityHeaders`](middleware.md#security-headers) as they are.
+htmx is a script file and `hx-*` attributes aren't scripts, which lets most pages work with [`SecurityHeaders`](middleware.md#security-headers) as they are.
 
-htmx features that evaluate strings need `'unsafe-eval'`, which the policy doesn't allow. That covers `hx-on` attributes, event filters such as `hx-trigger="keyup[key=='Enter']"`, and `js:` values in `hx-vals`. Write those as listeners in a script file, or loosen `script-src` in `content_policy`.
+htmx features that evaluate strings need `'unsafe-eval'`, which the policy doesn't allow. Those features are `hx-on` attributes, event filters such as `hx-trigger="keyup[key=='Enter']"`, and `js:` values in `hx-vals`. Write them as listeners in a script file, or loosen `script-src` in `content_policy`.
 
 ## Sessions
 
-PHP locks the session from the moment something uses it until the request ends. Requests that use the session run one at a time. A slow one holds up the polls and swaps behind it. Keep frequent requests, such as polling, away from the session.
-
-A flash value goes to the next request that uses the session. With htmx, that can be a background poll rather than the page after a redirect, as [sessions](sessions.md#flash-values) explains.
+A slow request that uses the session holds up the polls and swaps behind it, since PHP [locks the session](sessions.md#using-the-session) until the request ends. A background poll can also take a [flash value](sessions.md#flash-values) before the page after a redirect does.
 
 ## Header reference
 

@@ -9,13 +9,14 @@
     - [Fetching a single value](#fetching-a-single-value)
     - [Inserting, updating and deleting](#inserting-updating-and-deleting)
 - [Transactions](#transactions)
-- [Migrations](#migrations)
+- [Schema migrations](#schema-migrations)
     - [Creating a migration](#creating-a-migration)
     - [Running migrations](#running-migrations)
     - [Checking what has run](#checking-what-has-run)
     - [Running migrations from code](#running-migrations-from-code)
-- [Using PDO directly](#using-pdo-directly)
 - [Method reference](#method-reference)
+    - [Db](#db)
+    - [Migrations](#migrations)
 
 ## Introduction
 
@@ -23,17 +24,17 @@
 
 ## Connecting
 
-The database is registered once in `bootstrap.php`. Any class can ask for `Db` in its constructor. Because it's registered as a closure, a request that never uses the database never connects:
+The database is registered once in `bootstrap.php`, and any class can then ask for `Db` in its constructor. Registered as a closure, it never connects for a request that doesn't use it:
 
 ```php
-$app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
+$app->container->set(Db::class, fn(): Db => Db::sqlite($config->get('db_file')));
 ```
 
 ### SQLite
 
-`Db::sqlite()` opens a SQLite database file, creating it if needed, and applies these settings:
+`Db::sqlite()` opens a SQLite database file, creating it if needed, and applies these pragmas:
 
-| Setting | What it does |
+| Pragma | What it does |
 | --- | --- |
 | `journal_mode = WAL` | Readers don't block the writer |
 | `synchronous = NORMAL` | Commits don't wait for the disk. A power cut can lose the last few, but can't corrupt the file |
@@ -41,7 +42,16 @@ $app->container->set(Db::class, fn() => Db::sqlite($config->get('db_file')));
 | `busy_timeout = 5000` | A locked database is retried for 5 seconds before "database is locked" |
 | `journal_size_limit = 67108864` | The WAL file shrinks back to 64 MB after a big write |
 
-A file that can't be opened throws a `RuntimeException` that names it.
+A file that can't be opened throws a `RuntimeException` that names it. To set more pragmas, use `$db->pdo` when you register the database:
+
+```php
+$app->container->set(Db::class, function () use ($config): Db {
+    $db = Db::sqlite($config->get('db_file'));
+    $db->pdo->exec('PRAGMA cache_size = -20000');
+
+    return $db;
+});
+```
 
 ### Other databases
 
@@ -55,11 +65,11 @@ $app->container->set(Db::class, function () use ($config): Db {
 });
 ```
 
-`Db` then sets the connection to throw on errors, to fetch rows by name, and to use real prepared statements. The last one makes `LIMIT ?` work on MySQL.
+`Db` then sets the connection to throw on errors, to fetch rows by name, and to use real prepared statements, which make `LIMIT ?` work on MySQL.
 
 ## Running queries
 
-Every method takes the SQL and a list of values for its `?` placeholders. Write the SQL as a heredoc, one clause per line:
+Every method takes the SQL and a list of values for its `?` placeholders:
 
 ```php
 $sql = <<<SQL
@@ -147,12 +157,12 @@ $id = $this->db->transaction(function (Db $db) use ($userId, $body): string {
 });
 ```
 
-On SQLite, a transaction starts with `BEGIN IMMEDIATE`. It waits for the write lock like any other write, instead of failing at its first write.
+On SQLite, a transaction starts with `BEGIN IMMEDIATE`, which waits for the write lock at the start, as a single write does, rather than failing at the transaction's first write.
 
 > [!WARNING]
-> Transactions don't nest. A `transaction()` inside another throws a `PDOException`. Start the transaction in the outermost code, such as the action, and let the classes it calls use plain `run()`.
+> Transactions don't nest. A `transaction()` inside another throws a `PDOException`.
 
-## Migrations
+## Schema migrations
 
 Each schema change is a migration, a plain SQL file in `database/migrations/`, and three commands manage them.
 
@@ -170,14 +180,14 @@ This creates an empty `database/migrations/20261012093000-add_notes.sql`. Starti
 php bin/console migrations:run
 ```
 
-This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped, and runs later once it has SQL in it. There are no down migrations. To undo one, write another that reverses it.
+This runs the files that haven't run yet, in name order and each in its own transaction, and records them in a `migrations` table. An empty file is skipped until it has SQL in it. There are no down migrations, and you undo one by writing another that reverses it.
 
-Migrations are recorded by file name. Editing one that has already run changes nothing. A migration that fails is rolled back, stops the run and exits with 1, and the ones before it stay recorded.
+Migrations are recorded by file name, and editing one that has already run changes nothing. A migration that fails is rolled back and stops the run, which exits with 1, while the ones before it stay recorded.
 
-On SQLite, foreign keys are off while a migration runs. That lets you [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at it. A delete doesn't cascade. Before the migration commits, every foreign key is checked, and a row that points nowhere fails it.
+On SQLite, foreign keys are off while a migration runs, which lets you [rebuild a table](https://www.sqlite.org/lang_altertable.html#otheralter) without its `DROP TABLE` deleting the rows that point at the table, though it also means a delete doesn't cascade. Before the migration commits, every foreign key is checked, and a row that points nowhere fails the migration.
 
 > [!NOTE]
-> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction. A migration that fails partway can leave some of its changes behind. Keep one schema change per file.
+> MySQL commits `CREATE`, `ALTER` and `DROP` immediately, outside the transaction. A migration that fails partway can leave some of its changes behind.
 
 ### Checking what has run
 
@@ -203,26 +213,15 @@ $db = Db::sqlite("/data/customers/{$customerId}.db");
 $ran = new Migrations($db, $app->path('database/customer-migrations'))->run();
 ```
 
-`run()` prints nothing and returns the names of the files it ran. A failed file throws a `RuntimeException` that names it. `all()` returns each file with the UTC time it ran, or `null` while it's pending.
-
-## Using PDO directly
-
-For anything the methods don't cover, `$db->pdo` is the PDO connection. A common use is setting more SQLite pragmas when the database is registered:
-
-```php
-$app->container->set(Db::class, function () use ($config): Db {
-    $db = Db::sqlite($config->get('db_file'));
-    $db->pdo->exec('PRAGMA cache_size = -20000');
-
-    return $db;
-});
-```
+`run()` prints nothing and returns the names of the files it ran. A failed file makes it throw a `RuntimeException` that names the file. `all()` returns each file with the UTC time it ran, or `null` while it's pending.
 
 ## Method reference
 
+### Db
+
 | Method | What it does |
 | --- | --- |
-| `Db::sqlite($file)` | Opens a SQLite file with the settings above |
+| `Db::sqlite($file)` | Opens a SQLite file with the pragmas above |
 | `all($sql, $params = [])` | Returns every row, as a list of arrays |
 | `one($sql, $params = [])` | Returns the first row, or `null` |
 | `value($sql, $params = [])` | Returns the first column of the first row as a [`Value`](values.md) |
@@ -231,6 +230,11 @@ $app->container->set(Db::class, function () use ($config): Db {
 | `transaction($fn)` | Runs `$fn` with the `Db` in a transaction and returns its result. Rolls back if it throws |
 | `$db->pdo` | The PDO connection, for anything the methods don't cover |
 | `new Db($pdo)` | Wraps any PDO connection, set to throw on errors, fetch rows by name and use real prepared statements |
+
+### Migrations
+
+| Method | What it does |
+| --- | --- |
 | `$migrations->run()` | Runs the migrations that haven't run yet and returns their file names |
 | `$migrations->all()` | Returns each migration's file name with the UTC time it ran, or `null` while it's pending |
 | `new Migrations($db, $dir)` | The `.sql` files in `$dir`, to run on `$db` |

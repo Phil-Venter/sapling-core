@@ -7,7 +7,8 @@
     - [Arguments](#arguments)
     - [Options and flags](#options-and-flags)
     - [Asking a question](#asking-a-question)
-- [Output and exit codes](#output-and-exit-codes)
+- [Output](#output)
+- [Exit codes and errors](#exit-codes-and-errors)
 - [Adding commands in code](#adding-commands-in-code)
 - [Built-in commands](#built-in-commands)
 - [Method reference](#method-reference)
@@ -55,10 +56,7 @@ final class PruneNotes
 }
 ```
 
-`#[Command]` takes the command's name and a description, which the list of commands shows.
-
-> [!TIP]
-> Name commands `domain:action` with a plural domain, such as `notes:prune` or `users:add`. `commands:list` groups them by domain.
+`#[Command]` takes the command's name and a description, which `commands:list` shows grouped by the part of the name before the colon, such as `notes` in `notes:prune`.
 
 ## Running commands
 
@@ -68,11 +66,14 @@ php bin/console notes:prune --days=7
 
 Run without a name, `bin/console` lists every command, and an unknown name prints the same list and exits with 1.
 
-There's no scheduler built in. Commands that should run regularly go in the server's crontab:
+There's no scheduler built in, and commands that should run regularly go in the server's crontab:
 
 ```sh
 0 3 * * * php /path/to/app/bin/console notes:prune
 ```
+
+> [!WARNING]
+> php-fpm's `env[NAME]` variables only reach web requests. A command started from cron or a shell gets the defaults in `config.php` and an empty `app_key`, unless you set the same variables for it, such as at the top of the crontab.
 
 ## Input
 
@@ -88,7 +89,7 @@ $email = $console->arg(0)->string();        // ann@example.com
 $role = $console->arg(1)->string('member'); // member
 ```
 
-`$console->args` holds every argument as a list of strings. A name typed without quotes can be joined back together:
+`$console->args` holds every argument as a list of strings, and joining it puts a name typed without quotes back together:
 
 ```php
 // php bin/console users:find Ann Smith
@@ -105,14 +106,14 @@ $days = $console->option('days')->int(30); // 7
 $dryRun = $console->flag('dry-run');       // true
 ```
 
-An option that's missing or isn't of the type you read gives the default. `--days=soon` gives 30.
+An option that's missing or isn't of the type you read gives the default, as `--days=soon` gives 30.
 
 > [!WARNING]
-> Options need `=`. Written as `--days 7`, the value would be lost. `option('days')` throws a `UsageException` instead. `flag('force')` throws the same way when given `--force=yes`.
+> Options need `=`. For `--days 7`, `option('days')` throws a `UsageException`, as `flag('force')` does for `--force=yes`.
 
 ### Asking a question
 
-`ask()` prints a question and returns the answer as a `Value`. A blank answer gives the default you read it with. Pressing Enter here keeps the notes:
+`ask()` prints a question and returns the answer as a `Value`, and a blank answer gives the default you read it with. Pressing Enter here keeps the notes:
 
 ```php
 if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
@@ -120,9 +121,9 @@ if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
 }
 ```
 
-Without a terminal, such as under cron, every answer is blank. Read answers with a safe default, or skip the question when `stream_isatty(STDIN)` is false.
+Without a terminal, such as under cron, every answer is blank and reads as the default.
 
-## Output and exit codes
+## Output
 
 `line()` prints to standard output and `error()` to standard error:
 
@@ -140,9 +141,11 @@ $console->table([
 ]);
 ```
 
-Return `Console::SUCCESS` (0) or `Console::FAILURE` (1). A command that throws prints the error and exits with 1. It's also logged when `error_log` is set, such as to a file or `syslog`. Without it, PHP's log is the terminal.
+## Exit codes and errors
 
-A `Sapling\Cli\UsageException`, such as the one `--days 7` causes, prints its message and exits with 1, with no trace and no log line. Throw one for your own usage mistakes:
+A command returns `Console::SUCCESS` (0) or `Console::FAILURE` (1), which becomes its exit code.
+
+For a usage mistake, throw a `Sapling\Cli\UsageException`, as `option()` does for `--days 7`. It prints only its message and exits with 1, with no trace and no log line:
 
 ```php
 if (blank($email)) {
@@ -150,11 +153,11 @@ if (blank($email)) {
 }
 ```
 
-Any other exception, such as an `InvalidArgumentException` from a bug, is a crash and shows its trace.
+Any other exception, such as an `InvalidArgumentException` from a bug, is a crash. It prints the error with its trace and exits with 1, and is also logged when `error_log` is set, such as to a file or `syslog`.
 
 ## Adding commands in code
 
-Like routes, commands can also be added in code, for one-file apps. `$app->commands->add()` takes a class name, an object or a closure:
+Like routes, commands can be added in code for [one-file apps](app.md#one-file-apps), with `$app->commands->add()` taking a class name, an object or a closure:
 
 ```php
 $app->commands->add('greet', function (Console $console): int {
@@ -172,14 +175,15 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | --- | --- |
 | `commands:list` | Lists every command, grouped by the part of the name before the colon |
 | `routes:list` | Lists every route and the class that answers it |
-| `migrations:run` | Runs new migrations, see [database](database.md#running-migrations) |
-| `migrations:list` | Lists every migration and when it ran, see [database](database.md#checking-what-has-run) |
-| `migrations:new <name>` | Creates an empty migration named by the UTC time, see [database](database.md#creating-a-migration) |
+| `migrations:run` | [Runs new migrations](database.md#running-migrations) |
+| `migrations:list` | [Lists every migration](database.md#checking-what-has-run) and when it ran |
+| `migrations:new <name>` | [Creates an empty migration](database.md#creating-a-migration) named by the UTC time |
 
 ## Method reference
 
 | Method | What it does |
 | --- | --- |
+| `#[Command($name, $description = '')]` | Makes the class a command. `commands:list` shows the description |
 | `arg($index)` | Returns the argument at `$index` after the command name, counting from 0, as a `Value` |
 | `option($name)` | Returns the value of `--name=value`, as a `Value` |
 | `flag($name)` | Returns whether `--name` was given |
@@ -188,8 +192,8 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `error($text)` | Prints a line to standard error |
 | `table($rows)` | Prints a list of rows as lined-up columns. An empty row prints a blank line |
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
-| `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
-| `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as [tests](testing.md#running-a-command) do |
 | `$console->command` | The command name |
 | `$console->args` | Every argument after the command name, as a list of strings |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |
+| `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
+| `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as [tests](testing.md#running-a-command) do |

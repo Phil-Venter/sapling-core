@@ -49,7 +49,7 @@ final class ShowNote
 }
 ```
 
-The [container](container.md) builds the constructor's arguments. An action that doesn't read the request can leave the `Request` parameter out. Slashes at either end of a path are ignored. `notes/:id/` and `/notes/:id` are the same route.
+The [container](container.md) builds the constructor's arguments, and an action that doesn't read the request can leave the `Request` parameter out.
 
 ## Route parameters
 
@@ -64,7 +64,7 @@ $userId = $request->param('user')->int();
 $noteId = $request->param('note')->int();
 ```
 
-Parameters arrive URL-decoded, as in `café` from `/tags/caf%C3%A9`. A parameter never matches an empty part or a slash. Fixed parts are matched as browsers send them. Write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
+Parameters arrive URL-decoded, as in `café` from `/tags/caf%C3%A9`, and never match an empty part or a slash.
 
 Parameter names start with a letter or underscore, followed by letters, digits and underscores. `:note_id` works, while `:note-id` and `:2fa` throw a `LogicException`, as does a path that uses one name twice.
 
@@ -95,11 +95,11 @@ Most [middleware](middleware.md) is added for every request, but `#[Middleware]`
 final class ListUsers
 ```
 
-Like `#[Route]`, it can be repeated. The first one is outermost, so the login check runs before the admin check. Middleware added with `$app->middleware()` runs before both.
+Like `#[Route]`, it can be repeated, with the first one outermost, so the login check runs before the admin check. Middleware added with `$app->middleware()` runs before both.
 
 ## Adding routes in code
 
-Routes can also be added in code, for one-file apps and tests. `$app->router->add()` takes a class name, an object or a closure:
+For [one-file apps](app.md#one-file-apps) and tests, `$app->router->add()` adds a route in code, with a class name, an object or a closure as its action:
 
 ```php
 $app->router->add('GET', '/hello/:name', function (Request $request): Response {
@@ -111,19 +111,21 @@ An optional fourth argument lists middleware for the route, as `#[Middleware]` d
 
 ## How routes match
 
+A route matches a path one part at a time, where a part is the text between two slashes. Slashes at either end of a route's path are ignored, which makes `notes/:id/` and `/notes/:id` the same route. Fixed parts are compared as browsers send them, so write a route for `/café` as `/caf%C3%A9`, with uppercase hex.
+
 ### Which route wins
 
-When more than one route fits a path, the most specific one wins. `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. The order routes are added in doesn't matter.
+When more than one route fits a path, the most specific one wins, whatever order the routes were added in. `/notes/new` beats `/notes/:id`, which beats `/:section/edit`.
 
-Two classes on the same method and path stop the app with a `LogicException` that names both. That usually means an action was copied without changing its route.
+Two classes on the same method and path stop the app with a `LogicException` that names both.
 
 ### HEAD requests
 
-A HEAD request is answered by the GET route for the same path, with only the headers sent back. A `HEAD` route of your own wins. The GET action still runs in full. Keep it free of side effects.
+A HEAD request is answered by the GET route for the same path, unless you add a `HEAD` route of your own. The GET action still runs in full, and only its headers are sent back.
 
 ### Not found and wrong method
 
-A path that no route fits is a 404, and a known path with the wrong method is a 405 with an `Allow` header listing the methods it does take. Both pass through your global middleware and your [error handler](errors.md#showing-your-own-error-page), like any other error.
+A path that no route fits is a 404, and a known path with the wrong method is a 405 with an `Allow` header listing the methods it does take. Both reach your [error handler](errors.md#showing-your-own-error-page) like any other error.
 
 ## Method reference
 
