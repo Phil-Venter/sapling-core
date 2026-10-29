@@ -72,6 +72,25 @@ test('a method only a :param route has still reaches it past a fixed route', fun
 	expect(fn() => $router->match('PATCH', '/notes/new'))->toThrow(HttpException::class, 'Method Not Allowed');
 });
 
+test('a 405 lists each method once, from every route that fits', function () {
+	$router = new Router();
+	$router->add('GET', '/notes/new', 'NewNote');
+	$router->add('POST', '/notes/new', 'CreateNote');
+	$router->add('GET', '/notes/:id', 'ShowNote');
+	$router->add('DELETE', '/notes/:id', 'DeleteNote');
+
+	expect(fn() => $router->match('PATCH', '/notes/new'))->toThrow(function (HttpException $e) {
+		expect($e->headers['Allow'])->toBe('GET, POST, DELETE, HEAD');
+	});
+});
+
+test('a path with two params gives each its value', function () {
+	$router = new Router();
+	$router->add('GET', '/users/:user/notes/:note', 'ShowNote');
+
+	expect($router->match('GET', '/users/3/notes/7')['params'])->toBe(['user' => '3', 'note' => '7']);
+});
+
 test('a param never matches an empty segment', function () {
 	$router = new Router();
 	$router->add('GET', '/:slug', 'Page');
