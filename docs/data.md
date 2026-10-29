@@ -4,13 +4,12 @@
 - [JSON](#json)
 - [Forms and query strings](#forms-and-query-strings)
 - [XML](#xml)
-    - [How XML maps to arrays](#how-xml-maps-to-arrays)
 - [Decoding by content type](#decoding-by-content-type)
 - [Method reference](#method-reference)
 
 ## Introduction
 
-`Sapling\Data` converts arrays to and from JSON, XML and form strings, with a pair of static methods for each format that work without an app. Broken JSON or XML throws.
+`Sapling\Data` converts arrays to and from JSON and form strings, with a pair of static methods for each format that work without an app. Broken JSON throws.
 
 ## JSON
 
@@ -37,24 +36,18 @@ $fields = Data::fromForm('a=1&b[]=2&b[]=3');          // ['a' => '1', 'b' => ['2
 
 ## XML
 
-`toXml()` and `fromXml()` turn arrays into XML and back:
+`Data` leaves XML to PHP's SimpleXML, which needs the `simplexml` extension, and `decode()` gives an XML body back as a string. `simplexml_load_string()` reads it into objects, and `(string)` turns an element into its text:
 
 ```php
-$xml = Data::toXml(['id' => 7, 'items' => ['item' => ['Pen', 'Paper']]], root: 'order');
-$order = Data::fromXml($xml);
+$feed = simplexml_load_string($reply->body);
+
+$titles = [];
+foreach ($feed->channel->item as $item) {
+    $titles[] = (string) $item->title;
+}
 ```
 
-`toXml()` turns an empty list into an empty element, and needs keys at the top level, since a document has one root element. `fromXml()` throws a `RuntimeException` for invalid XML, and never fetches anything external while parsing.
-
-### How XML maps to arrays
-
-XML doesn't map onto arrays one to one. `fromXml()` follows these rules:
-
-- Elements become keys, and repeated elements become lists. One `<item>` is a string and two are a list. Check with `is_array()` when the count varies.
-- `@name` keys are attributes, and `#text` is text beside attributes.
-- Values are strings, because XML has no types.
-- Namespace prefixes stay on the keys, as in `soap:Body`.
-- A root holding only text decodes to a string.
+Broken XML raises a warning, which Sapling turns into a crash in an action or a command.
 
 ## Decoding by content type
 
@@ -64,7 +57,7 @@ When a body could be in any of these formats, `decode()` picks the right one fro
 $data = Data::decode($body, 'application/json; charset=utf-8');
 ```
 
-A `+json` or `+xml` suffix counts, as in `application/problem+json`. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services decodes the same way and returns a `Value`. For data you decode yourself, where a key you expect may be missing, [wrap it in a `Value`](values.md#wrapping-your-own-data) to read nested keys safely.
+A `+json` suffix counts, as in `application/problem+json`. An empty body gives `null`, and any other type gives the body back as it is. `data()` on requests, responses and replies from other services decodes the same way and returns a `Value`. For data you decode yourself, where a key you expect may be missing, [wrap it in a `Value`](values.md#wrapping-your-own-data) to read nested keys safely.
 
 ## Method reference
 
@@ -74,6 +67,4 @@ A `+json` or `+xml` suffix counts, as in `application/problem+json`. An empty bo
 | `fromJson($json)` | Decodes JSON, with objects as arrays. Throws `JsonException` when it's invalid |
 | `toForm($data)` | Returns a URL-encoded form body, the same format as a query string |
 | `fromForm($form)` | Decodes a URL-encoded form body |
-| `toXml($data, $root = 'root')` | Returns an XML document with the data inside a root element. Throws `InvalidArgumentException` when `$data` is a list |
-| `fromXml($xml)` | Decodes XML into arrays, or a string when the root only holds text. Throws `RuntimeException` when it's invalid |
-| `decode($body, $contentType)` | Decodes JSON, XML or a form by its `Content-Type`. Any other type gives the body as it is |
+| `decode($body, $contentType)` | Decodes JSON or a form by its `Content-Type`. Any other type gives the body as it is |

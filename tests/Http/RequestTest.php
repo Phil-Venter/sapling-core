@@ -131,14 +131,11 @@ test('data() reads JSON, plain text and posted form fields', function () {
 	expect($posted->data()->rawArray())->toBe(['a' => '1']);
 });
 
-test('a broken body is a 400 when an action reads a field', function (string $type, string $body) {
-	$response = httpRequest('PUT', '/echo/1', ['Content-Type' => $type], $body);
+test('a broken body is a 400 when an action reads a field', function () {
+	$response = httpRequest('PUT', '/echo/1', ['Content-Type' => 'application/json'], '{not json');
 
 	expect([$response['status'], $response['body']])->toBe([400, 'The request body is invalid']);
-})->with([
-	'json' => ['application/json', '{not json'],
-	'xml' => ['application/xml', '<not xml'],
-]);
+});
 
 test('a broken body throws only once a field is read', function () {
 	$request = new Request('PUT', '/echo/1', headers: ['Content-Type' => 'application/json'], body: '{not json');

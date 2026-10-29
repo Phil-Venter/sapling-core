@@ -73,7 +73,7 @@ I've been fiddling with my own micro frameworks since early 2023, and Sapling is
 | [Encrypting secrets](docs/encryption.md) | `Crypto` and `app_key` |
 | [Commands](docs/commands.md) | `#[Command]`, `Console` and the built-in commands |
 | [Talking to other services](docs/http-client.md) | `HttpClient`, `ClientRequest` and `ClientResponse`, one request at a time or several at once |
-| [Converting data](docs/data.md) | JSON, XML and form data with `Data` |
+| [Converting data](docs/data.md) | JSON and form data with `Data` |
 | [Helpers](docs/helpers.md) | `abort()`, `e()`, `attrs()` and the other global functions |
 | [Testing](docs/testing.md) | Requests, signing in, flash values, faked services and commands in tests |
 | [Running in production](docs/production.md) | A checklist for the server |
@@ -94,7 +94,6 @@ Some parts need extensions that most PHP installs already have:
 | `Session` and `Csrf` | `session` |
 | `Value` | `filter` |
 | `HttpClient` | `curl` |
-| XML in `Data` | `simplexml` and `xmlwriter` |
 | `Crypto` | `sodium` |
 
 ## Working on Sapling

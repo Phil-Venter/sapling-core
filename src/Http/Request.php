@@ -145,7 +145,7 @@ final class Request
 	}
 
 	/**
-	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
+	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
 	 *
 	 * @throws HttpException 400 when the body doesn't decode.
 	 */
@@ -182,7 +182,7 @@ final class Request
 		$type = $this->headers['content-type'] ?? '';
 		try {
 			return Data::decode($this->body, $type);
-		} catch (\JsonException|\RuntimeException $e) {
+		} catch (\JsonException $e) {
 			throw new HttpException(400, 'The request body is invalid', previous: $e);
 		}
 	}

@@ -1,9 +1,8 @@
 <?php
 
 use Sapling\Client\ClientRequest;
-use Sapling\Data;
 
-test('json(), form(), xml() and text() encode the body and set its Content-Type', function (
+test('json(), form() and text() encode the body and set its Content-Type', function (
 	ClientRequest $request,
 	string $body,
 	string $type,
@@ -13,11 +12,6 @@ test('json(), form(), xml() and text() encode the body and set its Content-Type'
 })->with([
 	'json' => [ClientRequest::json('PUT', '/', ['name' => 'Ann']), '{"name":"Ann"}', 'application/json'],
 	'form' => [ClientRequest::form('PUT', '/', ['name' => 'Ann']), 'name=Ann', 'application/x-www-form-urlencoded'],
-	'xml' => [
-		ClientRequest::xml('PUT', '/', ['name' => 'Ann'], 'note'),
-		Data::toXml(['name' => 'Ann'], 'note'),
-		'application/xml',
-	],
 	'text' => [ClientRequest::text('PUT', '/', 'Ann'), 'Ann', 'text/plain; charset=utf-8'],
 ]);
 

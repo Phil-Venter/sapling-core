@@ -25,7 +25,7 @@
 
 ## Introduction
 
-Every action receives the incoming request as a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Whatever you read from the request, apart from uploads, comes back as a typed value with a default, whether it was in the URL, a header, or a form, JSON or XML body.
+Every action receives the incoming request as a `Sapling\Http\Request` and returns a `Sapling\Http\Response`. Whatever you read from the request, apart from uploads, comes back as a typed value with a default, whether it was in the URL, a header, or a form or JSON body.
 
 ## The request lifecycle
 
@@ -99,7 +99,7 @@ $next = '/notes?' . Data::toForm([...$request->query()->rawArray(), 'page' => $p
 
 ### Body fields
 
-`data()` reads a field from the request body, whether it was sent as JSON, XML or a form:
+`data()` reads a field from the request body, whether it was sent as JSON or a form:
 
 ```php
 $title = $request->data('title')->string();
@@ -107,18 +107,17 @@ $remember = $request->data('remember')->bool();
 $city = $request->data('address', 'city')->string();
 ```
 
-The body is decoded by its `Content-Type` the first time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string, and a JSON or XML body that doesn't decode stops the request with a 400.
+The body is decoded by its `Content-Type` the first time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string, and a JSON body that doesn't decode stops the request with a 400.
 
 ### The whole body
 
-Without a name, `data()` returns the whole decoded body, such as a JSON list or a SOAP envelope, for when you need more than one field:
+Without a name, `data()` returns the whole decoded body, such as a JSON list, for when you need more than one field:
 
 ```php
-$items = $request->data()->items();   // each item of a JSON list as a Value
-$price = $request->data()->get('soap:Body', 'Price')->string();
+$items = $request->data()->items(); // each item of a JSON list as a Value
 ```
 
-A body of any other type, such as plain text, comes back as a string. The raw body is always in `$request->body`.
+A body of any other type, such as plain text or [XML](data.md#xml), comes back as a string. The raw body is always in `$request->body`.
 
 ### Headers and cookies
 
@@ -267,7 +266,7 @@ $title = $response->data('title')->string();
 $location = $response->header('location')->string();
 ```
 
-An empty body reads as a missing value, and a JSON or XML body that doesn't decode throws, as [`Data`](data.md) does.
+An empty body reads as a missing value, and a JSON body that doesn't decode throws, as [`Data`](data.md) does.
 
 ## Method reference
 
@@ -277,7 +276,7 @@ An empty body reads as a missing value, and a JSON or XML body that doesn't deco
 | --- | --- |
 | `param(...$keys)` | A `:name` parameter from the route path, as a `Value` |
 | `query(...$keys)` | A query string value, as a `Value` |
-| `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON, XML or a form, as a `Value` |
+| `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON or a form, as a `Value` |
 | `header($name)` | A header, case-insensitive, as a `Value` |
 | `cookie(...$keys)` | A cookie, as a `Value`. Like `param()`, `query()` and `data()`, more keys read deeper and no key gives all of them |
 | `$request->method`, `$request->path` | The method, and the path without its query string |

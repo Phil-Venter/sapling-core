@@ -34,11 +34,10 @@ $status = $this->http->send(new ClientRequest('GET', 'https://api.example.com/st
 ```php
 ClientRequest::json('POST', 'https://api.example.com/users', ['name' => 'Ann']);
 ClientRequest::form('POST', 'https://api.example.com/login', ['user' => 'ann', 'password' => $password]);
-ClientRequest::xml('POST', 'https://api.example.com/orders', $order, root: 'order');
 ClientRequest::text('PUT', 'https://api.example.com/notes/7/body', 'Buy milk');
 ```
 
-`json()` without data sends no body and no `Content-Type`, while `[]` sends `[]` and `new stdClass()` sends `{}`. For another format, pass the body and its `Content-Type` to the constructor.
+`json()` without data sends no body and no `Content-Type`, while `[]` sends `[]` and `new stdClass()` sends `{}`. For another format, such as XML, pass the body and its `Content-Type` to the constructor.
 
 ### Headers
 
@@ -71,7 +70,7 @@ A reply has its `status`, `headers` and `body`. `data()` decodes the body by its
 $name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"name": "bob"}}
 ```
 
-A JSON or XML body that doesn't decode, such as a cut-off reply, makes `data()` throw a `JsonException` or `RuntimeException`, which is a crash.
+A JSON body that doesn't decode, such as a cut-off reply, makes `data()` throw a `JsonException`, which is a crash. An XML body stays a string, which you can [read with SimpleXML](data.md#xml).
 
 A reply's header names are lowercase, and a header the service sent more than once is a list, read with `rawArray()`. The name you pass to `header()` is case-insensitive:
 
@@ -166,7 +165,6 @@ A redirect comes back as the reply, as an error status does. To follow one, send
 | --- | --- |
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
-| `ClientRequest::xml($method, $url, $data, $root = 'root', $headers = [])` | A request with `$data` as XML inside `$root` |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
 | `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
 
@@ -175,6 +173,6 @@ A redirect comes back as the reply, as an error status does. To follow one, send
 | Method | What it does |
 | --- | --- |
 | `$reply->header($name)` | Returns a header as a `Value`. The name is case-insensitive, and a header sent more than once is a list, read with `rawArray()` |
-| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON, XML or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` or `RuntimeException` when a JSON or XML body is invalid |
+| `$reply->data(...$keys)` | Returns a field from the reply's body, decoded as JSON or a form, as a [`Value`](values.md). No key gives the whole body. Throws `JsonException` when a JSON body is invalid |
 | `$reply->status`, `$reply->headers`, `$reply->body` | The reply. Header names are lowercase |
 | `new ClientResponse($body, $status, $headers)` | A reply built by hand, for tests or from a cache |

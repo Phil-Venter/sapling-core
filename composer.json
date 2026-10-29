@@ -15,9 +15,7 @@
         "ext-pdo": "for Sapling\\Db and the migrations commands, with your database's driver",
         "ext-pdo_sqlite": "for Sapling\\Db::sqlite()",
         "ext-session": "for Sapling\\Http\\Session and the Csrf middleware",
-        "ext-simplexml": "for Sapling\\Data::fromXml",
-        "ext-sodium": "for Sapling\\Crypto",
-        "ext-xmlwriter": "for Sapling\\Data::toXml"
+        "ext-sodium": "for Sapling\\Crypto"
     },
     "autoload": {
         "psr-4": {

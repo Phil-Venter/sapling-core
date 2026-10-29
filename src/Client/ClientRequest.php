@@ -54,20 +54,6 @@ final readonly class ClientRequest
 		]);
 	}
 
-	/**
-	 * @param array<array-key, mixed> $data
-	 * @param array<string, string> $headers
-	 */
-	public static function xml(
-		string $method,
-		string $url,
-		array $data,
-		string $root = 'root',
-		array $headers = [],
-	): self {
-		return new self($method, $url, Data::toXml($data, $root), ['content-type' => 'application/xml', ...$headers]);
-	}
-
 	/** @param array<string, string> $headers */
 	public static function text(string $method, string $url, string $text, array $headers = []): self
 	{

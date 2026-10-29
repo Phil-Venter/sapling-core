@@ -32,17 +32,15 @@ final readonly class ClientResponse
 	}
 
 	/**
-	 * The body, decoded as JSON, XML or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
+	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
 	 *
 	 * @throws \JsonException When a JSON body is invalid.
-	 * @throws \RuntimeException When an XML body is invalid.
 	 */
 	public function data(string|int ...$keys): Value
 	{
 		// A Content-Type sent twice is a list, and the first one counts.
 		$type = $this->header('content-type');
-		$first = $type->get(0)->string();
-		$contentType = $type->string($first);
+		$contentType = $type->string($type->get(0)->string());
 		return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 	}
 }
