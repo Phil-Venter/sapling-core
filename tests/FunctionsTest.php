@@ -21,11 +21,6 @@ test('abort() throws an HttpException with its status and headers', function () 
 	});
 });
 
-test('abort_if() throws only when its condition is true', function () {
-	expect(fn() => abort_if(true, 403))->toThrow(HttpException::class, 'Forbidden');
-	expect(abort_if(false, 403))->toBeNull();
-});
-
 test('attr() writes one escaped attribute, or null for an empty value', function (
 	string $key,
 	mixed $value,

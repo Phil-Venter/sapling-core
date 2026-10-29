@@ -21,9 +21,9 @@ Sapling sorts what goes wrong into two kinds. An error is an `HttpException` for
 When the visitor asks for something the app can't give, `abort()` stops the request with an error status from anywhere in the app:
 
 ```php
-abort_if($note === null, 404, 'That note does not exist.');
+if ($note === null) abort(404, 'That note does not exist.');
 
-abort_if($note['user_id'] !== $userId, 403);
+if ($note['user_id'] !== $userId) abort(403);
 ```
 
 Without a message, the response uses the standard phrase for the status, such as Forbidden. The router throws the same kind of error for a 404 or a 405. Either way, the error passes back out through the middleware [as a response](middleware.md#answering-early), and gets the [security headers](middleware.md#security-headers) like any other.
@@ -114,7 +114,6 @@ ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 | Method | What it does |
 | --- | --- |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
-| `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found |
 | `$app->onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response |

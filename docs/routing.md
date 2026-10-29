@@ -18,7 +18,7 @@ An action is the class that answers a request, what other frameworks call a cont
 
 ## Writing an action
 
-An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. This one shows a note from the [database](database.md), with [`abort_if()`](helpers.md) for a missing one:
+An action lives in `app/`, where the [scan](app.md#scanning-a-folder) finds it. This one shows a note from the [database](database.md), with [`abort()`](errors.md#errors-the-visitor-causes) for a missing one:
 
 ```php
 namespace App\Notes;
@@ -42,7 +42,7 @@ final class ShowNote
             SQL;
 
         $note = $this->db->one($sql, [$request->param('id')->int()]);
-        abort_if($note === null, 404, 'That note does not exist.');
+        if ($note === null) abort(404, 'That note does not exist.');
 
         return Response::text($note['body']);
     }

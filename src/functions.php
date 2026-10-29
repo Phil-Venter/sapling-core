@@ -13,26 +13,6 @@ if (!function_exists('abort')) {
 	}
 }
 
-if (!function_exists('abort_if')) {
-	/**
-	 * Throws like abort() when the condition is true.
-	 *
-	 * @param array<string, string> $headers
-	 * @throws Sapling\Http\HttpException When the condition is true.
-	 */
-	function abort_if(
-		bool $condition,
-		int $status,
-		string $message = '',
-		array $headers = [],
-		?Throwable $previous = null,
-	): void {
-		if ($condition) {
-			throw new Sapling\Http\HttpException($status, $message, $headers, $previous);
-		}
-	}
-}
-
 if (!function_exists('attr')) {
 	/**
 	 * One HTML attribute, escaped, such as attr('class', ['note', 'pinned']) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value gives null.

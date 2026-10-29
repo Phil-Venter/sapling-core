@@ -224,7 +224,7 @@ return Response::redirect($next);
 return Response::file($path, 'report.pdf');
 ```
 
-A missing file throws a `RuntimeException`, which is a crash. When a file can go missing, such as one a database row points at, check it first with `abort_if(!is_file($path), 404)` to answer with a 404 instead.
+A missing file throws a `RuntimeException`, which is a crash. When a file can go missing, such as one a database row points at, check it first with `if (!is_file($path)) abort(404);` to answer with a 404 instead.
 
 ### Serving large files
 

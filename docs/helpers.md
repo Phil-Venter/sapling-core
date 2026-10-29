@@ -20,11 +20,10 @@ Sapling has a few global functions for common jobs, such as escaping a value or 
 
 ## Stopping with an error
 
-`abort()` stops the request with an [error status](errors.md#errors-the-visitor-causes), and `abort_if()` does the same when its condition is true:
+`abort()` stops the request with an [error status](errors.md#errors-the-visitor-causes):
 
 ```php
-abort_if($note === null, 404, 'That note does not exist.');
-abort(403);
+if ($note === null) abort(404, 'That note does not exist.');
 ```
 
 ## Checking for empty values
@@ -109,7 +108,6 @@ Each helper is skipped when a function with its name already exists, which lets 
 | `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
 | `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
-| `abort_if($condition, $status, $message = '', $headers = [], $previous = null)` | Throws like `abort()` when the condition is true |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
 | `value($raw)` | Returns `new Value($raw)`, for [wrapping your own data](values.md#wrapping-your-own-data) |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |

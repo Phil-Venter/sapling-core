@@ -96,7 +96,7 @@ $sql = <<<SQL
     SQL;
 
 $note = $this->db->one($sql, [$request->param('id')->int()]);
-abort_if($note === null, 404, 'That note does not exist.');
+if ($note === null) abort(404, 'That note does not exist.');
 
 return Response::text($note['body']);
 ```
