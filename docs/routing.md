@@ -68,6 +68,9 @@ Parameters arrive URL-decoded, as in `café` from `/tags/caf%C3%A9`, and never m
 
 Parameter names start with a letter or underscore, followed by letters, digits and underscores. `:note_id` works, while `:note-id` and `:2fa` throw a `LogicException`, as does a path that uses one name twice.
 
+> [!WARNING]
+> A parameter can still be `..`, or hold a backslash, which Windows reads as a folder separator. Match it against the names you allow before using it in a file path.
+
 ## More than one route per action
 
 Routes have no optional parts. When one action should answer two paths, such as a form that both creates and edits, repeat `#[Route]`:
