@@ -1,6 +1,6 @@
 # Sapling
 
-Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies, and you can read the whole core, about 2,300 lines of code, in a day.
+Sapling is a small PHP framework for prototypes, one-off projects and internal tools. It has no runtime dependencies, and you can read the whole core, about 2,100 lines of code, in a day.
 
 Each action or command is one class in one file, with an attribute that declares its route or command name:
 

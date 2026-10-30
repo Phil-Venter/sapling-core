@@ -12,7 +12,6 @@ use Sapling\Http\Request;
 use Sapling\Http\Response;
 use Sapling\Http\Session;
 use Sapling\Tests\Fixtures\Broken\DuplicateGreet;
-use Sapling\Tests\Fixtures\Container\Clock;
 use Sapling\Tests\Fixtures\Container\CurrentUser;
 use Sapling\Tests\Fixtures\Container\Profile;
 use Sapling\Tests\Fixtures\JsonErrors;
@@ -130,12 +129,6 @@ describe('registering in code', function () {
 
 		expect(function_exists('scan_fixture_helper'))->toBeFalse();
 		expect(function_exists('scan_fixture_shared'))->toBeFalse();
-	});
-
-	test('add() refuses a class with no #[Route] or #[Command]', function () {
-		$app = new App(FIXTURES);
-
-		expect(fn() => $app->add(Clock::class))->toThrow(LogicException::class, 'Clock has no #[Route] or #[Command]');
 	});
 
 	test('a closure route can have closure middleware', function () {
@@ -348,7 +341,7 @@ describe('errors', function () {
 		expect($response->body)->toContain('boom &lt;script&gt;');
 		expect($response->body)->toContain('Fails.php:');
 		expect($response->body)->toContain('<span class="here">');
-		expect($response->body)->toMatch('#<summary>\d+ frames</summary>#');
+		expect($response->body)->toMatch('#<summary>\d+ frame\(s\)</summary>#');
 		expect(explode('<details', $response->body)[0])->toContain('Fails-&gt;__invoke()');
 		expect($response->body)->not->toContain('<script>');
 	});
@@ -508,6 +501,7 @@ describe('onError() for crashes', function () {
 		[$response, $log] = captureErrorLog(fn() => $app->handle($request));
 
 		expect($response->status)->toBe(500);
+		expect($response->body)->toBe('Internal Server Error');
 		expect($response->header('Access-Control-Allow-Origin')->string())->toBe('https://app.example');
 		expect($log)->toHaveCount(count($logged));
 

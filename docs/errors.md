@@ -73,7 +73,7 @@ $app->onError(function (HttpException $e, Request $request): Response {
         return Response::json(['error' => $e->getMessage()], $e->status);
     }
 
-    return Response::error($e);
+    return Response::text($e->getMessage(), $e->status);
 });
 ```
 
@@ -117,4 +117,3 @@ ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
 | `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found, or Error for a status it doesn't know |
 | `$app->onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response |
-| `Response::error($e)` | The default answer, in plain text with the error's status and message |

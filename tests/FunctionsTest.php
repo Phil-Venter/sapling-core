@@ -21,21 +21,21 @@ test('abort() throws an HttpException with its status and headers', function () 
 	});
 });
 
-test('attr() writes one escaped attribute, or null for an empty value', function (
+test('attrs() writes an escaped attribute, or nothing for an empty value', function (
 	string $key,
 	mixed $value,
-	?string $expected,
+	string $expected,
 ) {
-	expect(attr($key, $value))->toBe($expected);
+	expect(attrs([$key => $value]))->toBe($expected);
 })->with([
 	'a value to escape' => ['title', '"><script>', 'title="&quot;&gt;&lt;script&gt;"'],
 	'a list, without its empty items' => ['class', ['col', '0', '', null], 'class="col 0"'],
-	'a list of only empty items' => ['class', ['', null], null],
+	'a list of only empty items' => ['class', ['', null], ''],
 	'0' => ['tabindex', 0, 'tabindex="0"'],
 	'true, as a bare attribute' => ['required', true, 'required'],
-	'false' => ['hidden', false, null],
-	'null' => ['id', null, null],
-	'an empty string' => ['id', '', null],
+	'false' => ['hidden', false, ''],
+	'null' => ['id', null, ''],
+	'an empty string' => ['id', '', ''],
 ]);
 
 test('attrs() joins the attributes, leaving out empty ones', function () {
@@ -94,15 +94,4 @@ test('datetime() without a timezone uses the default', function () {
 	} finally {
 		date_default_timezone_set($default);
 	}
-});
-
-test('uuid() makes a version 7 UUID, ordered by time', function () {
-	$first = uuid();
-	usleep(2000);
-	$second = uuid();
-	$many = array_map(fn() => uuid(), range(1, 1000));
-
-	expect($first)->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/');
-	expect(strcmp($first, $second))->toBeLessThan(0);
-	expect(array_unique($many))->toHaveCount(1000);
 });

@@ -153,13 +153,8 @@ final class DebugPage
 			return '';
 		}
 
-		if ($count === 1) {
-			$line = $lines[0] ?? '';
-			return "<div class=\"vendor\">{$line}</div>";
-		}
-
 		$inner = '<div>' . implode('</div><div>', $lines) . '</div>';
-		return "<details class=\"vendor\"><summary>{$count} frames</summary>{$inner}</details>";
+		return "<details class=\"vendor\"><summary>{$count} frame(s)</summary>{$inner}</details>";
 	}
 
 	private static function relative(string $file, string $root): string

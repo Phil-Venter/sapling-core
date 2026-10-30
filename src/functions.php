@@ -13,38 +13,33 @@ if (!function_exists('abort')) {
 	}
 }
 
-if (!function_exists('attr')) {
-	/**
-	 * One HTML attribute, escaped, such as attr('class', ['note', 'pinned']) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value gives null.
-	 */
-	function attr(string $key, mixed $value = null): ?string
-	{
-		if (is_array($value)) {
-			$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
-		}
-
-		if (blank($value) || $value === false) {
-			return null;
-		}
-
-		if ($value === true) {
-			return e($key);
-		}
-
-		return sprintf('%s="%s"', e($key), e($value));
-	}
-}
-
 if (!function_exists('attrs')) {
 	/**
-	 * attr() for each pair, joined with spaces. Empty ones are left out.
+	 * Escaped HTML attributes, such as attrs(['class' => ['note', 'pinned']]) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value leaves the attribute out.
 	 *
 	 * @param array<string, mixed> $attrs
 	 */
 	function attrs(array $attrs): string
 	{
-		$parts = array_map(attr(...), array_keys($attrs), $attrs);
-		return implode(' ', array_filter($parts, fn(?string $part): bool => $part !== null));
+		$parts = [];
+		foreach ($attrs as $key => $value) {
+			if (is_array($value)) {
+				$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
+			}
+
+			if (blank($value) || $value === false) {
+				continue;
+			}
+
+			if ($value === true) {
+				$parts[] = e($key);
+				continue;
+			}
+
+			$parts[] = sprintf('%s="%s"', e($key), e($value));
+		}
+
+		return implode(' ', $parts);
 	}
 }
 
@@ -120,27 +115,6 @@ if (!function_exists('e')) {
 		}
 
 		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-	}
-}
-
-if (!function_exists('uuid')) {
-	/**
-	 * A version 7 UUID, which sorts by creation time.
-	 */
-	function uuid(): string
-	{
-		$time = str_pad(dechex((int) (microtime(true) * 1000)), 12, '0', STR_PAD_LEFT);
-		$random = bin2hex(random_bytes(10));
-		$variant = dechex(8 | (hexdec($random[3]) & 3));
-		return sprintf(
-			'%s-%s-7%s-%s%s-%s',
-			substr($time, 0, 8),
-			substr($time, 8, 4),
-			substr($random, 0, 3),
-			$variant,
-			substr($random, 4, 3),
-			substr($random, 7, 12),
-		);
 	}
 }
 

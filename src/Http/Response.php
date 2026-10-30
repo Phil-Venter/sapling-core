@@ -70,26 +70,6 @@ final class Response
 	}
 
 	/**
-	 * The error's status and message as plain text. App adds its headers.
-	 */
-	public static function error(HttpException $e): self
-	{
-		return self::text($e->getMessage(), $e->status);
-	}
-
-	/**
-	 * A 500 for a crash. In debug mode it's the debug page, otherwise a plain Internal Server Error.
-	 */
-	public static function fromCrash(\Throwable $e, bool $debug, string $basePath): self
-	{
-		if ($debug) {
-			return self::html(DebugPage::render($e, $basePath), 500);
-		}
-
-		return self::text('Internal Server Error', 500);
-	}
-
-	/**
 	 * The name is case-insensitive. One set to a list, such as several Set-Cookie values, is read with rawArray().
 	 */
 	public function header(string $name): Value
@@ -148,11 +128,8 @@ final class Response
 			}
 		}
 
-		// After the headers, since header('Location: ...') turns any status but 201 and 3xx into a 302.
 		http_response_code($this->status);
-
-		$bodiless = $this->status < 200 || $this->status === 204 || $this->status === 304;
-		if (!$body || $bodiless) {
+		if (!$body || $this->status < 200 || $this->status === 204 || $this->status === 304) {
 			return;
 		}
 

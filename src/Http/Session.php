@@ -88,7 +88,6 @@ final class Session
 		}
 
 		$https = !in_array($_SERVER['HTTPS'] ?? '', ['', 'off'], true);
-		// Taken from any client, not only trusted proxies, since it can only add Secure, and a forged one breaks only the sender's own session.
 		$proxiedHttps = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 
 		$options = [
@@ -106,7 +105,6 @@ final class Session
 			session_start($options);
 		}
 
-		// PHP only sends the cookie for a new id. Renewing a kept one keeps an active visitor signed in past $lifetime.
 		$kept = ($_COOKIE[(string) session_name()] ?? null) === session_id();
 		if ($this->lifetime > 0 && $kept) {
 			$this->sendCookie((string) session_id(), time() + $this->lifetime);

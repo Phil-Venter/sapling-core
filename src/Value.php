@@ -31,21 +31,13 @@ final readonly class Value
 	public function int(int $default = 0): int
 	{
 		$int = $this->filter(FILTER_VALIDATE_INT);
-		if (!is_int($int)) {
-			return $default;
-		}
-
-		return $int;
+		return is_int($int) ? $int : $default;
 	}
 
 	public function float(float $default = 0.0): float
 	{
 		$float = $this->filter(FILTER_VALIDATE_FLOAT);
-		if (!is_float($float)) {
-			return $default;
-		}
-
-		return $float;
+		return is_float($float) ? $float : $default;
 	}
 
 	/**
@@ -58,11 +50,7 @@ final readonly class Value
 		}
 
 		$bool = $this->filter(FILTER_VALIDATE_BOOL);
-		if (!is_bool($bool)) {
-			return $default;
-		}
-
-		return $bool;
+		return is_bool($bool) ? $bool : $default;
 	}
 
 	/**
@@ -127,11 +115,7 @@ final readonly class Value
 	 */
 	public function rawArray(array $default = []): array
 	{
-		if (!is_array($this->raw)) {
-			return $default;
-		}
-
-		return $this->raw;
+		return is_array($this->raw) ? $this->raw : $default;
 	}
 
 	private function text(): ?string

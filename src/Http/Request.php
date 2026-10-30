@@ -145,14 +145,11 @@ final class Request
 	}
 
 	/**
-	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
-	 *
-	 * @throws HttpException 400 when the body doesn't decode.
+	 * More keys read deeper, as in cookie('prefs', 'theme') for prefs[theme]=dark.
 	 */
-	public function data(string|int ...$keys): Value
+	public function cookie(string|int ...$keys): Value
 	{
-		$this->data ??= $this->decode();
-		return new Value($this->data)->get(...$keys);
+		return new Value($this->cookies)->get(...$keys);
 	}
 
 	/**
@@ -164,11 +161,14 @@ final class Request
 	}
 
 	/**
-	 * More keys read deeper, as in cookie('prefs', 'theme') for prefs[theme]=dark.
+	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
+	 *
+	 * @throws HttpException 400 when the body doesn't decode.
 	 */
-	public function cookie(string|int ...$keys): Value
+	public function data(string|int ...$keys): Value
 	{
-		return new Value($this->cookies)->get(...$keys);
+		$this->data ??= $this->decode();
+		return new Value($this->data)->get(...$keys);
 	}
 
 	/** @throws HttpException */
@@ -179,8 +179,8 @@ final class Request
 			return $this->input;
 		}
 
-		$type = $this->headers['content-type'] ?? '';
 		try {
+			$type = $this->headers['content-type'] ?? '';
 			return Data::decode($this->body, $type);
 		} catch (\JsonException $e) {
 			throw new HttpException(400, 'The request body is invalid', previous: $e);

@@ -48,7 +48,6 @@ final class Container
 			return;
 		}
 
-		// A factory as well, so $instances holds only what get() has handed out.
 		$this->factories[$id] = fn(): object => $value;
 	}
 
@@ -76,8 +75,6 @@ final class Container
 			unset($this->building[$id]);
 		}
 
-		// Not newInstanceArgs(), which converts loosely, so a setting of 'false' would fill a bool with true.
-		// @mago-expect analysis:unknown-class-instantiation
 		return new $id(...$arguments);
 	}
 

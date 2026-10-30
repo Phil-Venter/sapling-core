@@ -4,6 +4,7 @@ namespace Sapling\Http\Middleware;
 
 use Sapling\Http\Request;
 use Sapling\Http\Response;
+use Sapling\Value;
 
 /**
  * Lets the sites you list call the app from a browser. It answers preflights and adds the CORS headers.
@@ -48,7 +49,7 @@ final readonly class Cors
 
 		$allowed = $this->allowedOrigin($origin);
 		$response = $next($request);
-		foreach ($this->corsHeaders($allowed, $response->headers) as $name => $value) {
+		foreach ($this->corsHeaders($allowed, $response->header('Vary')) as $name => $value) {
 			$response = $response->withHeader($name, $value);
 		}
 
@@ -95,21 +96,14 @@ final readonly class Cors
 		return null;
 	}
 
-	/**
-	 * @param array<string, string|list<string>> $existing
-	 * @return array<string, string>
-	 */
-	private function corsHeaders(?string $allowed, array $existing): array
+	/** @return array<string, string> */
+	private function corsHeaders(?string $allowed, Value $vary): array
 	{
 		$headers = [];
 		if (!$this->anyOrigin) {
 			$headers['Vary'] = 'Origin';
-			foreach ($existing as $name => $value) {
-				if (strcasecmp($name, 'Vary') !== 0) {
-					continue;
-				}
-
-				$headers['Vary'] = implode(', ', (array) $value) . ', Origin';
+			if ($vary->raw !== null) {
+				$headers['Vary'] = implode(', ', (array) $vary->raw) . ', Origin';
 			}
 		}
 

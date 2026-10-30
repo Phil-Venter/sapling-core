@@ -32,7 +32,6 @@ final readonly class RunMigrations
 			$console->line("Migrated {$name}");
 		}
 
-		// run() leaves only empty files pending.
 		foreach ($migrations->all() as $name => $ranAt) {
 			if ($ranAt !== null) {
 				continue;

@@ -17,14 +17,15 @@ final class CommandList
 	 */
 	public function add(string $name, string|object $action, string $description = ''): void
 	{
-		if (array_key_exists($name, $this->commands)) {
-			$taken = $this->commands[$name]['action'];
-			$first = is_object($taken) ? $taken::class : $taken;
-			$second = is_object($action) ? $action::class : $action;
-			throw new \LogicException("Duplicate command {$name}: {$first} and {$second}");
+		if (!array_key_exists($name, $this->commands)) {
+			$this->commands[$name] = ['action' => $action, 'description' => $description];
+			return;
 		}
 
-		$this->commands[$name] = ['action' => $action, 'description' => $description];
+		$taken = $this->commands[$name]['action'];
+		$first = is_object($taken) ? $taken::class : $taken;
+		$second = is_object($action) ? $action::class : $action;
+		throw new \LogicException("Duplicate command {$name}: {$first} and {$second}");
 	}
 
 	/** @return class-string|object|null */

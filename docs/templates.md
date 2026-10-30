@@ -60,7 +60,7 @@ Inside a template, print values with `<?= ?>` and escape every one with `e()`, w
 <?php endforeach ?>
 ```
 
-For attributes, `attrs()` builds the escaped list from an array, and `attr()` builds one attribute. `true` gives a bare attribute such as `hidden`, while `null`, `false` and empty values leave the attribute out, and an array is joined with spaces:
+For attributes, `attrs()` builds the escaped list from an array. `true` gives a bare attribute such as `hidden`, while `null`, `false` and empty values leave the attribute out, and an array is joined with spaces:
 
 ```php
 <li <?= attrs(['class' => ['note', 'pinned'], 'data-id' => $note['id'], 'hidden' => true, 'title' => null]) ?>>

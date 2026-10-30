@@ -5,7 +5,6 @@
 - [Stopping with an error](#stopping-with-an-error)
 - [Checking for empty values](#checking-for-empty-values)
 - [Dates and times](#dates-and-times)
-- [Generating ids](#generating-ids)
 - [Dumping values](#dumping-values)
 - [Replacing a helper](#replacing-a-helper)
 - [Function reference](#function-reference)
@@ -16,7 +15,7 @@ Sapling has a few global functions for common jobs, such as escaping a value or 
 
 ## Escaping HTML
 
-`e()` escapes a value for HTML, and `attrs()` and `attr()` build escaped attributes, as [Printing values](templates.md#printing-values) shows. Read a [`Value`](values.md#reading-a-value) as a type first, as in `e($request->query('q')->string())`.
+`e()` escapes a value for HTML, and `attrs()` builds escaped attributes, as [Printing values](templates.md#printing-values) shows. Read a [`Value`](values.md#reading-a-value) as a type first, as in `e($request->query('q')->string())`.
 
 ## Stopping with an error
 
@@ -70,24 +69,6 @@ try {
 }
 ```
 
-## Generating ids
-
-`uuid()` returns a version 7 UUID, which sorts by the time it was made and suits database keys:
-
-```php
-$sql = <<<SQL
-    INSERT INTO files (id, name)
-    VALUES (?, ?)
-    SQL;
-
-$this->db->run($sql, [uuid(), $name]);
-```
-
-It's safe to show in a URL, though anyone who sees it can tell when it was made.
-
-> [!WARNING]
-> Only 74 of its bits are random, too few for a secret such as the token in an invite link.
-
 ## Dumping values
 
 `dd()` dumps its values and stops:
@@ -98,18 +79,16 @@ dd($request, $note);
 
 ## Replacing a helper
 
-Each helper is skipped when a function with its name already exists, which lets an app replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attr()` and `attrs()` call `e()` and `blank()`, and use your versions of them.
+Each helper is skipped when a function with its name already exists, which lets an app replace one by defining its own before `vendor/autoload.php` loads. Sapling's classes never call the helpers, though `attrs()` calls `e()` and `blank()`, and uses your versions of them.
 
 ## Function reference
 
 | Function | What it does |
 | --- | --- |
 | `e($value)` | Escapes a value for HTML. A backed enum prints its value. Throws on a `Value` |
-| `attrs($attributes)` | Returns several HTML attributes, leaving out the empty ones. An array value is joined with spaces |
-| `attr($key, $value)` | Returns one escaped HTML attribute. `true` gives a bare attribute, and `null`, `false` or an empty value gives `null` |
+| `attrs($attributes)` | Returns escaped HTML attributes. `true` gives a bare attribute, `null`, `false` or an empty value leaves one out, and an array value is joined with spaces |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
 | `value($raw)` | Returns `new Value($raw)`, for [wrapping your own data](values.md#wrapping-your-own-data) |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
-| `uuid()` | Returns a version 7 UUID, which sorts by creation time |
 | `dd($value, ...$more)` | Dumps the values and stops |

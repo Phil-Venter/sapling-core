@@ -137,7 +137,7 @@ A bare app has none of what [booting sets up](#what-booting-sets-up), though `tr
 | --- | --- |
 | `App::boot($basePath, $config)` | Builds an app from its config, as described in [What booting sets up](#what-booting-sets-up) |
 | `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes, skipping classes without them |
-| `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes. Throws a `LogicException` when it has no route or command |
+| `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes |
 | `middleware($middleware, $prefix = '')` | Adds [middleware](middleware.md#registering-middleware) around every request, or every request under `$prefix` |
 | `onError($handler)` | Sets the [error handler](errors.md#showing-your-own-error-page), which turns an `HttpException`, or a crash outside debug mode, into a response |
 | `run()` | Answers the current request and sends the response, or runs a command from the terminal |

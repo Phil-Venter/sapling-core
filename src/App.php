@@ -15,6 +15,7 @@ use Sapling\Cli\Commands\NewMigration;
 use Sapling\Cli\Commands\RunMigrations;
 use Sapling\Cli\Console;
 use Sapling\Cli\UsageException;
+use Sapling\Http\DebugPage;
 use Sapling\Http\HttpException;
 use Sapling\Http\Middleware\Cors;
 use Sapling\Http\Middleware\Csrf;
@@ -62,7 +63,7 @@ final class App
 		$this->commands->add(ListCommands::NAME, ListCommands::class, ListCommands::DESCRIPTION);
 		$this->commands->add(ListRoutes::NAME, ListRoutes::class, ListRoutes::DESCRIPTION);
 
-		$this->onError(Response::error(...));
+		$this->onError(fn(HttpException $e) => Response::text($e->getMessage(), $e->status));
 	}
 
 	/**
@@ -122,19 +123,31 @@ final class App
 
 		sort($classes);
 		foreach ($classes as $class) {
-			$this->register($class);
+			$this->add($class);
 		}
 	}
 
 	/**
-	 * Registers one class, as scan() does for a folder. Throws a LogicException when it has no #[Route] or #[Command].
+	 * Registers one class, as scan() does for a folder.
 	 *
 	 * @param class-string $class
 	 */
 	public function add(string $class): void
 	{
-		if (!$this->register($class)) {
-			throw new \LogicException("{$class} has no #[Route] or #[Command]");
+		$reflection = new \ReflectionClass($class);
+		$middleware = [];
+		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
+			$middleware[] = $attribute->newInstance()->class;
+		}
+
+		foreach ($reflection->getAttributes(Route::class) as $attribute) {
+			$route = $attribute->newInstance();
+			$this->router->add($route->method, $route->path, $class, $middleware);
+		}
+
+		foreach ($reflection->getAttributes(Command::class) as $attribute) {
+			$command = $attribute->newInstance();
+			$this->commands->add($command->name, $class, $command->description);
 		}
 	}
 
@@ -194,7 +207,7 @@ final class App
 
 		set_error_handler($this->throwOnError(...));
 		try {
-			return $this->pipeline($middleware, $this->dispatch(...))($request);
+			return $this->answer([...$middleware, $this->dispatch(...)], $request);
 		} finally {
 			restore_error_handler();
 		}
@@ -205,24 +218,17 @@ final class App
 	 */
 	public function runCommand(Console $console): int
 	{
-		$name = $console->command;
-		if ($name === '') {
-			$name = ListCommands::NAME;
-		}
-
+		$name = $console->command === '' ? ListCommands::NAME : $console->command;
 		$action = $this->commands->find($name);
 		if ($action === null) {
 			$console->error("Unknown command: {$name}");
-			$list = $this->resolve(ListCommands::class);
-			$list($console);
+			$this->resolve(ListCommands::class)($console);
 			return Console::FAILURE;
 		}
 
 		set_error_handler($this->throwOnError(...));
 		try {
-			/** @var callable(Console): int $command */
-			$command = $this->resolve($action);
-			return $command($console);
+			return $this->resolve($action)($console);
 		} catch (UsageException $e) {
 			$console->error($e->getMessage());
 			return Console::FAILURE;
@@ -248,58 +254,37 @@ final class App
 		return "{$base}/{$relative}";
 	}
 
-	/** @param class-string $class */
-	private function register(string $class): bool
-	{
-		$reflection = new \ReflectionClass($class);
-		$routes = $reflection->getAttributes(Route::class);
-		$commands = $reflection->getAttributes(Command::class);
-		$middleware = [];
-		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
-			$middleware[] = $attribute->newInstance()->class;
-		}
-
-		foreach ($routes as $attribute) {
-			$route = $attribute->newInstance();
-			$this->router->add($route->method, $route->path, $class, $middleware);
-		}
-
-		foreach ($commands as $attribute) {
-			$command = $attribute->newInstance();
-			$this->commands->add($command->name, $class, $command->description);
-		}
-
-		return $routes !== [] || $commands !== [];
-	}
-
 	/** @param class-string|object $handler */
 	private function resolve(string|object $handler): callable
 	{
-		if (!is_string($handler)) {
-			return $handler;
-		}
-
-		return $this->container->get($handler);
+		return is_string($handler) ? $this->container->get($handler) : $handler;
 	}
 
-	/**
-	 * @param list<class-string|object> $middleware
-	 * @param \Closure(Request): Response $next
-	 * @return \Closure(Request): Response
-	 */
-	private function pipeline(array $middleware, \Closure $next): \Closure
+	/** @param non-empty-list<class-string|object> $layers */
+	private function answer(array $layers, Request $request): Response
 	{
-		$next = $this->answerErrors($next);
-		foreach (array_reverse($middleware) as $layer) {
-			$inner = $next;
-			$next = $this->answerErrors(function (Request $request) use ($layer, $inner): Response {
-				/** @var callable(Request, \Closure): Response $middleware */
-				$middleware = $this->resolve($layer);
-				return $middleware($request, $inner);
-			});
-		}
+		$layer = array_shift($layers);
+		try {
+			if ($layers === []) {
+				return $this->resolve($layer)($request);
+			}
 
-		return $next;
+			$next = fn(Request $request) => $this->answer($layers, $request);
+			return $this->resolve($layer)($request, $next);
+		} catch (HttpException $e) {
+			if ($e->status >= 500) {
+				error_log("{$request->method} {$request->path} failed: {$e->status}");
+			}
+
+			return $this->answerError($e, $request);
+		} catch (\Throwable $e) {
+			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
+			if ($this->debug) {
+				return Response::html(DebugPage::render($e, $this->basePath), 500);
+			}
+
+			return $this->answerError(new HttpException(500, previous: $e), $request);
+		}
 	}
 
 	/** @throws HttpException */
@@ -307,34 +292,7 @@ final class App
 	{
 		$route = $this->router->match($request->method, $request->path);
 		$request->params = $route['params'];
-		$action = function (Request $request) use ($route): Response {
-			/** @var callable(Request): Response $handler */
-			$handler = $this->resolve($route['action']);
-			return $handler($request);
-		};
-
-		return $this->pipeline($route['middleware'], $action)($request);
-	}
-
-	/**
-	 * @param \Closure(Request): Response $step
-	 * @return \Closure(Request): Response
-	 */
-	private function answerErrors(\Closure $step): \Closure
-	{
-		return function (Request $request) use ($step): Response {
-			try {
-				return $step($request);
-			} catch (HttpException $e) {
-				if ($e->status >= 500) {
-					error_log("{$request->method} {$request->path} failed: {$e->status}");
-				}
-
-				return $this->answerError($e, $request);
-			} catch (\Throwable $e) {
-				return $this->answerCrash($e, $request);
-			}
-		};
+		return $this->answer([...$route['middleware'], $route['action']], $request);
 	}
 
 	private function answerError(HttpException $e, Request $request): Response
@@ -344,9 +302,12 @@ final class App
 			$handler = $this->resolve($this->errorHandler);
 			$response = $handler($e, $request);
 		} catch (\Throwable $crash) {
-			// Not answerCrash(), which would call the broken handler again.
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $crash);
-			return Response::fromCrash($crash, $this->debug, $this->basePath);
+			if ($this->debug) {
+				return Response::html(DebugPage::render($crash, $this->basePath), 500);
+			}
+
+			return Response::text('Internal Server Error', 500);
 		}
 
 		foreach ($e->headers as $name => $value) {
@@ -358,16 +319,6 @@ final class App
 		}
 
 		return $response;
-	}
-
-	private function answerCrash(\Throwable $e, Request $request): Response
-	{
-		new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
-		if ($this->debug) {
-			return Response::fromCrash($e, true, $this->basePath);
-		}
-
-		return $this->answerError(new HttpException(500, previous: $e), $request);
 	}
 
 	private function throwOnError(int $severity, string $message, string $file, int $line): bool

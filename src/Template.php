@@ -58,7 +58,6 @@ final class Template
 				throw new \LogicException("end() in {$template} closes a component or slot it didn't open");
 			}
 
-			// Before ob_get_clean(), which would otherwise read the unclosed one's buffer.
 			$unclosed = $this->open[$opened] ?? null;
 			if ($unclosed !== null) {
 				$kind = ucfirst($unclosed['kind']);

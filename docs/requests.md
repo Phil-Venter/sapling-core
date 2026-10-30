@@ -276,9 +276,9 @@ An empty body reads as a missing value, and a JSON body that doesn't decode thro
 | --- | --- |
 | `param(...$keys)` | A `:name` parameter from the route path, as a `Value` |
 | `query(...$keys)` | A query string value, as a `Value` |
-| `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON or a form, as a `Value` |
+| `cookie(...$keys)` | A cookie, as a `Value` |
 | `header($name)` | A header, case-insensitive, as a `Value` |
-| `cookie(...$keys)` | A cookie, as a `Value`. Like `param()`, `query()` and `data()`, more keys read deeper and no key gives all of them |
+| `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON or a form, as a `Value`. Like `param()`, `query()` and `cookie()`, more keys read deeper and no key gives all of them |
 | `$request->method`, `$request->path` | The method, and the path without its query string |
 | `$request->params` | Every route parameter, by name |
 | `$request->body` | The raw body |
@@ -295,7 +295,6 @@ An empty body reads as a missing value, and a JSON body that doesn't decode thro
 | `Response::json($data, $status = 200)` | Returns JSON. Throws `JsonException` when the data can't be encoded |
 | `Response::redirect($url, $status = 302)` | Returns a redirect |
 | `Response::file($path, $name = null)` | Returns a download, read from disk while it's sent. Throws `RuntimeException` when the file is missing |
-| `Response::error($e)` | Returns plain text with an `HttpException`'s status and message, for an [error handler](errors.md#showing-your-own-error-page) |
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
