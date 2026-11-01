@@ -70,7 +70,7 @@ final readonly class Db
 	public function value(string $sql, array $params = []): Value
 	{
 		$row = $this->query($sql, $params)->fetch(\PDO::FETCH_NUM);
-		return is_array($row) ? new Value($row[0] ?? null) : new Value(null);
+		return new Value($row[0] ?? null);
 	}
 
 	/**

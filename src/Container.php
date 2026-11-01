@@ -61,6 +61,7 @@ final class Container
 
 		$this->building[$id] = true;
 		$arguments = [];
+
 		try {
 			if (array_key_exists($id, $this->factories)) {
 				return $this->factories[$id]($this);

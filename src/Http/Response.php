@@ -92,6 +92,7 @@ final class Response
 	public function withHeader(string $name, string|array $value): self
 	{
 		$copy = clone $this;
+
 		foreach (array_keys($copy->headers) as $existing) {
 			if (strcasecmp($existing, $name) !== 0) {
 				continue;
@@ -116,9 +117,9 @@ final class Response
 	}
 
 	/**
-	 * With body: false, only the status and headers.
+	 * For a HEAD request, PHP drops the body itself.
 	 */
-	public function send(bool $body = true): void
+	public function send(): void
 	{
 		foreach ($this->headers as $name => $values) {
 			$replace = strcasecmp($name, 'Set-Cookie') !== 0;
@@ -129,7 +130,7 @@ final class Response
 		}
 
 		http_response_code($this->status);
-		if (!$body || $this->status < 200 || $this->status === 204 || $this->status === 304) {
+		if ($this->status < 200 || $this->status === 204 || $this->status === 304) {
 			return;
 		}
 

@@ -91,12 +91,6 @@ message = 'Invalid argument type for argument #1 of `Sapling\Config::__construct
 count = 1
 
 [[issues]]
-file = "src/Config.php"
-code = "unused-parameter"
-message = "Parameter `$env` is never used."
-count = 1
-
-[[issues]]
 file = "src/Container.php"
 code = "invalid-return-statement"
 message = '''Invalid return type for function `Sapling\Container::get`: expected `('T.sapling\container::get() extends object)`, but found `object`.'''

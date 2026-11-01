@@ -39,7 +39,8 @@ final readonly class ClientRequest
 			return new self($method, $url, '', $headers);
 		}
 
-		return new self($method, $url, Data::toJson($data), ['content-type' => 'application/json', ...$headers]);
+		$type = 'application/json';
+		return new self($method, $url, Data::toJson($data), ['content-type' => $type, ...$headers]);
 	}
 
 	/**
@@ -48,15 +49,14 @@ final readonly class ClientRequest
 	 */
 	public static function form(string $method, string $url, array $data, array $headers = []): self
 	{
-		return new self($method, $url, Data::toForm($data), [
-			'content-type' => 'application/x-www-form-urlencoded',
-			...$headers,
-		]);
+		$type = 'application/x-www-form-urlencoded';
+		return new self($method, $url, Data::toForm($data), ['content-type' => $type, ...$headers]);
 	}
 
 	/** @param array<string, string> $headers */
 	public static function text(string $method, string $url, string $text, array $headers = []): self
 	{
-		return new self($method, $url, $text, ['content-type' => 'text/plain; charset=utf-8', ...$headers]);
+		$type = 'text/plain; charset=utf-8';
+		return new self($method, $url, $text, ['content-type' => $type, ...$headers]);
 	}
 }

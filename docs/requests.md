@@ -107,7 +107,7 @@ $remember = $request->data('remember')->bool();
 $city = $request->data('address', 'city')->string();
 ```
 
-The body is decoded by its `Content-Type` the first time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string, and a JSON body that doesn't decode stops the request with a 400.
+The body is decoded by its `Content-Type` each time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string, and a JSON body that doesn't decode stops the request with a 400.
 
 ### The whole body
 
@@ -298,6 +298,6 @@ An empty body reads as a missing value, and a JSON body that doesn't decode thro
 | `header($name)` | Returns a header, case-insensitive, as a `Value`. One set to a list, such as several `Set-Cookie` values, is read with `rawArray()` |
 | `withHeader($name, $value)` | Returns a copy with the header set, replacing one of the same name |
 | `data(...$keys)` | Returns a field from the body decoded by its `Content-Type`, as a `Value`. More keys read deeper, and no key gives the whole body |
-| `send($body = true)` | Sends the response. `App::run()` calls it |
+| `send()` | Sends the response. `App::run()` calls it |
 | `$response->status`, `headers`, `body`, `file` | Read-only. `headers` keeps each name as it was set, and `file` holds a download's path |
 | `new Response($body, $status = 200, $headers = [])` | Builds any other response |

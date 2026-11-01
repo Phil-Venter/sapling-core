@@ -367,8 +367,8 @@ describe('errors', function () {
 		expect([$response['status'], $response['body']])->toBe([200, 'still works']);
 	});
 
-	test('a crash in a package logs the line of your code that led there', function () {
-		$app = new App(FIXTURES);
+	test('a crash in a package logs the line of your code that led there', function (string $base) {
+		$app = new App($base);
 		$app->router->add('GET', '/report', require FIXTURES . '/missing-download.php');
 
 		[, $log] = captureErrorLog(fn() => $app->handle(new Request('GET', '/report')));
@@ -376,6 +376,15 @@ describe('errors', function () {
 		expect($log[0])->toContain('File not found: /no/such/report.pdf in ');
 		expect($log[0])->toContain('src/Http/Response.php:');
 		expect($log[0])->toEndWith(' from ' . FIXTURES . '/missing-download.php:5');
+	})->with(['without' => FIXTURES, 'with' => FIXTURES . '/']);
+});
+
+describe('paths', function () {
+	test('a trailing slash on the base path is dropped', function () {
+		$app = new App(FIXTURES . '/');
+
+		expect($app->basePath)->toBe(FIXTURES);
+		expect($app->path('views'))->toBe(FIXTURES . '/views');
 	});
 });
 

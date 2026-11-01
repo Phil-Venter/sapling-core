@@ -13,8 +13,6 @@ final class Request
 	/** @var array<string, string> */
 	public array $params = [];
 
-	private mixed $data = null;
-
 	/**
 	 * A request built by hand, for tests. Use fromGlobals() for the current request.
 	 *
@@ -95,7 +93,6 @@ final class Request
 			$headers[$name] = $value;
 		}
 
-		// PHP leaves these two out of the HTTP_ keys.
 		foreach (['CONTENT_TYPE' => 'content-type', 'CONTENT_LENGTH' => 'content-length'] as $key => $name) {
 			$value = $_SERVER[$key] ?? null;
 			if (is_string($value)) {
@@ -111,13 +108,11 @@ final class Request
 	{
 		$remote = $_SERVER['REMOTE_ADDR'] ?? '';
 		$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
-		$any = in_array('*', $trusted, true);
-		$fromProxy = $any || in_array($remote, $trusted, true);
+		$fromProxy = in_array('*', $trusted, true) || in_array($remote, $trusted, true);
 		if (!is_string($forwarded) || !$fromProxy) {
 			return $remote;
 		}
 
-		// Each proxy adds the address it saw, so the visitor is the last one no trusted proxy added. No address matches '*', which leaves the one the connecting proxy added.
 		$hops = array_map(trim(...), explode(',', $forwarded));
 		foreach (array_reverse($hops) as $hop) {
 			if (!in_array($hop, $trusted, true)) {
@@ -167,21 +162,14 @@ final class Request
 	 */
 	public function data(string|int ...$keys): Value
 	{
-		$this->data ??= $this->decode();
-		return new Value($this->data)->get(...$keys);
-	}
-
-	/** @throws HttpException */
-	private function decode(): mixed
-	{
 		// PHP keeps no copy of a multipart body, only $_POST.
 		if ($this->input !== []) {
-			return $this->input;
+			return new Value($this->input)->get(...$keys);
 		}
 
+		$contentType = $this->headers['content-type'] ?? '';
 		try {
-			$type = $this->headers['content-type'] ?? '';
-			return Data::decode($this->body, $type);
+			return new Value(Data::decode($this->body, $contentType))->get(...$keys);
 		} catch (\JsonException $e) {
 			throw new HttpException(400, 'The request body is invalid', previous: $e);
 		}

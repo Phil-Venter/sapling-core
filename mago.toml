@@ -18,6 +18,8 @@ separate-attributes = true
 use-tabs = true
 
 [linter]
+baseline = "baseline-linter.toml"
+baseline-variant = "loose"
 minimum-fail-level = "Note"
 
 [linter.rules]
@@ -86,7 +88,7 @@ enum-cases = false
 
 [analyzer]
 excludes = ["tests"]
-baseline = "analyzer-baseline.toml"
+baseline = "baseline-analyzer.toml"
 baseline-variant = "loose"
 minimum-fail-level = "Note"
 plugins = []

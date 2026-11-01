@@ -9,12 +9,10 @@ namespace Sapling;
  */
 final readonly class CrashLog
 {
-	private string $root;
-
-	public function __construct(string $basePath)
-	{
-		$this->root = rtrim($basePath, '/\\') . '/';
-	}
+	/**
+	 * $root is the app's folder, without a trailing slash, as App::$basePath holds it.
+	 */
+	public function __construct(private string $root) {}
 
 	/**
 	 * Logs "{$what} failed: Class: message in file:line", plus "from" your code when Sapling or a package threw.
@@ -54,6 +52,6 @@ final readonly class CrashLog
 
 	private function inApp(string $file): bool
 	{
-		return str_starts_with($file, $this->root) && !str_starts_with($file, "{$this->root}vendor/");
+		return str_starts_with($file, "{$this->root}/") && !str_starts_with($file, "{$this->root}/vendor/");
 	}
 }

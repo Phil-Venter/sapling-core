@@ -58,7 +58,9 @@ final readonly class Migrations
 			FROM migrations
 			SQL;
 		$rows = $this->db->all($sql);
-		$ran = new Value(array_column($rows, 'ran_at', 'name'));
+
+		/** @var array<string, string> $ran */
+		$ran = array_column($rows, 'ran_at', 'name');
 		$all = [];
 		if ($files === false) {
 			$files = [];
@@ -66,11 +68,7 @@ final readonly class Migrations
 
 		foreach ($files as $file) {
 			$name = basename($file);
-			$ranAt = $ran->get($name)->string();
-			$all[$name] = null;
-			if ($ranAt !== '') {
-				$all[$name] = $ranAt;
-			}
+			$all[$name] = $ran[$name] ?? null;
 		}
 
 		return $all;

@@ -55,11 +55,11 @@ final readonly class Csrf
 	private function host(string $origin): string
 	{
 		$host = parse_url($origin, PHP_URL_HOST);
-		$port = parse_url($origin, PHP_URL_PORT);
 		if (!is_string($host)) {
 			return '';
 		}
 
+		$port = parse_url($origin, PHP_URL_PORT);
 		if (!is_int($port)) {
 			return $host;
 		}

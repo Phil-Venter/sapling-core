@@ -24,20 +24,16 @@ test('send() skips the body for 1xx, 204 and 304', function (int $status) {
 	expect(ob_get_clean())->toBe('');
 })->with([101, 204, 304]);
 
-test('send(body: false) never reads a file', function () {
-	ob_start();
-	Response::file(FIXTURES . '/files/hello.txt')->send(body: false);
-
-	expect(ob_get_clean())->toBe('');
-});
-
-test('HEAD on a GET route sends the headers and no body', function () {
-	$response = httpRequest('HEAD', '/notes');
+test('HEAD on a GET route sends the headers and no body', function (string $path, string $header, string $value) {
+	$response = httpRequest('HEAD', $path);
 
 	expect($response['status'])->toBe(200);
-	expect(headerValues($response, 'Content-Type'))->toBe(['text/plain; charset=utf-8']);
+	expect(headerValues($response, $header))->toBe([$value]);
 	expect($response['body'])->toBe('');
-});
+})->with([
+	'text' => ['/notes', 'Content-Type', 'text/plain; charset=utf-8'],
+	'a file' => ['/download', 'Content-Length', '18'],
+]);
 
 test('a Location header keeps the status it came with', function () {
 	$response = httpRequest('POST', '/jobs');

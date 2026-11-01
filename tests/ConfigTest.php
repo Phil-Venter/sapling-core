@@ -22,8 +22,7 @@ test('load() passes .env values to config.php as strings', function () {
 
 	expect($config->get('env'))->toMatchArray([
 		'APP_ENV' => 'dev',
-		// @mago-expect lint:no-literal-password
-		'APP_PASSWORD' => 'quoted secret',
+		'DOUBLE' => 'double quoted',
 		'SINGLE' => 'single quoted',
 		'EMPTY' => '',
 		'SPACED' => 'padded value',
@@ -56,9 +55,9 @@ test('the env file is optional', function () {
 test('env file values never leak into getenv(), $_ENV or $_SERVER', function () {
 	Config::load(CONFIG_FIXTURES . '/config.php', CONFIG_FIXTURES . '/test.env');
 
-	expect(getenv('APP_PASSWORD'))->toBeFalse();
-	expect($_ENV)->not->toHaveKey('APP_PASSWORD');
-	expect($_SERVER)->not->toHaveKey('APP_PASSWORD');
+	expect(getenv('DOUBLE'))->toBeFalse();
+	expect($_ENV)->not->toHaveKey('DOUBLE');
+	expect($_SERVER)->not->toHaveKey('DOUBLE');
 	expect(getenv('SAPLING_TEST_SERVER_ONLY'))->toBe('from the server');
 });
 

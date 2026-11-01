@@ -14,7 +14,6 @@ final class DebugPage
 	 */
 	public static function render(\Throwable $e, string $root): string
 	{
-		$root = rtrim($root, '/\\');
 		$title = self::e($e::class);
 		$sections = self::exceptionHtml($e, $root, '');
 		$previous = $e->getPrevious();
@@ -97,6 +96,7 @@ final class DebugPage
 	{
 		$html = '';
 		$hidden = [];
+
 		/** @var array{function: string, line?: int, file?: string, class?: string, type?: string} $frame */
 		foreach (array_values($e->getTrace()) as $index => $frame) {
 			$line = self::frame($index, $frame, $root);
@@ -128,6 +128,7 @@ final class DebugPage
 		$files = [$frame['file'] ?? ''];
 		$class = $frame['class'] ?? '';
 		$match = [];
+
 		if (class_exists($class, false)) {
 			$files[] = (string) new \ReflectionClass($class)->getFileName();
 		}

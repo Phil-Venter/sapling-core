@@ -30,6 +30,8 @@ use Sapling\Http\Session;
  */
 final class App
 {
+	public readonly string $basePath;
+
 	public readonly Container $container;
 
 	public readonly Router $router;
@@ -48,8 +50,9 @@ final class App
 	/**
 	 * A bare app with only the commands:list and routes:list commands, for tests and one-file apps. Use boot() to build an app from its config.
 	 */
-	public function __construct(public readonly string $basePath, public readonly bool $debug = false)
+	public function __construct(string $basePath, public readonly bool $debug = false)
 	{
+		$this->basePath = rtrim($basePath, '/\\');
 		$this->container = new Container();
 		$this->router = new Router();
 		$this->commands = new CommandList();
@@ -110,6 +113,7 @@ final class App
 		$namespace = rtrim($namespace, '\\') . '\\';
 		$classes = [];
 		$directory = new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS);
+
 		/** @var \SplFileInfo $file */
 		foreach (new \RecursiveIteratorIterator($directory) as $file) {
 			$name = $file->getBasename('.php');
@@ -187,8 +191,7 @@ final class App
 		}
 
 		$request = Request::fromGlobals($this->trustedProxies);
-		$response = $this->handle($request);
-		$response->send(body: $request->method !== 'HEAD');
+		$this->handle($request)->send();
 	}
 
 	/**
@@ -249,9 +252,8 @@ final class App
 	 */
 	public function path(string $relative = ''): string
 	{
-		$base = rtrim($this->basePath, '/\\');
 		$relative = ltrim($relative, '/\\');
-		return "{$base}/{$relative}";
+		return "{$this->basePath}/{$relative}";
 	}
 
 	/** @param class-string|object $handler */

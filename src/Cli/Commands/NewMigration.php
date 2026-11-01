@@ -26,12 +26,14 @@ final readonly class NewMigration
 	{
 		$name = strtolower(implode(' ', $console->args));
 		$name = trim((string) preg_replace('/[^a-z0-9]+/', '_', $name), '_');
+
 		if ($name === '') {
 			throw new UsageException('Usage: php bin/console migrations:new <name>');
 		}
 
 		$dir = $this->app->path(RunMigrations::DIR);
 		$file = gmdate('YmdHis') . "-{$name}.sql";
+
 		if (!is_dir($dir)) {
 			mkdir($dir, recursive: true);
 		}

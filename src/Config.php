@@ -22,10 +22,7 @@ final readonly class Config
 	public static function load(string $configFile, string $envFile): self
 	{
 		$env = getenv() + self::readEnv($envFile);
-		$load =
-			/** @param array<string, string> $env */
-			static fn(string $__file, array $env): mixed => require $__file;
-		return new self($load($configFile, $env));
+		return new self(require $configFile);
 	}
 
 	/**

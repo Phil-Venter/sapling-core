@@ -88,8 +88,6 @@ final class HttpClient
 	private function handle(ClientRequest $request): \CurlHandle
 	{
 		$headers = $request->headers;
-
-		// curl labels a string body as a form when it has no type, and an empty header line stops it.
 		if (is_string($request->body) && !array_key_exists('content-type', $headers)) {
 			$headers['content-type'] = '';
 		}

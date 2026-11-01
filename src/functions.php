@@ -98,7 +98,6 @@ if (!function_exists('dd')) {
 	 */
 	function dd(mixed $value, mixed ...$more): never
 	{
-		// @mago-expect lint:no-debug-symbols
 		var_dump($value, ...$more);
 		exit(1);
 	}

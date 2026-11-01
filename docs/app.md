@@ -147,5 +147,5 @@ A bare app has none of what [booting sets up](#what-booting-sets-up), though `tr
 | `$app->container` | The [container](container.md) |
 | `$app->router` | The [router](routing.md) |
 | `$app->commands` | The [commands](commands.md) |
-| `$app->basePath`, `$app->debug` | The app's folder, and whether debug mode is on |
+| `$app->basePath`, `$app->debug` | The app's folder, without a trailing slash, and whether debug mode is on |
 | `new App($basePath, $debug = false)` | Builds a bare app, for tests and one-file apps |

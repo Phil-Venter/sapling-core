@@ -151,7 +151,7 @@ final class Template
 	 */
 	public function prefix(string $prefix, string $dir): void
 	{
-		$this->prefixes[$prefix] = rtrim($dir, '/\\');
+		$this->prefixes[$prefix] = $dir;
 	}
 
 	/** @throws \RuntimeException */

@@ -27,6 +27,7 @@ final class Router
 		$path = '/' . implode('/', $segments);
 		$node = $this->tree;
 		$params = [];
+
 		foreach ($segments as $segment) {
 			if (!str_starts_with($segment, ':')) {
 				$node->fixed[$segment] ??= new RouteNode();
@@ -37,6 +38,7 @@ final class Router
 			$node->param ??= new RouteNode();
 			$node = $node->param;
 			$param = substr($segment, 1);
+
 			if (in_array($param, $params, true)) {
 				throw new \LogicException("Route {$method} {$path} uses :{$param} twice");
 			}
@@ -71,6 +73,7 @@ final class Router
 	{
 		$allowed = [];
 		$segments = explode('/', trim($path, '/'));
+
 		foreach ($this->walk($this->tree, $segments) as [$node, $values]) {
 			$route = $node->routes[$method] ?? null;
 			if ($route === null && $method === 'HEAD') {
@@ -121,6 +124,7 @@ final class Router
 
 		$segment = array_shift($segments);
 		$fixed = $node->fixed[$segment] ?? null;
+
 		if ($fixed !== null) {
 			yield from $this->walk($fixed, $segments, $values);
 		}
