@@ -57,11 +57,14 @@ $meeting = datetime('2026-10-15 09:00', 'Africa/Johannesburg');
 $created = datetime($row['created_at'], 'UTC');
 ```
 
-When you don't pass a timezone, it uses the [`timezone` setting](config.md#settings-sapling-reads). Either way, a date string without a zone of its own is read in that timezone.
+When you don't pass a timezone, it uses PHP's default, which the [`timezone` setting](config.md#settings-sapling-reads) sets. Either way, a date string without a zone of its own is read in that timezone.
 
 An unknown timezone throws a `DateInvalidTimeZoneException`, and a blank string or a date PHP can't read throws a `DateMalformedStringException`. Catch them where a visitor supplies the value:
 
 ```php
+use DateMalformedStringException;
+use Sapling\Http\Response;
+
 try {
     $start = datetime($request->data('start')->string(), 'Africa/Johannesburg');
 } catch (DateMalformedStringException) {
@@ -85,10 +88,10 @@ Each helper is skipped when a function with its name already exists, which lets 
 
 | Function | What it does |
 | --- | --- |
-| `e($value)` | Escapes a value for HTML. A backed enum prints its value. Throws on a `Value` |
-| `attrs($attributes)` | Returns escaped HTML attributes. `true` gives a bare attribute, `null`, `false` or an empty value leaves one out, and an array value is joined with spaces |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
+| `attrs($attrs)` | Returns escaped HTML attributes. `true` gives a bare attribute, `null`, `false` or an empty value leaves one out, and an array value is joined with spaces |
 | `blank($value)` | Returns whether the value is `null`, a blank string or an empty array or Countable. `'0'`, `0` and `false` aren't blank. Throws on a `Value` |
-| `value($raw)` | Returns `new Value($raw)`, for [wrapping your own data](values.md#wrapping-your-own-data) |
 | `datetime($value = null, $timezone = null)` | Returns a `DateTimeImmutable` in `$timezone`, a name or a `DateTimeZone`, or in the default timezone. A date string without its own zone is read in `$timezone`, and a blank one throws |
 | `dd($value, ...$more)` | Dumps the values and stops |
+| `e($value)` | Escapes a value for HTML. A backed enum prints its value. Throws on a `Value` |
+| `value($raw)` | Returns `new Value($raw)`, for [wrapping your own data](values.md#wrapping-your-own-data) |

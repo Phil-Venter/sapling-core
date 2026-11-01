@@ -115,5 +115,5 @@ ini_set('error_log', __DIR__ . '/logs/app-' . gmdate('Y-m-d') . '.log');
 | --- | --- |
 | `abort($status, $message = '', $headers = [], $previous = null)` | Throws an `HttpException`, which becomes the response |
 | `$e->status`, `$e->headers` | The status, and the headers Sapling adds to the response |
-| `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found, or Error for a status it doesn't know |
 | `$app->onError($handler)` | Sets what turns an `HttpException`, or a crash outside debug mode, into a response |
+| `new HttpException($status, $message = '', $headers = [], $previous = null)` | An error status. Without a message, it uses the standard phrase, such as Not Found, or Error for a status it doesn't know |

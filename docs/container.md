@@ -58,6 +58,9 @@ The closure runs once, the first time the class is needed. `set()` also takes a 
 The container can't guess which class to use for an interface. Register the one you want under the interface's name, with a closure that receives the container:
 
 ```php
+use Sapling\Config;
+use Sapling\Container;
+
 $app->container->set(Mailer::class, function (Container $c): Mailer {
     $config = $c->get(Config::class);
 

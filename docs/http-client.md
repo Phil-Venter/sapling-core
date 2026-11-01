@@ -140,6 +140,8 @@ To cache a reply, store its body with its `Content-Type`. A reply rebuilt from b
 A request gives up after 30 seconds. When a visitor waits on it, register a client with a shorter timeout in `bootstrap.php`:
 
 ```php
+use Sapling\Client\HttpClient;
+
 $app->container->set(HttpClient::class, fn(): HttpClient => new HttpClient(timeout: 5));
 ```
 
@@ -166,7 +168,8 @@ A redirect comes back as the reply, as an error status does. To follow one, send
 | `ClientRequest::json($method, $url, $data = null, $headers = [])` | A request with `$data` as JSON, or no body without data |
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
-| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Header names are lowercased |
+| `$request->method`, `url`, `body`, `headers` | Read-only, as a [fake](testing.md#faking-other-services) sees them. Header names are lowercase |
+| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data |
 
 ### ClientResponse
 

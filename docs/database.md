@@ -207,6 +207,7 @@ php bin/console migrations:list
 `Sapling\Migrations` runs a folder of migrations on any `Db`, as `migrations:run` does on the app's database. Use it for another database, such as one file per customer, or to set up a database in a test:
 
 ```php
+use Sapling\Db;
 use Sapling\Migrations;
 
 $db = Db::sqlite("/data/customers/{$customerId}.db");

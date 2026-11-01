@@ -51,7 +51,7 @@ Broken XML raises a warning, which Sapling turns into a crash in an action or a 
 
 ## Decoding by content type
 
-When a body could be in any of these formats, `decode()` picks the right one from its `Content-Type`:
+When a body could be JSON or a form, `decode()` picks the right one from its `Content-Type`:
 
 ```php
 $data = Data::decode($body, 'application/json; charset=utf-8');

@@ -117,6 +117,10 @@ An action behind `RequireLogin`, added with `$app->middleware(RequireLogin::clas
 Middleware is added in `bootstrap.php`, which the server and your tests both load. `$app->middleware()` adds it around every request and takes a class name, an object or a closure:
 
 ```php
+use Sapling\Http\Middleware\Cors;
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+
 $app->middleware(NoIndex::class);
 
 $app->middleware(new Cors(['https://app.example']));

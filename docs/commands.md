@@ -160,6 +160,8 @@ Any other exception, such as an `InvalidArgumentException` from a bug, is a cras
 Like routes, commands can be added in code for [one-file apps](app.md#one-file-apps), with `$app->commands->add()` taking a class name, an object or a closure:
 
 ```php
+use Sapling\Cli\Console;
+
 $app->commands->add('greet', function (Console $console): int {
     $console->line("Hello {$console->arg(0)->string('world')}");
 
@@ -195,5 +197,7 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `$console->command` | The command name |
 | `$console->args` | Every argument after the command name, as a list of strings |
 | `$app->commands->add($name, $action, $description = '')` | Adds a command in code |
+| `$app->commands->find($name)` | Returns a command's action, or `null` |
+| `$app->commands->all()` | Returns every command by name, sorted, with its action and description |
 | `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
 | `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as [tests](testing.md#running-a-command) do |

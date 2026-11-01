@@ -62,6 +62,8 @@ test('a new note goes back to the list', function () {
 `header()` and `data()` read the response as a [`Value`](values.md), and `data()` decodes a JSON body:
 
 ```php
+use Sapling\Http\Request;
+
 test('the API answers a new note with its id', function () {
     $response = testApp()->handle(new Request('POST', '/api/notes', input: ['body' => 'Buy milk']));
 

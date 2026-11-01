@@ -15,7 +15,6 @@
     - [Attaching headers](#attaching-headers)
     - [Setting cookies](#setting-cookies)
     - [Redirects](#redirects)
-    - [Error responses](#error-responses)
 - [File downloads](#file-downloads)
     - [Serving large files](#serving-large-files)
 - [Reading a response](#reading-a-response)
@@ -117,7 +116,7 @@ Without a name, `data()` returns the whole decoded body, such as a JSON list, fo
 $items = $request->data()->items(); // each item of a JSON list as a Value
 ```
 
-A body of any other type, such as plain text or [XML](data.md#xml), comes back as a string. The raw body is always in `$request->body`.
+A body of any other type, such as plain text or [XML](data.md#xml), comes back as a string. The raw body is in `$request->body`, apart from a multipart form, which PHP doesn't keep.
 
 ### Headers and cookies
 
@@ -167,6 +166,8 @@ For anything else, build the response yourself:
 return new Response($xml, 200, ['Content-Type' => 'application/xml']);
 ```
 
+[`abort()`](errors.md#errors-the-visitor-causes) stops the request with an error status instead, from anywhere, middleware and templates included.
+
 ### Attaching headers
 
 A response can't be changed once it's made, so `withHeader()` returns a copy with the header set, replacing any header of the same name:
@@ -210,10 +211,6 @@ if (!str_starts_with($next, '/') || str_starts_with($next, '//') || strpbrk($nex
 
 return Response::redirect($next);
 ```
-
-### Error responses
-
-[`abort()`](errors.md#errors-the-visitor-causes) stops the request with an error status from anywhere, middleware and templates included.
 
 ## File downloads
 
@@ -274,6 +271,7 @@ An empty body reads as a missing value, and a JSON body that doesn't decode thro
 
 | Method | What it returns |
 | --- | --- |
+| `Request::fromGlobals($trustedProxies = [])` | The current request, read from PHP's globals. `App::run()` calls it |
 | `param(...$keys)` | A `:name` parameter from the route path, as a `Value` |
 | `query(...$keys)` | A query string value, as a `Value` |
 | `cookie(...$keys)` | A cookie, as a `Value` |
@@ -281,7 +279,7 @@ An empty body reads as a missing value, and a JSON body that doesn't decode thro
 | `data(...$keys)` | A field from the body, decoded by its `Content-Type` as JSON or a form, as a `Value`. Like `param()`, `query()` and `cookie()`, more keys read deeper and no key gives all of them |
 | `$request->method`, `$request->path` | The method, and the path without its query string |
 | `$request->params` | Every route parameter, by name |
-| `$request->body` | The raw body |
+| `$request->body` | The raw body, empty for a multipart form |
 | `$request->files` | Uploaded files, as PHP's `$_FILES` holds them |
 | `$request->ip` | The visitor's address, or the proxy's until the proxy is listed in `trusted_proxies` |
 | `new Request($method, $path, ...)` | A request built by hand, for tests |

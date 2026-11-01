@@ -105,6 +105,9 @@ Like `#[Route]`, it can be repeated, with the first one outermost, so the login 
 For [one-file apps](app.md#one-file-apps) and tests, `$app->router->add()` adds a route in code, with a class name, an object or a closure as its action:
 
 ```php
+use Sapling\Http\Request;
+use Sapling\Http\Response;
+
 $app->router->add('GET', '/hello/:name', function (Request $request): Response {
     return Response::text("Hello {$request->param('name')->string()}");
 });

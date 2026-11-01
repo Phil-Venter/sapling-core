@@ -77,6 +77,8 @@ $remember = $request->data('remember')->bool();
 `items()` returns each item of an array as a `Value`, under its key, and `[]` for anything that isn't an array. Here `tags[]=php&tags[]=sql` becomes a list of strings:
 
 ```php
+use Sapling\Value;
+
 $tags = array_map(fn(Value $tag): string => $tag->string(), $request->query('tags')->items());
 ```
 

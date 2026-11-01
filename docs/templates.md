@@ -190,6 +190,8 @@ $view->share('appName', 'Notes');
 Share helpers as closures, which only run when a template calls them. A page that never shows a flash message never starts the session:
 
 ```php
+use Sapling\Http\Session;
+
 $view->share('flash', function (string $key) use ($app): string {
     $session = $app->container->get(Session::class);
 
