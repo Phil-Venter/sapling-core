@@ -618,7 +618,7 @@ describe('commands', function () {
 		expect($result['code'])->toBe($code);
 		expect($result['stderr'])->toBe($stderr);
 		expect($result['stdout'])
-			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n\n  routes:list    List every route and its class\n");
+			->toBe("Commands:\n  commands:list  List every command\n\n  crash          Trigger a warning\n  fail           Exit with code 3\n  greet          Say hello to arg 0\n  misconfigured  Throw an InvalidArgumentException, as a bug does\n\n  routes:list    List every route and its class\n\n  send-file      Send the file at arg 0\n");
 	})->with([
 		'no command, which runs commands:list' => [[], 0, ''],
 		'an unknown command' => [['nope'], 1, "Unknown command: nope\n"],

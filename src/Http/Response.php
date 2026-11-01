@@ -117,7 +117,7 @@ final class Response
 	}
 
 	/**
-	 * For a HEAD request, PHP drops the body itself.
+	 * For a HEAD request, PHP drops the body itself. A file ends every output buffer first, since readfile() would copy all of it into one, which is fatal past memory_limit.
 	 */
 	public function send(): void
 	{
@@ -135,6 +135,10 @@ final class Response
 		}
 
 		if ($this->file !== null) {
+			for ($level = ob_get_level(); $level > 0; $level--) {
+				ob_end_flush();
+			}
+
 			readfile($this->file);
 			return;
 		}

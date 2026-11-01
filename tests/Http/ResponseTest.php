@@ -59,6 +59,18 @@ test('file() sends the file as a download, with a name any browser can use', fun
 	]);
 });
 
+test('file() sends a file larger than memory_limit with output buffering on', function () {
+	$file = tempDir() . '/big.bin';
+	$handle = fopen($file, 'w');
+	ftruncate($handle, 16_000_000);
+	fclose($handle);
+
+	$result = runConsole(['send-file', $file], ['output_buffering' => '4096', 'memory_limit' => '8M']);
+
+	expect($result['code'])->toBe(0);
+	expect(strlen($result['stdout']))->toBe(16_000_000);
+});
+
 test('file() refuses a file that does not exist', function () {
 	expect(fn() => Response::file('/no/such/file.txt'))
 		->toThrow(RuntimeException::class, 'File not found: /no/such/file.txt');
