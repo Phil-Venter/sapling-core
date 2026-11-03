@@ -9,23 +9,15 @@ namespace Sapling;
  */
 final readonly class CrashLog
 {
-	/**
-	 * $root is the app's folder, without a trailing slash, as App::$basePath holds it.
-	 */
 	public function __construct(private string $root) {}
 
-	/**
-	 * Logs "{$what} failed: Class: message in file:line", plus "from" your code when Sapling or a package threw.
-	 */
 	public function write(string $what, \Throwable $e): void
 	{
 		$class = $e::class;
-
-		// A newline would let a message forge a log line.
 		$message = str_replace(["\r", "\n"], ' ', $e->getMessage());
-
 		$where = "{$e->getFile()}:{$e->getLine()}";
 		$appLine = $this->firstAppLine($e);
+
 		if ($appLine !== '') {
 			$where .= " from {$appLine}";
 		}

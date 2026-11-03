@@ -42,6 +42,7 @@ final readonly class Console
 		$words = array_slice($argv, 1);
 		$literal = [];
 		$end = array_search('--', $words, true);
+
 		if ($end !== false) {
 			$literal = array_slice($words, $end + 1);
 			$words = array_slice($words, 0, $end);
@@ -51,6 +52,7 @@ final readonly class Console
 			if (str_starts_with($word, '--')) {
 				$name = substr($word, 2);
 				$equals = strpos($name, '=');
+
 				if ($equals === false) {
 					$flags[$name] = true;
 					continue;
@@ -119,7 +121,6 @@ final readonly class Console
 		echo $question, ' ';
 		$line = fgets($this->input ?? STDIN);
 
-		// At the end of input, the cursor is still after the question.
 		if ($line === false) {
 			echo PHP_EOL;
 			return new Value(null);

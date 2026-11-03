@@ -88,11 +88,13 @@ final class HttpClient
 	private function handle(ClientRequest $request): \CurlHandle
 	{
 		$headers = $request->headers;
+
 		if (is_string($request->body) && !array_key_exists('content-type', $headers)) {
 			$headers['content-type'] = '';
 		}
 
 		$lines = [];
+
 		foreach ($headers as $name => $value) {
 			$lines[] = "{$name}: {$value}";
 		}

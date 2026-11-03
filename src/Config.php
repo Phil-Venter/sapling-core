@@ -37,6 +37,7 @@ final readonly class Config
 
 		$env = [];
 		$lines = file($file);
+
 		if ($lines === false) {
 			throw new \RuntimeException("Cannot read {$file}");
 		}

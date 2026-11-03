@@ -136,6 +136,7 @@ A bare app has none of what [booting sets up](#what-booting-sets-up), though `tr
 | Method | What it does |
 | --- | --- |
 | `App::boot($basePath, $config)` | Builds an app from its config, as described in [What booting sets up](#what-booting-sets-up) |
+| `path($relative = '')` | Returns an absolute path inside the app, such as `path('views')` |
 | `scan($dir, $namespace)` | Registers every class in the folder and its subfolders by its attributes, skipping classes without them |
 | `add($class)` | Registers one class by its `#[Route]`, `#[Middleware]` and `#[Command]` attributes |
 | `middleware($middleware, $prefix = '')` | Adds [middleware](middleware.md#registering-middleware) around every request, or every request under `$prefix` |
@@ -143,7 +144,6 @@ A bare app has none of what [booting sets up](#what-booting-sets-up), though `tr
 | `run()` | Answers the current request and sends the response, or runs a command from the terminal |
 | `handle($request)` | Returns the `Response` for a `Request`, even for an error or a crash, as in [tests](testing.md#sending-a-request). It never throws |
 | `runCommand($console)` | Runs a command and returns its exit code, as in [tests](testing.md#running-a-command) |
-| `path($relative = '')` | Returns an absolute path inside the app, such as `path('views')` |
 | `$app->container` | The [container](container.md) |
 | `$app->router` | The [router](routing.md) |
 | `$app->commands` | The [commands](commands.md) |

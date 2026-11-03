@@ -68,8 +68,7 @@ final class Container
 			}
 
 			$reflection = new \ReflectionClass($id);
-			$parameters = $reflection->getConstructor()?->getParameters() ?? [];
-			foreach ($parameters as $parameter) {
+			foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
 				$arguments[] = $this->argument($parameter, $id);
 			}
 		} finally {
@@ -84,12 +83,11 @@ final class Container
 		$attribute = $parameter->getAttributes(Attributes\Config::class)[0] ?? null;
 		if ($attribute !== null) {
 			$key = $attribute->newInstance()->key;
-			$config = $this->get(Config::class);
 			if ($parameter->isDefaultValueAvailable()) {
-				return $config->get($key, $parameter->getDefaultValue());
+				return $this->get(Config::class)->get($key, $parameter->getDefaultValue());
 			}
 
-			return $config->get($key);
+			return $this->get(Config::class)->get($key);
 		}
 
 		$type = $parameter->getType();

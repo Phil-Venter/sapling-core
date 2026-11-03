@@ -159,11 +159,12 @@ final class Template
 	{
 		$dir = $this->dir;
 		$name = $template;
-
 		$separator = strpos($template, '::');
+
 		if ($separator !== false) {
 			$prefix = substr($template, 0, $separator);
 			$name = substr($template, $separator + 2);
+
 			if (!array_key_exists($prefix, $this->prefixes)) {
 				throw new \LogicException("Unknown template prefix {$prefix} in {$template}");
 			}
@@ -172,6 +173,7 @@ final class Template
 		}
 
 		$file = "{$dir}/{$name}.{$this->suffix}";
+
 		if (!is_file($file)) {
 			throw new \RuntimeException("Template not found: {$file}");
 		}

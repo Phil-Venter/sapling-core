@@ -51,6 +51,7 @@ final readonly class Crypto
 		$nonce = substr($raw, 0, self::NONCE_BYTES);
 		$cipher = substr($raw, self::NONCE_BYTES);
 		$secret = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($cipher, $context, $nonce, $this->key);
+
 		if ($secret === false) {
 			return null;
 		}

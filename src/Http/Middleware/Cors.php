@@ -43,12 +43,14 @@ final readonly class Cors
 	{
 		$origin = $request->header('origin')->string();
 		$method = $request->header('access-control-request-method')->string();
+
 		if ($origin !== '' && $request->method === 'OPTIONS' && $method !== '') {
 			return $this->preflight($request, $origin, $method);
 		}
 
 		$allowed = $this->allowedOrigin($origin);
 		$response = $next($request);
+
 		foreach ($this->corsHeaders($allowed, $response->header('Vary')) as $name => $value) {
 			$response = $response->withHeader($name, $value);
 		}
@@ -60,6 +62,7 @@ final readonly class Cors
 	{
 		$allowed = $this->allowedOrigin($origin);
 		$vary = 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers';
+
 		if ($allowed === null) {
 			return new Response('', 403, ['Vary' => $vary]);
 		}

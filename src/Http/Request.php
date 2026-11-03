@@ -60,6 +60,7 @@ final class Request
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 		$override = $_POST['_method'] ?? null;
+
 		if ($method !== 'POST' || !is_string($override)) {
 			return $method;
 		}
@@ -109,6 +110,7 @@ final class Request
 		$remote = $_SERVER['REMOTE_ADDR'] ?? '';
 		$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
 		$fromProxy = in_array('*', $trusted, true) || in_array($remote, $trusted, true);
+
 		if (!is_string($forwarded) || !$fromProxy) {
 			return $remote;
 		}
@@ -162,7 +164,6 @@ final class Request
 	 */
 	public function data(string|int ...$keys): Value
 	{
-		// PHP keeps no copy of a multipart body, only $_POST.
 		if ($this->input !== []) {
 			return new Value($this->input)->get(...$keys);
 		}

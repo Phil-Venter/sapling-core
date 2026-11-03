@@ -30,7 +30,6 @@ final readonly class ListMigrations
 		}
 
 		$rows = [];
-
 		foreach ($migrations as $name => $ranAt) {
 			$status = 'pending';
 			if (trim((string) file_get_contents("{$dir}/{$name}")) === '') {

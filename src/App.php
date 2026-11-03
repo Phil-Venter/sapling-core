@@ -78,6 +78,7 @@ final class App
 	{
 		$app = new self($basePath, $config->get('debug', false));
 		$timezone = $config->get('timezone', null);
+
 		if ($timezone !== null) {
 			$zone = new \DateTimeZone($timezone);
 			date_default_timezone_set($zone->getName());
@@ -100,6 +101,15 @@ final class App
 		$app->commands->add(ListMigrations::NAME, ListMigrations::class, ListMigrations::DESCRIPTION);
 
 		return $app;
+	}
+
+	/**
+	 * An absolute path inside the app, such as path('views').
+	 */
+	public function path(string $relative = ''): string
+	{
+		$relative = ltrim($relative, '/\\');
+		return "{$this->basePath}/{$relative}";
 	}
 
 	/**
@@ -140,6 +150,7 @@ final class App
 	{
 		$reflection = new \ReflectionClass($class);
 		$middleware = [];
+
 		foreach ($reflection->getAttributes(Middleware::class) as $attribute) {
 			$middleware[] = $attribute->newInstance()->class;
 		}
@@ -223,6 +234,7 @@ final class App
 	{
 		$name = $console->command === '' ? ListCommands::NAME : $console->command;
 		$action = $this->commands->find($name);
+
 		if ($action === null) {
 			$console->error("Unknown command: {$name}");
 			$this->resolve(ListCommands::class)($console);
@@ -245,15 +257,6 @@ final class App
 		} finally {
 			restore_error_handler();
 		}
-	}
-
-	/**
-	 * An absolute path inside the app, such as path('views').
-	 */
-	public function path(string $relative = ''): string
-	{
-		$relative = ltrim($relative, '/\\');
-		return "{$this->basePath}/{$relative}";
 	}
 
 	/** @param class-string|object $handler */

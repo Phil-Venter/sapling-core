@@ -92,7 +92,6 @@ final class Response
 	public function withHeader(string $name, string|array $value): self
 	{
 		$copy = clone $this;
-
 		foreach (array_keys($copy->headers) as $existing) {
 			if (strcasecmp($existing, $name) !== 0) {
 				continue;

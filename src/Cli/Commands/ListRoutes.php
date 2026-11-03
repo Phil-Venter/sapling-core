@@ -22,8 +22,8 @@ final readonly class ListRoutes
 	{
 		$routes = $this->router->all();
 		usort($routes, $this->byPathThenMethod(...));
-
 		$rows = [];
+
 		foreach ($routes as $route) {
 			$rows[] = [$route['method'], $route['path'], $route['action']];
 		}
@@ -43,6 +43,9 @@ final readonly class ListRoutes
 			return $byPath;
 		}
 
-		return (self::METHOD_ORDER[$a['method']] ?? 99) <=> (self::METHOD_ORDER[$b['method']] ?? 99);
+		$aOrder = self::METHOD_ORDER[$a['method']] ?? 99;
+		$bOrder = self::METHOD_ORDER[$b['method']] ?? 99;
+
+		return $aOrder <=> $bOrder;
 	}
 }

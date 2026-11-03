@@ -54,6 +54,7 @@ final class Data
 
 		$mime = strtolower(trim(explode(';', $contentType)[0]));
 		$format = preg_replace('#^.*[/+]#', '', $mime);
+
 		return match ($format) {
 			'json' => self::fromJson($body),
 			'x-www-form-urlencoded' => self::fromForm($body),
