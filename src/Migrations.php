@@ -25,19 +25,34 @@ final readonly class Migrations
 	 */
 	public function run(): array
 	{
+		// SQLite ignores foreign_keys inside a transaction.
+		$sqlite = $this->db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
+		$foreignKeys = $sqlite && $this->db->value('PRAGMA foreign_keys')->int() === 1;
+
+		if ($foreignKeys) {
+			$this->db->run('PRAGMA foreign_keys = OFF');
+		}
+
 		$ran = [];
-		foreach ($this->all() as $name => $ranAt) {
-			if ($ranAt !== null) {
-				continue;
-			}
 
-			$sql = (string) file_get_contents("{$this->dir}/{$name}");
-			if (trim($sql) === '') {
-				continue;
-			}
+		try {
+			foreach ($this->all() as $name => $ranAt) {
+				if ($ranAt !== null) {
+					continue;
+				}
 
-			$this->apply($name, $sql);
-			$ran[] = $name;
+				$sql = (string) file_get_contents("{$this->dir}/{$name}");
+				if (trim($sql) === '') {
+					continue;
+				}
+
+				$this->apply($name, $sql, $foreignKeys);
+				$ran[] = $name;
+			}
+		} finally {
+			if ($foreignKeys) {
+				$this->db->run('PRAGMA foreign_keys = ON');
+			}
 		}
 
 		return $ran;
@@ -53,15 +68,11 @@ final readonly class Migrations
 	{
 		$this->db->run(self::CREATE_TABLE);
 		$files = glob("{$this->dir}/*.sql");
-		$sql = <<<SQL
-			SELECT name, ran_at
-			FROM migrations
-			SQL;
-		$rows = $this->db->all($sql);
-
+		$rows = $this->db->all('SELECT name, ran_at FROM migrations');
 		/** @var array<string, string> $ran */
 		$ran = array_column($rows, 'ran_at', 'name');
 		$all = [];
+
 		if ($files === false) {
 			$files = [];
 		}
@@ -75,51 +86,32 @@ final readonly class Migrations
 	}
 
 	/** @throws \Throwable */
-	private function apply(string $name, string $sql): void
+	private function apply(string $name, string $sql, bool $foreignKeys): void
 	{
-		// SQLite ignores foreign_keys inside a transaction.
-		$sqlite = $this->db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
-		$foreignKeys = $sqlite && $this->db->value('PRAGMA foreign_keys')->int() === 1;
-		if ($foreignKeys) {
-			$this->db->run('PRAGMA foreign_keys = OFF');
-		}
+		$migrate = /** @throws \PDOException|\RuntimeException */ function () use ($name, $sql, $foreignKeys): void {
+			$this->db->pdo->exec($sql);
+			$broken = null;
+
+			if ($foreignKeys) {
+				$broken = $this->db->one('PRAGMA foreign_key_check');
+			}
+
+			if ($broken !== null) {
+				$check = new Value($broken);
+				$table = $check->get('table')->string();
+				$parent = $check->get('parent')->string();
+				throw new \RuntimeException(
+					"{$name} leaves a row in {$table} that points at a missing row in {$parent}",
+				);
+			}
+
+			$this->db->run('INSERT INTO migrations (name, ran_at) VALUES (?, ?)', [$name, gmdate('Y-m-d H:i:s')]);
+		};
 
 		try {
-			$this->db->transaction(
-				/** @throws \PDOException|\RuntimeException */
-				function () use ($name, $sql, $foreignKeys): void {
-					$this->migrate($name, $sql, $foreignKeys);
-				},
-			);
+			$this->db->transaction($migrate);
 		} catch (\PDOException $e) {
 			throw new \RuntimeException("{$name} failed: {$e->getMessage()}", 0, $e);
-		} finally {
-			if ($foreignKeys) {
-				$this->db->run('PRAGMA foreign_keys = ON');
-			}
 		}
-	}
-
-	/** @throws \PDOException|\RuntimeException */
-	private function migrate(string $name, string $migration, bool $foreignKeys): void
-	{
-		$this->db->pdo->exec($migration);
-		$broken = null;
-		if ($foreignKeys) {
-			$broken = $this->db->one('PRAGMA foreign_key_check');
-		}
-
-		if ($broken !== null) {
-			$check = new Value($broken);
-			$table = $check->get('table')->string();
-			$parent = $check->get('parent')->string();
-			throw new \RuntimeException("{$name} leaves a row in {$table} that points at a missing row in {$parent}");
-		}
-
-		$sql = <<<SQL
-			INSERT INTO migrations (name, ran_at)
-			VALUES (?, ?)
-			SQL;
-		$this->db->run($sql, [$name, gmdate('Y-m-d H:i:s')]);
 	}
 }
