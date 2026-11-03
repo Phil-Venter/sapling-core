@@ -154,7 +154,7 @@ Sapling comes with three, in `Sapling\Http\Middleware`. A new app's `bootstrap.p
 
 ### Security headers
 
-`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy only lets scripts come from files on your own site, while styles, images and fonts can also come from any HTTPS site, such as a CDN. Inline styles are allowed, `<style>` blocks and `style` attributes included.
+`SecurityHeaders` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and a content policy. The policy only lets scripts come from files on your own site, while styles, images and fonts can also come from any HTTPS site. Inline styles are allowed, `<style>` blocks and `style` attributes included.
 
 > [!WARNING]
 > Inline scripts are blocked, and browsers only report it in the console. The policy stops `<script>` blocks, `onclick` attributes, and libraries such as Alpine.js that evaluate strings.
@@ -165,7 +165,7 @@ To loosen the policy, set `content_policy` in `config.php`. Each directive repla
 'content_policy' => ['script-src' => "'self' https://unpkg.com"],
 ```
 
-`SecurityHeaders::POLICY` holds the defaults, and an action that sets one of these headers itself, such as its own policy, keeps it.
+`SecurityHeaders::POLICY` holds the defaults, and an action that sets one of these headers itself keeps it.
 
 ### Cross-site request protection
 

@@ -42,7 +42,7 @@ Encrypting the same secret twice gives different text, since each value gets a f
 
 ### Contexts
 
-The second argument is a context, a string that ties the value to the place it's stored, such as the tenant and the service above. A value only decrypts with the context it was encrypted with, and one copied into another tenant's row gives `null` instead of the first tenant's secret.
+The second argument is a context, a string that ties the value to the place it's stored, here the tenant and the service above. A value only decrypts with the context it was encrypted with, and one copied into another tenant's row gives `null` instead of the first tenant's secret.
 
 ### When decrypting fails
 

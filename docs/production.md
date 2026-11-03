@@ -13,4 +13,4 @@ There's no build step or cache to warm. Install the code, run migrations, and ch
 - [ ] Set php.ini's `expose_php = Off`, or every response names PHP's exact version in an `X-Powered-By` header. `php.ini-production` leaves it on.
 - [ ] On Debian and Ubuntu, set php.ini's `session.gc_maxlifetime` to match `session_lifetime`.
 - [ ] Add scheduled commands to the crontab, such as `0 3 * * * php /path/to/app/bin/console notes:prune`.
-- [ ] Clear old log files from cron if you [log to files](errors.md#where-the-log-goes), such as with `find logs -name 'app-*.log' -mtime +14 -delete`.
+- [ ] Clear old log files from cron if you [log to files](errors.md#where-the-log-goes), with `find logs -name 'app-*.log' -mtime +14 -delete`.

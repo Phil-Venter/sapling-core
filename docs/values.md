@@ -27,7 +27,7 @@ Everything in Sapling that hands you outside data returns a `Value`:
 | [`$console->arg()`](commands.md#input), `option()`, `ask()` | A command-line argument, option or answer |
 | [`$session->get()`](sessions.md#using-the-session), `getFlash()` | A session value, or one stored for the next request |
 | [`$db->value()`](database.md#fetching-a-single-value) | The first column of the first row |
-| [`$response->data()`](requests.md#reading-a-response), `header()` | A response's decoded body or a header, such as in a test |
+| [`$response->data()`](requests.md#reading-a-response), `header()` | A response's decoded body or a header |
 | [`$reply->data()`](http-client.md#reading-the-reply), `header()` | A reply's decoded body or a header, from another service |
 | [`value($data)`](#wrapping-your-own-data), `new Value($data)` | Anything else, such as a decoded file |
 
@@ -44,7 +44,7 @@ $count = $db->value($sql)->int();
 ```
 
 > [!WARNING]
-> A `Value` isn't a string. `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, `blank($request->data('q'))` throws a `LogicException`, and a comparison such as `$request->query('lang') === 'en'` is always false. Call `string()` first.
+> A `Value` isn't a string. `e($request->data('q'))` and `"Hello {$request->param('name')}"` throw an `Error`, `blank($request->data('q'))` throws a `LogicException`, and `$request->query('lang') === 'en'` is always false. Call `string()` first.
 
 ### Strings
 

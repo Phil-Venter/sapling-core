@@ -41,11 +41,11 @@ Neither class is registered anywhere. The container builds `NoteRepository` beca
 
 Each class is built once and then shared, and everything that asks for `Db` during a request gets the same connection.
 
-A class can ask for the `App` itself too, such as to find a folder with [`path()`](app.md#method-reference).
+A class can ask for the `App` itself too, to find a folder with [`path()`](app.md#method-reference).
 
 ## Registering services
 
-Some classes can't be built from types alone, such as a database connection, which needs to know where the database is. Register those in `bootstrap.php` with `set()`:
+Some classes can't be built from types alone: a database connection needs to know where the database is. Register those in `bootstrap.php` with `set()`:
 
 ```php
 $app->container->set(Db::class, fn(): Db => Db::sqlite($config->get('db_file')));

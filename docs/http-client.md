@@ -17,7 +17,7 @@
 
 ## Introduction
 
-`Sapling\Client\HttpClient` calls other services, such as a payment provider or a weather API, through curl. Each reply is a `Sapling\Client\ClientResponse`.
+`Sapling\Client\HttpClient` calls other services through curl. Each reply is a `Sapling\Client\ClientResponse`.
 
 ## Making requests
 
@@ -37,7 +37,7 @@ ClientRequest::form('POST', 'https://api.example.com/login', ['user' => 'ann', '
 ClientRequest::text('PUT', 'https://api.example.com/notes/7/body', 'Buy milk');
 ```
 
-`json()` without data sends no body and no `Content-Type`, while `[]` sends `[]` and `new stdClass()` sends `{}`. For another format, such as XML, pass the body and its `Content-Type` to the constructor.
+`json()` without data sends no body and no `Content-Type`, while `[]` sends `[]` and `new stdClass()` sends `{}`. For XML or another format, pass the body and its `Content-Type` to the constructor.
 
 ### Headers
 
@@ -70,7 +70,7 @@ A reply has its `status`, `headers` and `body`. `data()` decodes the body by its
 $name = $reply->data('profile', 'name')->string(); // 'bob' from {"profile": {"name": "bob"}}
 ```
 
-A JSON body that doesn't decode, such as a cut-off reply, makes `data()` throw a `JsonException`, which is a crash. An XML body stays a string, which you can [read with SimpleXML](data.md#xml).
+A cut-off reply or other JSON body that doesn't decode makes `data()` throw a `JsonException`, which is a crash. An XML body stays a string, which you can [read with SimpleXML](data.md#xml).
 
 A reply's header names are lowercase, and a header the service sent more than once is a list, read with `rawArray()`. The name you pass to `header()` is case-insensitive:
 
@@ -148,7 +148,7 @@ $app->container->set(HttpClient::class, fn(): HttpClient => new HttpClient(timeo
 A redirect comes back as the reply, as an error status does. To follow one, send a new request to its `Location` header, which can also be a path on the same host. Only `http` and `https` URLs are allowed, TLS certificates are always checked, and compressed replies are unpacked.
 
 > [!WARNING]
-> A URL from a visitor, such as a webhook or a link to preview, can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it, and again for each redirect you follow.
+> A webhook or preview URL from a visitor can still reach services on your own network, such as `localhost` or a cloud server's metadata at `169.254.169.254`. Check its host before sending it, and again for each redirect you follow.
 
 ## Method reference
 

@@ -82,7 +82,7 @@ $sql = <<<SQL
 $notes = $this->db->all($sql, [$userId]);
 ```
 
-A query that fails throws a `PDOException`, which you can catch for cases such as a duplicate email.
+A query that fails throws a `PDOException`, which you can catch to handle a duplicate email.
 
 ### Fetching rows
 

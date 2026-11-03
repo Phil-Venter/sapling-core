@@ -56,7 +56,7 @@ final class PruneNotes
 }
 ```
 
-`#[Command]` takes the command's name and a description, which `commands:list` shows grouped by the part of the name before the colon, such as `notes` in `notes:prune`.
+`#[Command]` takes the command's name and a description, which `commands:list` shows grouped by the part of the name before the colon.
 
 ## Running commands
 
@@ -73,7 +73,7 @@ There's no scheduler built in, and commands that should run regularly go in the 
 ```
 
 > [!WARNING]
-> php-fpm's `env[NAME]` variables only reach web requests. A command started from cron or a shell gets the defaults in `config.php` and an empty `app_key`, unless you set the same variables for it, such as at the top of the crontab.
+> php-fpm's `env[NAME]` variables only reach web requests. A command started from cron or a shell gets the defaults in `config.php` and an empty `app_key`, unless you set the same variables for it, which a crontab can do at the top.
 
 ## Input
 
@@ -121,7 +121,7 @@ if (!$console->ask("Delete {$count} notes? (yes/no)")->bool()) {
 }
 ```
 
-Without a terminal, such as under cron, every answer is blank and reads as the default.
+Under cron or anywhere else without a terminal, every answer is blank and reads as the default.
 
 ## Output
 
@@ -153,7 +153,7 @@ if (blank($email)) {
 }
 ```
 
-Any other exception, such as an `InvalidArgumentException` from a bug, is a crash. It prints the error with its trace and exits with 1, and is also logged when `error_log` is set, such as to a file or `syslog`.
+Any other exception, such as an `InvalidArgumentException` from a bug, is a crash. It prints the error with its trace and exits with 1, and is also logged when `error_log` is set.
 
 ## Adding commands in code
 

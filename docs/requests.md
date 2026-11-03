@@ -81,7 +81,7 @@ Crafted input can't change the type, so `string()` gives the default when someon
 
 ### Route parameters
 
-[Route parameters](routing.md#route-parameters), such as `:id`, are read with `param()`, and `$request->params` holds them all.
+[Route parameters](routing.md#route-parameters) are read with `param()`, and `$request->params` holds them all.
 
 ### The query string
 
@@ -110,7 +110,7 @@ The body is decoded by its `Content-Type` each time you read it, even for a form
 
 ### The whole body
 
-Without a name, `data()` returns the whole decoded body, such as a JSON list, for when you need more than one field:
+Without a name, `data()` returns the whole decoded body, for when you need more than one field:
 
 ```php
 $items = $request->data()->items(); // each item of a JSON list as a Value
@@ -220,7 +220,7 @@ return Response::redirect($next);
 return Response::file($path, 'report.pdf');
 ```
 
-A missing file throws a `RuntimeException`, which is a crash. When a file can go missing, such as one a database row points at, check it first with `if (!is_file($path)) abort(404);` to answer with a 404 instead.
+A missing file throws a `RuntimeException`, which is a crash. When a file can go missing, check it first with `if (!is_file($path)) abort(404);` to answer with a 404 instead.
 
 ### Serving large files
 

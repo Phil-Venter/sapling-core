@@ -44,11 +44,11 @@ $this->session->forget('theme');
 ```
 
 > [!NOTE]
-> PHP locks the session from the moment something uses it until the request ends, which makes one visitor's requests that use the session run one at a time. A slow request holds up the ones behind it, such as htmx polls, and a [download](requests.md#serving-large-files) behind a login check holds the lock until it ends.
+> PHP locks the session from the moment something uses it until the request ends, which makes one visitor's requests that use the session run one at a time. A slow request holds up the ones behind it, and a [download](requests.md#serving-large-files) behind a login check holds the lock until it ends.
 
 ## Flash values
 
-A flash value is kept for the next request only, for a message such as "Saved." that the action sets before redirecting:
+A flash value is kept for the next request only, for a "Saved." message that the action sets before redirecting:
 
 ```php
 use Sapling\Attributes\Route;

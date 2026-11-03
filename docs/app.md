@@ -42,7 +42,7 @@ $app->middleware(Csrf::class);
 return $app;
 ```
 
-`App::boot()` takes the app's folder and its [configuration](config.md), and sets up what Sapling needs. In the rest of the file, you register services such as the database, scan `app/` for your classes, and add the middleware every request goes through.
+`App::boot()` takes the app's folder and its [configuration](config.md), and sets up what Sapling needs. In the rest of the file, you register the database and other services, scan `app/` for your classes, and add the middleware every request goes through.
 
 ### What booting sets up
 
@@ -64,7 +64,7 @@ $app->scan(__DIR__ . '/app', 'App');
 
 It expects one class per file, named after its path as PSR-4 does, such as `App\Notes\Show` in `app/Notes/Show.php`. Classes without attributes are skipped, and the rest are registered in name order.
 
-Only files whose names start with a capital letter and have no dot before `.php` are read as classes, which leaves `app/` free to hold files of plain functions, such as `helpers.php`, and [templates](templates.md#templates-next-to-their-classes), such as `list.tmpl.php`. Load function files through Composer, as Sapling's own helpers are:
+Only files whose names start with a capital letter and have no dot before `.php` are read as classes, which leaves `app/` free to hold a `helpers.php` of plain functions and [templates](templates.md#templates-next-to-their-classes) named like `list.tmpl.php`. Load function files through Composer, as Sapling's own helpers are:
 
 ```json
 "autoload": {

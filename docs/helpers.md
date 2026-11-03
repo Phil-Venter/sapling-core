@@ -11,7 +11,7 @@
 
 ## Introduction
 
-Sapling has a few global functions for common jobs, such as escaping a value or stopping with an error, and they work without an app.
+Sapling has a few global functions for escaping a value, stopping with an error and other common jobs, and they work without an app.
 
 ## Escaping HTML
 

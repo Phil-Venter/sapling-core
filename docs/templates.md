@@ -48,7 +48,7 @@ final class ListNotes
 }
 ```
 
-`render('notes')` runs `views/notes.tmpl.php` with each array key as a variable, and a name with a slash, such as `notes/show`, looks in a subfolder. The `.tmpl.php` suffix keeps templates apart from classes. To use another suffix, such as plain `.php`, [register `Template` yourself](container.md#replacing-saplings-services) with `new Template(__DIR__ . '/views', suffix: 'php')`.
+`render('notes')` runs `views/notes.tmpl.php` with each array key as a variable, and `render('notes/show')` looks in a subfolder. The `.tmpl.php` suffix keeps templates apart from classes. To use another suffix, such as plain `.php`, [register `Template` yourself](container.md#replacing-saplings-services) with `new Template(__DIR__ . '/views', suffix: 'php')`.
 
 ## Printing values
 
@@ -81,7 +81,7 @@ grep -rnoE '<\?= *[^ ]+' views | grep -vF -e '<?= e(' -e '<?= attrs(' -e '<?= $t
 
 ### Plain text
 
-A template can render plain text as well as HTML, such as a command's output or the text part of an email. Leave out `e()` there, or `O'Brien` prints as `O&#039;Brien`.
+A template can render plain text as well as HTML, for a command's output or the text part of an email. Leave out `e()` there, or `O'Brien` prints as `O&#039;Brien`.
 
 PHP drops the newline straight after a closing `?>`. HTML hides the difference, but plain text runs the two lines together. A line that prints a value needs its newline inside the tag, while lines that hold only `foreach` or `if` need nothing:
 
@@ -141,7 +141,7 @@ A component can take more than one piece of content. `slot()` with only a name c
 <footer><?= $this->yield('footer') ?></footer>
 ```
 
-`slot()` with a value sets the slot to it, such as a title or a list of scripts. `yield()` takes a default for a slot that wasn't set:
+`slot()` with a value sets the slot to it. `yield()` takes a default for a slot that wasn't set:
 
 ```php
 <?php $this->slot('scripts', ['/notes.js']) ?>
@@ -176,11 +176,11 @@ A layout is a component that wraps the whole page in the outer HTML your pages s
 <main><?= $this->yield() ?></main>
 ```
 
-A layout can wrap itself in another the same way, such as an admin layout inside the main one, and passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
+An admin layout can wrap itself in the main one the same way, and passes on the slots the outer layout needs, as in `slot('title', $this->yield('title'))`.
 
 ## Sharing data with every template
 
-`share()` makes a value available to every template rendered after it, such as the app's name. Share it in `bootstrap.php` to reach the whole app:
+`share()` makes a value available to every template rendered after it. Share it in `bootstrap.php` to reach the whole app:
 
 ```php
 $view = $app->container->get(Template::class);

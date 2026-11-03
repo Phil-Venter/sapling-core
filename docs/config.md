@@ -71,7 +71,7 @@ On a server, set every variable, `APP_ENV` included, as a real environment varia
 
 ## Reading settings
 
-Most classes get their settings in the constructor with [`#[Config]`](container.md#settings-in-constructors). Elsewhere, such as in `bootstrap.php`, ask the `Config` object with `get()`:
+Most classes get their settings in the constructor with [`#[Config]`](container.md#settings-in-constructors). Elsewhere, ask the `Config` object with `get()`:
 
 ```php
 $debug = $config->get('debug');
