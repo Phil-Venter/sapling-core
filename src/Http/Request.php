@@ -158,7 +158,7 @@ final class Request
 	}
 
 	/**
-	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string. More keys read deeper, as Value::get() does.
+	 * The body, decoded as JSON or a form by its Content-Type. Any other body stays a string.
 	 *
 	 * @throws HttpException 400 when the body doesn't decode.
 	 */

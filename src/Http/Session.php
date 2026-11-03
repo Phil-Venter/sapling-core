@@ -21,9 +21,6 @@ final class Session
 	 */
 	public function __construct(private int $lifetime = 0) {}
 
-	/**
-	 * More keys read deeper, as Value::get() does.
-	 */
 	public function get(string|int ...$keys): Value
 	{
 		$this->start();
@@ -43,7 +40,7 @@ final class Session
 	}
 
 	/**
-	 * A value setFlash() stored during the previous request. More keys read deeper, as Value::get() does.
+	 * A value setFlash() stored during the previous request.
 	 */
 	public function getFlash(string|int ...$keys): Value
 	{
