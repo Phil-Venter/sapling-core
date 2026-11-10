@@ -123,7 +123,7 @@ A route matches a path one part at a time, where a part is the text between two 
 
 When more than one route fits a path, the most specific one wins, whatever order the routes were added in. `/notes/new` beats `/notes/:id`, which beats `/:section/edit`. Only routes for the request's method count, so with `GET /notes/new` and `POST /notes/:id`, a POST to `/notes/new` reaches the `:id` route.
 
-Two classes on the same method and path stop the app with a `LogicException` that names both.
+Two classes on the same method and path stop the app with a `LogicException` that names both. So does a method that isn't one word, such as `GET|POST`, which takes a `#[Route]` for each method instead.
 
 ### HEAD requests
 

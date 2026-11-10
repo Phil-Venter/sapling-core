@@ -106,7 +106,7 @@ $remember = $request->data('remember')->bool();
 $city = $request->data('address', 'city')->string();
 ```
 
-The body is decoded by its `Content-Type` each time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string, and a JSON body that doesn't decode stops the request with a 400.
+The body is decoded by its `Content-Type` each time you read it, even for a form-encoded PUT, PATCH or DELETE, which PHP itself leaves alone. `data()` never falls back to the query string. A body that doesn't decode, such as broken JSON or a form with more fields than php.ini's `max_input_vars`, stops the request with a 400.
 
 ### The whole body
 
@@ -136,6 +136,8 @@ Uploads are the one part of the request that isn't a `Value`. `$request->files` 
 ```php
 $avatar = $request->files['avatar'] ?? null;
 ```
+
+PHP reads a multipart form's fields and files only from a POST. Sapling reads them from a PUT, PATCH or DELETE as well, such as htmx sends for `hx-put` with `hx-encoding="multipart/form-data"`.
 
 ## Sending PUT, PATCH and DELETE from forms
 

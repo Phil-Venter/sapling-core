@@ -273,6 +273,7 @@ describe('middleware', function () {
 		'the path itself' => ['/notes', '/notes', true],
 		'below it, trailing slash in the prefix' => ['/notes/', '/notes/7', true],
 		'no leading slash in the prefix' => ['notes', '/notes/7', true],
+		'slashes to spare in a path built by hand' => ['/notes', '//notes//7/', true],
 		'a longer name' => ['/note', '/notes', false],
 		'elsewhere' => ['/notes', '/guarded', false],
 	]);
@@ -312,7 +313,12 @@ describe('errors', function () {
 		}
 	})->with([
 		'a 403' => ['/forbidden', 403, 'Forbidden', []],
-		'a 503' => ['/unavailable', 503, 'Down for maintenance', ['GET /unavailable failed: 503']],
+		'a 503' => [
+			'/unavailable',
+			503,
+			'Down for maintenance',
+			['GET /unavailable failed: 503: Down for maintenance in '],
+		],
 		'a crash' => ['/fails', 500, 'Internal Server Error', ['GET /fails failed: RuntimeException: boom <script>']],
 		'a warning, turned into a crash' => [
 			'/warns',
@@ -524,6 +530,30 @@ describe('onError() for crashes', function () {
 			['GET /boom failed: RuntimeException: boom', 'GET /boom failed: LogicException: handler broke'],
 		],
 	]);
+
+	test('an HttpException that can\'t be answered falls back to a plain 500', function (
+		Closure $handler,
+		array $headers,
+		string $logged,
+	) {
+		$app = new App(FIXTURES);
+		$app->middleware(fn() => throw new HttpException(429, headers: $headers));
+		$app->onError($handler);
+
+		[$response, $log] = captureErrorLog(fn() => $app->handle(new Request('GET', '/')));
+
+		expect($response->status)->toBe(500);
+		expect($response->body)->toBe('Internal Server Error');
+		expect($log)->toHaveCount(1);
+		expect($log[0])->toContain($logged);
+	})->with([
+		'a handler that returns nothing' => [fn() => null, [], 'GET / failed: TypeError: '],
+		'a header that isn\'t a string' => [
+			fn(HttpException $e) => Response::text('Slow down', $e->status),
+			['Retry-After' => 30],
+			'GET / failed: TypeError: ',
+		],
+	]);
 });
 
 describe('testing', function () {
@@ -593,6 +623,19 @@ describe('commands', function () {
 		expect($result['code'])->toBe(1);
 		expect($result['stderr'])->toBe("--times needs a value, written --times=value\n");
 	});
+
+	test('--help prints the description without running the command', function () {
+		expect(runInApp(scannedApp(), 'greet', 'Ann', '--help'))->toBe([0, "greet  Say hello to arg 0\n"]);
+	});
+
+	test('an option the command doesn\'t list stops it', function (string $typed, string $unknown) {
+		$result = runConsole(['greet', 'Ann', $typed]);
+
+		expect($result)->toBe(['stdout' => '', 'stderr' => "Unknown option: {$unknown}\n", 'code' => 1]);
+	})->with([
+		'a misspelt flag' => ['--shuot', '--shuot'],
+		'a misspelt option' => ['--time=2', '--time'],
+	]);
 
 	test('a second class with the same command name throws, naming both', function () {
 		$app = scannedApp();

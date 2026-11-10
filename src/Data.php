@@ -8,13 +8,14 @@ namespace Sapling;
 final class Data
 {
 	/**
-	 * JSON, with slashes and Unicode left as they are.
+	 * JSON, with slashes and Unicode left as they are. Bytes that aren't UTF-8 become U+FFFD.
 	 *
 	 * @throws \JsonException When the data can't be encoded.
 	 */
 	public static function toJson(mixed $data): string
 	{
-		return json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		$flags = JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE;
+		return json_encode($data, $flags);
 	}
 
 	/**

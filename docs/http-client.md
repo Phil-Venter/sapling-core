@@ -49,6 +49,8 @@ $me = $this->http->send(new ClientRequest('GET', 'https://api.example.com/me', h
 ClientRequest::json('PATCH', 'https://api.example.com/users/7', $changes, ['Content-Type' => 'application/merge-patch+json']);
 ```
 
+A header whose name or value has a line break or a NUL byte in it throws an `InvalidArgumentException`.
+
 ### Uploading files
 
 An array body is sent as multipart form data, with files as `CURLFile`:
@@ -101,7 +103,7 @@ if ($reply->status !== 200) {
 ]);
 ```
 
-Named keys work the same way, and `sendAll(['weather' => $a, 'news' => $b])` returns `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest, and a failed connection comes back with status 0, as from `send()`, without losing the other replies.
+Named keys work the same way, and `sendAll(['weather' => $a, 'news' => $b])` returns `['weather' => …, 'news' => …]`. It opens at most 6 connections to one host and queues the rest, whose [timeout](#timeouts-redirects-and-tls) is already running while they wait. A failed connection comes back with status 0, as from `send()`, without losing the other replies.
 
 ## Retrying and caching
 
@@ -169,7 +171,7 @@ A redirect comes back as the reply, as an error status does. To follow one, send
 | `ClientRequest::form($method, $url, $data, $headers = [])` | A request with `$data` as a URL-encoded form |
 | `ClientRequest::text($method, $url, $text, $headers = [])` | A request with a plain text body |
 | `$request->method`, `url`, `body`, `headers` | Read-only, as a [fake](testing.md#faking-other-services) sees them. Header names are lowercase |
-| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data |
+| `new ClientRequest($method, $url, $body = '', $headers = [])` | A request. A string body goes as it is, and an array as multipart form data. Throws `InvalidArgumentException` for a header with a line break or NUL in it |
 
 ### ClientResponse
 

@@ -101,6 +101,12 @@ Sapling writes one line per crash or 5xx `HttpException` with PHP's `error_log()
 GET /notes/7 failed: RuntimeException: File not found: /srv/app/files/7.pdf in /srv/app/vendor/sapling/core/src/Http/Response.php:55 from /srv/app/app/Notes/Download.php:21
 ```
 
+A 5xx `HttpException` is logged with its status in place of a class name. An exception passed as `$previous`, as in `abort(503, 'Billing is down.', previous: $e)`, follows on the same line as the cause:
+
+```text
+GET /invoices failed: 503: Billing is down. in /srv/app/vendor/sapling/core/src/functions.php:12 from /srv/app/app/Invoices/ListInvoices.php:24, caused by RuntimeException: Connection refused in /srv/app/app/Billing.php:31
+```
+
 ### Where the log goes
 
 By default, PHP sends the lines to the web server's log. A command [prints a crash](commands.md#exit-codes-and-errors) to standard error, and only writes a log line when `error_log` is set. For a file per day, set `error_log` in `bootstrap.php`:

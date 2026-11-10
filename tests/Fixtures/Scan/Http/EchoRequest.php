@@ -19,6 +19,7 @@ final class EchoRequest
 			'q' => $request->query('q')->raw,
 			'header' => $request->header('X-Test')->raw,
 			'cookie' => $request->cookie('c')->raw,
+			'upload' => $request->files['upload']['name'] ?? null,
 			'body' => $request->body,
 			'ip' => $request->ip,
 			'content_type' => $request->header('content-type')->raw,

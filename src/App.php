@@ -162,7 +162,7 @@ final class App
 
 		foreach ($reflection->getAttributes(Command::class) as $attribute) {
 			$command = $attribute->newInstance();
-			$this->commands->add($command->name, $class, $command->description);
+			$this->commands->add($command->name, $class, $command->description, $command->options);
 		}
 	}
 
@@ -228,22 +228,35 @@ final class App
 	}
 
 	/**
-	 * An unknown command prints the list of commands and returns 1.
+	 * An unknown command prints the list of commands and returns 1. An option or flag the command doesn't list also returns 1, and --help prints the command's description instead of running it.
 	 */
 	public function runCommand(Console $console): int
 	{
 		$name = $console->command === '' ? ListCommands::NAME : $console->command;
-		$action = $this->commands->find($name);
+		$command = $this->commands->find($name);
 
-		if ($action === null) {
+		if ($command === null) {
 			$console->error("Unknown command: {$name}");
 			$this->resolve(ListCommands::class)($console);
 			return Console::FAILURE;
 		}
 
+		if ($console->command !== '' && array_key_exists('help', $console->flags)) {
+			$console->table([[$name, $command['description']]]);
+			return Console::SUCCESS;
+		}
+
+		$given = array_keys($console->options + $console->flags);
+		$unknown = array_diff($given, $command['options'], ['help']);
+
+		if ($unknown !== []) {
+			$console->error('Unknown option: --' . implode(', --', $unknown));
+			return Console::FAILURE;
+		}
+
 		set_error_handler($this->throwOnError(...));
 		try {
-			return $this->resolve($action)($console);
+			return $this->resolve($command['action'])($console);
 		} catch (UsageException $e) {
 			$console->error($e->getMessage());
 			return Console::FAILURE;
@@ -278,7 +291,7 @@ final class App
 			return $this->resolve($layer)($request, $next);
 		} catch (HttpException $e) {
 			if ($e->status >= 500) {
-				error_log("{$request->method} {$request->path} failed: {$e->status}");
+				new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $e);
 			}
 
 			return $this->answerError($e, $request);
@@ -306,6 +319,16 @@ final class App
 			/** @var callable(HttpException, Request): Response $handler */
 			$handler = $this->resolve($this->errorHandler);
 			$response = $handler($e, $request);
+
+			foreach ($e->headers as $name => $value) {
+				if ($response->header($name)->raw !== null) {
+					continue;
+				}
+
+				$response = $response->withHeader($name, $value);
+			}
+
+			return $response;
 		} catch (\Throwable $crash) {
 			new CrashLog($this->basePath)->write("{$request->method} {$request->path}", $crash);
 			if ($this->debug) {
@@ -314,16 +337,6 @@ final class App
 
 			return Response::text('Internal Server Error', 500);
 		}
-
-		foreach ($e->headers as $name => $value) {
-			if ($response->header($name)->raw !== null) {
-				continue;
-			}
-
-			$response = $response->withHeader($name, $value);
-		}
-
-		return $response;
 	}
 
 	private function throwOnError(int $severity, string $message, string $file, int $line): bool

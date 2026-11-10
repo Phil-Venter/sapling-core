@@ -19,16 +19,16 @@ final readonly class Console
 	public array $args;
 
 	/** @var array<string, string> */
-	private array $options;
+	public array $options;
 
 	/** @var array<string, true> */
-	private array $flags;
+	public array $flags;
 
 	/** @var resource|null */
 	private mixed $input;
 
 	/**
-	 * The first word is the command, --name=value is an option, --name is a flag and the rest are arguments, as is every word after --. Tests can pass $input to stand in for standard input.
+	 * --name=value is an option and --name is a flag, with one dash or two. The first other word is the command and the rest are arguments, as are a number such as -5 and every word after --. Tests can pass $input to stand in for standard input.
 	 *
 	 * @param list<string> $argv
 	 * @param resource|null $input
@@ -49,8 +49,8 @@ final readonly class Console
 		}
 
 		foreach ($words as $word) {
-			if (str_starts_with($word, '--')) {
-				$name = substr($word, 2);
+			if (str_starts_with($word, '-') && !is_numeric($word)) {
+				$name = ltrim($word, '-');
 				$equals = strpos($name, '=');
 
 				if ($equals === false) {

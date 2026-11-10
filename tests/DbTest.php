@@ -48,6 +48,20 @@ test('all() and one() read rows as arrays', function () {
 	expect($this->db->one('SELECT body FROM notes WHERE id = ?', [2]))->toBe(['body' => 'b']);
 });
 
+test('an int or a bool is bound as that type', function () {
+	$this->db->run("INSERT INTO notes (body) VALUES ('hello')");
+	$types = $this->db->one('SELECT typeof(?) AS int, typeof(?) AS bool, typeof(?) AS string, typeof(?) AS missing', [
+		2,
+		false,
+		'2',
+		null,
+	]);
+
+	expect($types)->toBe(['int' => 'integer', 'bool' => 'integer', 'string' => 'text', 'missing' => 'null']);
+	expect($this->db->value('SELECT count(*) FROM notes WHERE length(body) > ?', [2])->int())->toBe(1);
+	expect($this->db->value('SELECT count(*) FROM notes WHERE id = :id', ['id' => 1])->int())->toBe(1);
+});
+
 test('transaction() commits the closure\'s writes', function (bool $committed) {
 	$id = $this->db->transaction(function (Db $db) use ($committed) {
 		$db->run("INSERT INTO notes (body) VALUES ('kept')");

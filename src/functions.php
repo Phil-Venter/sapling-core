@@ -15,7 +15,7 @@ if (!function_exists('abort')) {
 
 if (!function_exists('attrs')) {
 	/**
-	 * Escaped HTML attributes, such as attrs(['class' => ['note', 'pinned']]) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value leaves the attribute out.
+	 * Escaped HTML attributes, such as attrs(['class' => ['note', 'pinned']]) for class="note pinned". A value of true gives a bare attribute, and null, false or an empty value leaves the attribute out. A name with a space, a slash or an equals sign in it throws an InvalidArgumentException.
 	 *
 	 * @param array<string, mixed> $attrs
 	 */
@@ -23,6 +23,11 @@ if (!function_exists('attrs')) {
 	{
 		$parts = [];
 		foreach ($attrs as $key => $value) {
+			// Escaping can't stop a name such as "x onclick" from writing a second attribute.
+			if ($key === '' || preg_match('#[\s/=]#', $key) === 1) {
+				throw new InvalidArgumentException("{$key} isn't an attribute name");
+			}
+
 			if (is_array($value)) {
 				$value = implode(' ', array_filter($value, fn(mixed $item): bool => !blank($item)));
 			}
@@ -66,15 +71,25 @@ if (!function_exists('datetime')) {
 	 * A DateTimeImmutable in $timezone, or in the default timezone. A date string without its own zone is read in $timezone.
 	 *
 	 * @throws DateInvalidTimeZoneException When $timezone isn't a known timezone.
-	 * @throws DateMalformedStringException When $value is a string PHP can't read as a date.
+	 * @throws DateMalformedStringException When $value is a string that isn't a date, such as a blank one, a timezone on its own or 30 February.
 	 */
 	function datetime(
 		DateTimeInterface|int|float|string|null $value = null,
 		DateTimeZone|string|null $timezone = null,
 	): DateTimeImmutable {
-		// new DateTimeImmutable('') is now, which would turn a blank form field into the current time.
-		if (is_string($value) && trim($value) === '') {
-			throw new DateMalformedStringException('A blank string is not a date');
+		if (is_string($value)) {
+			/** @var array{year: int|false, month: int|false, day: int|false, hour: int|false, is_localtime: bool, relative?: mixed} $parts */
+			$parts = date_parse($value);
+			[$year, $month, $day] = [$parts['year'], $parts['month'], $parts['day']];
+
+			// Left to PHP, a blank string is now, 'x' is now in timezone X and 30 February is 2 March.
+			$timeless = $month === false && $parts['hour'] === false && !array_key_exists('relative', $parts);
+			$onlyZone = $timeless && $parts['is_localtime'];
+			$noSuchDay = $year !== false && $month !== false && $day !== false && !checkdate($month, $day, $year);
+
+			if (trim($value) === '' || $onlyZone || $noSuchDay) {
+				throw new DateMalformedStringException("Not a date: {$value}");
+			}
 		}
 
 		$zone = $timezone ?? date_default_timezone_get();

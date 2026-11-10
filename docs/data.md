@@ -20,7 +20,7 @@ $json = Data::toJson(['name' => 'Ann', 'city' => 'Cape Town']);
 $user = Data::fromJson($json);
 ```
 
-`toJson()` leaves slashes and Unicode as they are, and `fromJson()` decodes objects as arrays. Both throw a `JsonException` when the data can't be encoded or decoded.
+`toJson()` leaves slashes and Unicode as they are and writes a byte that isn't UTF-8 as `�`, and `fromJson()` decodes objects as arrays. Both throw a `JsonException` when the data can't be encoded or decoded.
 
 > [!NOTE]
 > Because objects become arrays, `{}` decodes to `[]`, which encodes as a list. Use `new stdClass()` where another service needs `{}`.

@@ -15,7 +15,7 @@ final class Router
 	}
 
 	/**
-	 * Throws a LogicException when the method and path are already taken, or a :param name is used twice or isn't a plain name.
+	 * Throws a LogicException when the method and path are already taken, the method isn't one word, or a :param name is used twice or isn't a plain name.
 	 *
 	 * @param class-string|object $action
 	 * @param list<class-string|object> $middleware
@@ -27,6 +27,10 @@ final class Router
 		$path = '/' . implode('/', $segments);
 		$node = $this->tree;
 		$params = [];
+
+		if (preg_match('/^[A-Z]+$/D', $method) !== 1) {
+			throw new \LogicException("Route {$method} {$path}: {$method} isn't a method");
+		}
 
 		foreach ($segments as $segment) {
 			if (!str_starts_with($segment, ':')) {

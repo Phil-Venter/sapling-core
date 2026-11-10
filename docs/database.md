@@ -82,7 +82,7 @@ $sql = <<<SQL
 $notes = $this->db->all($sql, [$userId]);
 ```
 
-A query that fails throws a `PDOException`, which you can catch to handle a duplicate email.
+An int or a bool is bound as that type, and any other value as a string. A query that fails throws a `PDOException`, which you can catch to handle a duplicate email.
 
 ### Fetching rows
 

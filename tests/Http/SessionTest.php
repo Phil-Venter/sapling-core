@@ -21,12 +21,12 @@ afterEach(function () {
 	}
 });
 
-function nextRequest(): Session
+function nextRequest(int $lifetime = 0): Session
 {
 	session_write_close();
 	$_SESSION = [];
 
-	return new Session();
+	return new Session($lifetime);
 }
 
 test('the cookie is HttpOnly, SameSite=Lax and Secure over HTTPS', function (array $server, bool $secure) {
@@ -95,6 +95,18 @@ test('with a lifetime, every visit renews the cookie', function () {
 
 	expect($second['body'])->toBe('2');
 	expect(headerValues($second, 'Set-Cookie')[0] ?? '')->toStartWith("{$cookie}; expires=");
+});
+
+test('a session idle for longer than its lifetime starts empty', function () {
+	$session = new Session(3600);
+	$session->set('user_id', 7);
+	$_SESSION['sapling.seen'] = time() - 3601;
+	$idle = session_id();
+
+	$next = nextRequest(3600);
+
+	expect($next->get('user_id')->raw)->toBeNull();
+	expect(session_id())->not->toBe($idle);
 });
 
 test('a stale session id gets one new cookie', function () {

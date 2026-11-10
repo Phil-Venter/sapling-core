@@ -13,8 +13,10 @@ final class Request
 	/** @var array<string, string> */
 	public array $params = [];
 
+	public readonly string $path;
+
 	/**
-	 * A request built by hand, for tests. Use fromGlobals() for the current request.
+	 * A request built by hand, for tests. Use fromGlobals() for the current request. The path loses its repeated and trailing slashes.
 	 *
 	 * @param array<array-key, mixed> $query
 	 * @param array<array-key, mixed> $input
@@ -24,7 +26,7 @@ final class Request
 	 */
 	public function __construct(
 		public readonly string $method,
-		public readonly string $path,
+		string                 $path,
 		private array          $query = [],
 		private array          $input = [],
 		private array          $headers = [],
@@ -33,27 +35,50 @@ final class Request
 		public readonly string $body = '',
 		public readonly string $ip = '',
 	) {
+		$path = (string) preg_replace('#/+#', '/', $path);
+		$this->path = '/' . trim($path, '/');
 		$this->headers = array_change_key_case($headers, CASE_LOWER);
 	}
 
 	/**
-	 * A POST with _method set to PUT, PATCH or DELETE becomes that method. When the connection comes from one of $trustedProxies, or any with ['*'], the ip is the visitor's, from X-Forwarded-For.
+	 * A POST with _method set to PUT, PATCH or DELETE becomes that method. A multipart body sent as one of those is read as a POST's is. When the connection comes from one of $trustedProxies, or any with ['*'], the ip is the visitor's, from X-Forwarded-For.
 	 *
 	 * @param list<string> $trustedProxies
 	 */
 	public static function fromGlobals(array $trustedProxies = []): self
 	{
+		[$input, $files] = self::readForm();
+		$uri = $_SERVER['REQUEST_URI'] ?? '/';
+
 		return new self(
 			method: self::readMethod(),
-			path: self::readPath(),
+			path: explode('?', $uri, 2)[0],
 			query: $_GET,
-			input: $_POST,
+			input: $input,
 			headers: self::readHeaders(),
 			cookies: $_COOKIE,
-			files: $_FILES,
+			files: $files,
 			body: (string) file_get_contents('php://input'),
 			ip: self::readIp($trustedProxies),
 		);
+	}
+
+	/** @return array{array<array-key, mixed>, array<array-key, mixed>} */
+	private static function readForm(): array
+	{
+		$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+		$type = $_SERVER['CONTENT_TYPE'] ?? '';
+
+		if ($method === 'POST' || !str_starts_with(strtolower($type), 'multipart/form-data')) {
+			return [$_POST, $_FILES];
+		}
+
+		// PHP reads a multipart body into $_POST and $_FILES for a POST only. A body it can't read leaves both empty, as it does for a POST.
+		try {
+			return request_parse_body();
+		} catch (\RequestParseBodyException) {
+			return [[], []];
+		}
 	}
 
 	private static function readMethod(): string
@@ -71,14 +96,6 @@ final class Request
 		}
 
 		return $override;
-	}
-
-	private static function readPath(): string
-	{
-		$uri = $_SERVER['REQUEST_URI'] ?? '/';
-		$path = explode('?', $uri, 2)[0];
-		$path = (string) preg_replace('#/+#', '/', $path);
-		return '/' . trim($path, '/');
 	}
 
 	/** @return array<string, string> */
@@ -169,9 +186,11 @@ final class Request
 		}
 
 		$contentType = $this->headers['content-type'] ?? '';
+
+		// parse_str() warns about a form with more fields than max_input_vars, and handle() throws the warning as an ErrorException.
 		try {
 			return new Value(Data::decode($this->body, $contentType))->get(...$keys);
-		} catch (\JsonException $e) {
+		} catch (\JsonException|\ErrorException $e) {
 			throw new HttpException(400, 'The request body is invalid', previous: $e);
 		}
 	}

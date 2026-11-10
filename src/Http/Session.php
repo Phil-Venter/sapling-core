@@ -11,6 +11,8 @@ final class Session
 {
 	private const string FLASH = 'sapling.flash';
 
+	private const string SEEN = 'sapling.seen';
+
 	private bool $started = false;
 
 	/** @var array<string, mixed> */
@@ -102,14 +104,29 @@ final class Session
 			session_start($options);
 		}
 
-		$kept = ($_COOKIE[(string) session_name()] ?? null) === session_id();
-		if ($this->lifetime > 0 && $kept) {
-			$this->sendCookie((string) session_id(), time() + $this->lifetime);
+		if ($this->lifetime > 0) {
+			$this->renew();
 		}
 
 		$this->started = true;
 		$this->flash = $_SESSION[self::FLASH] ?? [];
 		unset($_SESSION[self::FLASH]);
+	}
+
+	private function renew(): void
+	{
+		// PHP ends an idle session only when its garbage collector runs, and until then reads one of any age.
+		$seen = new Value($_SESSION)->get(self::SEEN)->int(time());
+		if ($seen < (time() - $this->lifetime)) {
+			$_SESSION = [];
+			session_regenerate_id(true);
+		}
+
+		$_SESSION[self::SEEN] = time();
+
+		if (($_COOKIE[(string) session_name()] ?? null) === session_id()) {
+			$this->sendCookie((string) session_id(), time() + $this->lifetime);
+		}
 	}
 
 	private function sendCookie(string $id, int $expires): void

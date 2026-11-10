@@ -7,18 +7,19 @@ namespace Sapling\Cli;
  */
 final class CommandList
 {
-	/** @var array<string, array{action: class-string|object, description: string}> */
+	/** @var array<string, array{action: class-string|object, description: string, options: list<string>}> */
 	private array $commands = [];
 
 	/**
-	 * Throws a LogicException when the name is taken.
+	 * $options names the options and flags the command takes. Throws a LogicException when the name is taken.
 	 *
 	 * @param class-string|object $action
+	 * @param list<string> $options
 	 */
-	public function add(string $name, string|object $action, string $description = ''): void
+	public function add(string $name, string|object $action, string $description = '', array $options = []): void
 	{
 		if (!array_key_exists($name, $this->commands)) {
-			$this->commands[$name] = ['action' => $action, 'description' => $description];
+			$this->commands[$name] = ['action' => $action, 'description' => $description, 'options' => $options];
 			return;
 		}
 
@@ -29,16 +30,16 @@ final class CommandList
 		throw new \LogicException("Duplicate command {$name}: {$first} and {$second}");
 	}
 
-	/** @return class-string|object|null */
-	public function find(string $name): string|object|null
+	/** @return array{action: class-string|object, description: string, options: list<string>}|null */
+	public function find(string $name): ?array
 	{
-		return $this->commands[$name]['action'] ?? null;
+		return $this->commands[$name] ?? null;
 	}
 
 	/**
 	 * Sorted by name.
 	 *
-	 * @return array<string, array{action: class-string|object, description: string}>
+	 * @return array<string, array{action: class-string|object, description: string, options: list<string>}>
 	 */
 	public function all(): array
 	{

@@ -127,7 +127,19 @@ final readonly class Db
 	private function query(string $sql, array $params): \PDOStatement
 	{
 		$statement = $this->pdo->prepare($sql);
-		$statement->execute($params);
+
+		// execute($params) would bind every value as a string. SQLite then stores false as '' and finds a count(*) > ? never true, and PostgreSQL refuses false.
+		foreach ($params as $key => $value) {
+			$type = match (true) {
+				is_int($value) => \PDO::PARAM_INT,
+				is_bool($value) => \PDO::PARAM_BOOL,
+				default => \PDO::PARAM_STR,
+			};
+
+			$statement->bindValue(is_int($key) ? $key + 1 : $key, $value, $type);
+		}
+
+		$statement->execute();
 		return $statement;
 	}
 }

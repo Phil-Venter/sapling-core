@@ -27,6 +27,14 @@ test('an option without =value, or a flag with one, throws', function () {
 	expect(fn() => $console->flag('force'))->toThrow(UsageException::class, '--force is a flag');
 });
 
+test('one dash names an option or a flag as two do', function () {
+	$console = new Console(['bin/console', 'notes:shift', '-n', '-days=7', '-5']);
+
+	expect($console->flag('n'))->toBeTrue();
+	expect($console->option('days')->int())->toBe(7);
+	expect($console->args)->toBe(['-5']);
+});
+
 test('every word after -- is an argument', function () {
 	$console = new Console(['bin/console', 'notes:add', 'first', '--', '--not-a-flag', '--x=1']);
 

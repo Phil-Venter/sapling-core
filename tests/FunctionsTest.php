@@ -43,6 +43,16 @@ test('attrs() joins the attributes, leaving out empty ones', function () {
 		->toBe('class="note" data-id="7" open');
 });
 
+test('attrs() refuses a name that would write a second attribute', function (string $name) {
+	expect(fn() => attrs([$name => 'x']))->toThrow(InvalidArgumentException::class, "isn't an attribute name");
+})->with([
+	'a space' => 'title onclick',
+	'an equals sign' => 'title=',
+	'a slash' => 'title/onclick',
+	'a line break' => "title\n",
+	'empty' => '',
+]);
+
 test('blank() tells empty values from falsy ones', function (mixed $value, bool $blank) {
 	expect(blank($value))->toBe($blank);
 })->with([
@@ -81,9 +91,30 @@ test('datetime() returns the date in the timezone asked for', function (
 	],
 ]);
 
-test('datetime() refuses a blank string', function (string $blank) {
-	expect(fn() => datetime($blank))->toThrow(DateMalformedStringException::class, 'A blank string is not a date');
-})->with(['empty' => '', 'spaces' => '  ']);
+test('datetime() refuses a string that is not a date', function (string $junk) {
+	expect(fn() => datetime($junk))->toThrow(DateMalformedStringException::class);
+})->with([
+	'empty' => '',
+	'spaces' => '  ',
+	'a letter, which PHP reads as a timezone' => 'x',
+	'only a timezone' => 'Africa/Johannesburg',
+	'a day the month doesn\'t have' => '2026-02-30',
+	'a zero date' => '0000-00-00 00:00:00',
+	'words' => 'next thursdayish',
+]);
+
+test('datetime() reads a date string in any form PHP knows', function (string $date, string $expected) {
+	expect(datetime($date, 'UTC')->format('Y-m-d H:i'))->toBe($expected);
+})->with([
+	'a leap day' => ['2024-02-29', '2024-02-29 00:00'],
+	'a date with its own zone' => ['15 Oct 2026 09:00 Africa/Johannesburg', '2026-10-15 07:00'],
+	'a month and a day' => ['15 October UTC', date('Y') . '-10-15 00:00'],
+	'a relative date' => ['first day of january 2026', '2026-01-01 00:00'],
+]);
+
+test('datetime() reads now as the current time', function () {
+	expect(abs(datetime('now')->getTimestamp() - time()))->toBeLessThan(2);
+});
 
 test('datetime() without a timezone uses the default', function () {
 	$default = date_default_timezone_get();

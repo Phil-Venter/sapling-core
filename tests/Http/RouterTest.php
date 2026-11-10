@@ -128,6 +128,13 @@ test('all() lists every route with its own :param names', function () {
 	]);
 });
 
+test('a method that is not one word throws', function () {
+	$router = new Router();
+
+	expect(fn() => $router->add('GET|POST', '/notes', 'Handler'))
+		->toThrow(LogicException::class, "Route GET|POST /notes: GET|POST isn't a method");
+});
+
 test('a parameter name used twice, or one that is not a plain name, throws', function (string $path, string $message) {
 	$router = new Router();
 

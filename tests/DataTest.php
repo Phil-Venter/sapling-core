@@ -9,6 +9,10 @@ test('JSON round-trips with slashes and Unicode as they are', function () {
 	expect(Data::fromJson(Data::toJson($data)))->toBe($data);
 });
 
+test('toJson() replaces bytes that aren\'t UTF-8', function () {
+	expect(Data::toJson(['q' => "a\xFFb"]))->toBe("{\"q\":\"a\u{FFFD}b\"}");
+});
+
 test('broken JSON throws', function () {
 	expect(fn() => Data::fromJson('{nope'))->toThrow(JsonException::class);
 });

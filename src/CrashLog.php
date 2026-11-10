@@ -2,8 +2,10 @@
 
 namespace Sapling;
 
+use Sapling\Http\HttpException;
+
 /**
- * Writes a crash to PHP's error log as one line, with the line of your own code that led to it.
+ * Writes a crash or a 5xx HttpException to PHP's error log as one line, with the line of your own code that led to it and the exceptions that caused it.
  *
  * @internal
  */
@@ -13,7 +15,17 @@ final readonly class CrashLog
 
 	public function write(string $what, \Throwable $e): void
 	{
-		$class = $e::class;
+		$causes = [];
+		for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+			$causes[] = $this->describe($cause);
+		}
+
+		error_log("{$what} failed: " . implode(', caused by ', $causes));
+	}
+
+	private function describe(\Throwable $e): string
+	{
+		$kind = $e instanceof HttpException ? $e->status : $e::class;
 		$message = str_replace(["\r", "\n"], ' ', $e->getMessage());
 		$where = "{$e->getFile()}:{$e->getLine()}";
 		$appLine = $this->firstAppLine($e);
@@ -22,7 +34,7 @@ final readonly class CrashLog
 			$where .= " from {$appLine}";
 		}
 
-		error_log("{$what} failed: {$class}: {$message} in {$where}");
+		return "{$kind}: {$message} in {$where}";
 	}
 
 	private function firstAppLine(\Throwable $e): string

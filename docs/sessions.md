@@ -103,7 +103,7 @@ $this->session->destroy();
 
 ## How long a session lasts
 
-`session_lifetime` in `config.php` sets how many seconds a visitor can go between requests and stay signed in, since every request that uses the session renews the cookie. Without the setting, php.ini decides:
+`session_lifetime` in `config.php` sets how many seconds a visitor can go between requests and stay signed in. Every request that uses the session renews the cookie, and a session left idle for longer starts again empty under a new id, even when the browser still sends its cookie. Without the setting, php.ini decides:
 
 ```php
 'session_lifetime' => 60 * 60 * 24 * 14,   // two weeks

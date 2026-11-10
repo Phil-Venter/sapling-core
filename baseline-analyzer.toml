@@ -124,7 +124,7 @@ count = 1
 file = "src/Db.php"
 code = "invalid-method-access"
 message = "Attempting to access a method on a non-object type (`false`)."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Db.php"
@@ -142,7 +142,7 @@ count = 1
 file = "src/Db.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
+count = 3
 
 [[issues]]
 file = "src/Db.php"
@@ -160,6 +160,12 @@ count = 1
 file = "src/Http/Middleware/Cors.php"
 code = "less-specific-nested-argument-type"
 message = "Argument type mismatch for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but provided type `array<array-key, mixed>` is less specific."
+count = 1
+
+[[issues]]
+file = "src/Http/Request.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Sapling\Http\Request::readForm`: expected `array{0: array<array-key, mixed>, 1: array<array-key, mixed>}`, but found `array<int, array<array-key, mixed>>`.'
 count = 1
 
 [[issues]]

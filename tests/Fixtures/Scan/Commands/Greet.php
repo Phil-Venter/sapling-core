@@ -5,7 +5,7 @@ namespace Sapling\Tests\Fixtures\Scan\Commands;
 use Sapling\Attributes\Command;
 use Sapling\Cli\Console;
 
-#[Command('greet', 'Say hello to arg 0')]
+#[Command('greet', 'Say hello to arg 0', ['times', 'shout'])]
 final class Greet
 {
 	public function __invoke(Console $console): int

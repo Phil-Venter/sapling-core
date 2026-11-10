@@ -121,6 +121,30 @@ test('a JSON request through php -S reaches the action intact', function () {
 	]);
 });
 
+test('a multipart PUT through php -S brings its fields and files', function () {
+	$body = implode("\r\n", [
+		'--x',
+		'Content-Disposition: form-data; name="name"',
+		'',
+		'Ann',
+		'--x',
+		'Content-Disposition: form-data; name="upload"; filename="a.txt"',
+		'Content-Type: text/plain',
+		'',
+		'hello',
+		'--x--',
+		'',
+	]);
+
+	$response = httpRequest('PUT', '/echo/7', ['Content-Type' => 'multipart/form-data; boundary=x'], $body);
+
+	expect(json_decode($response['body'], true))->toMatchArray([
+		'method' => 'PUT',
+		'name' => 'Ann',
+		'upload' => 'a.txt',
+	]);
+});
+
 test('data() reads JSON, plain text and posted form fields', function () {
 	$json = new Request('PUT', '/x', headers: ['Content-Type' => 'application/json'], body: '[1,2]');
 	$text = new Request('PUT', '/x', headers: ['Content-Type' => 'text/plain'], body: 'hello');
@@ -131,11 +155,17 @@ test('data() reads JSON, plain text and posted form fields', function () {
 	expect($posted->data()->rawArray())->toBe(['a' => '1']);
 });
 
-test('a broken body is a 400 when an action reads a field', function () {
-	$response = httpRequest('PUT', '/echo/1', ['Content-Type' => 'application/json'], '{not json');
+test('a broken body is a 400 when an action reads a field', function (string $type, string $body) {
+	$response = httpRequest('PUT', '/echo/1', ['Content-Type' => $type], $body);
 
 	expect([$response['status'], $response['body']])->toBe([400, 'The request body is invalid']);
-});
+})->with([
+	'broken JSON' => ['application/json', '{not json'],
+	'a form with more fields than max_input_vars' => [
+		'application/x-www-form-urlencoded',
+		str_repeat('tags[]=1&', (int) ini_get('max_input_vars')) . 'name=Ann',
+	],
+]);
 
 test('a broken body throws only once a field is read', function () {
 	$request = new Request('PUT', '/echo/1', headers: ['Content-Type' => 'application/json'], body: '{not json');

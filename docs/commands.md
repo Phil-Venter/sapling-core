@@ -28,7 +28,7 @@ use Sapling\Attributes\Command;
 use Sapling\Cli\Console;
 use Sapling\Db;
 
-#[Command('notes:prune', 'Delete notes older than --days=30')]
+#[Command('notes:prune', 'Delete notes older than --days=30', ['days'])]
 final class PruneNotes
 {
     public function __construct(private Db $db) {}
@@ -56,7 +56,7 @@ final class PruneNotes
 }
 ```
 
-`#[Command]` takes the command's name and a description, which `commands:list` shows grouped by the part of the name before the colon.
+`#[Command]` takes the command's name and a description, which `commands:list` shows grouped by the part of the name before the colon. Its third argument names the [options and flags](#options-and-flags) the command takes.
 
 ## Running commands
 
@@ -64,7 +64,7 @@ final class PruneNotes
 php bin/console notes:prune --days=7
 ```
 
-Run without a name, `bin/console` lists every command, and an unknown name prints the same list and exits with 1.
+Run without a name, `bin/console` lists every command, and an unknown name prints the same list and exits with 1. With `--help` after its name, a command prints its description and doesn't run.
 
 There's no scheduler built in, and commands that should run regularly go in the server's crontab:
 
@@ -77,7 +77,7 @@ There's no scheduler built in, and commands that should run regularly go in the 
 
 ## Input
 
-`Console` reads the words after the command name in three ways. `--name=value` is an option, `--name` on its own is a flag, and any other word is an argument. Every word after `--` is an argument, even one that starts with dashes.
+`Console` reads the words after the command name in three ways. `--name=value` is an option, `--name` on its own is a flag, and any other word is an argument. One dash works as two, which makes `-n` the flag `n`, while a number such as `-5` is still an argument. Every word after `--` is an argument, even one that starts with dashes.
 
 ### Arguments
 
@@ -107,6 +107,8 @@ $dryRun = $console->flag('dry-run');       // true
 ```
 
 An option that's missing or isn't of the type you read gives the default, as `--days=soon` gives 30.
+
+A command takes only the options and flags its `#[Command]` names, here `['days', 'dry-run']`. Any other, such as a misspelt `--dry-rnu`, stops the command before it runs. It prints `Unknown option: --dry-rnu` and exits with 1.
 
 > [!WARNING]
 > Options need `=`. For `--days 7`, `option('days')` throws a `UsageException`, as `flag('force')` does for `--force=yes`.
@@ -157,7 +159,7 @@ Any other exception, such as an `InvalidArgumentException` from a bug, is a cras
 
 ## Adding commands in code
 
-Like routes, commands can be added in code for [one-file apps](app.md#one-file-apps), with `$app->commands->add()` taking a class name, an object or a closure:
+Like routes, commands can be added in code for [one-file apps](app.md#one-file-apps), with `$app->commands->add()` taking a class name, an object or a closure, followed by the description and the names of its options and flags:
 
 ```php
 use Sapling\Cli\Console;
@@ -185,7 +187,7 @@ Two commands with the same name stop the app with a `LogicException` that names 
 
 | Method | What it does |
 | --- | --- |
-| `#[Command($name, $description = '')]` | Makes the class a command. `commands:list` shows the description |
+| `#[Command($name, $description = '', $options = [])]` | Makes the class a command. `commands:list` shows the description, and `$options` names the options and flags it takes |
 | `arg($index)` | Returns the argument at `$index` after the command name, counting from 0, as a `Value` |
 | `option($name)` | Returns the value of `--name=value`, as a `Value` |
 | `flag($name)` | Returns whether `--name` was given |
@@ -196,8 +198,9 @@ Two commands with the same name stop the app with a `LogicException` that names 
 | `Console::SUCCESS`, `Console::FAILURE` | The exit codes 0 and 1 |
 | `$console->command` | The command name |
 | `$console->args` | Every argument after the command name, as a list of strings |
-| `$app->commands->add($name, $action, $description = '')` | Adds a command in code |
-| `$app->commands->find($name)` | Returns a command's action, or `null` |
-| `$app->commands->all()` | Returns every command by name, sorted, with its action and description |
+| `$console->options`, `$console->flags` | Every option with its value, and every flag, by name |
+| `$app->commands->add($name, $action, $description = '', $options = [])` | Adds a command in code |
+| `$app->commands->find($name)` | Returns a command's action, description and options, or `null` |
+| `$app->commands->all()` | Returns every command by name, sorted, with its action, description and options |
 | `throw new UsageException($message)` | Stops the command for a usage mistake, printing only the message and exiting with 1 |
 | `new Console($argv, $input = null)` | A command's input, read from `$argv`. `ask()` reads answers from `$input` when you pass one, as [tests](testing.md#running-a-command) do |

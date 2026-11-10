@@ -31,3 +31,11 @@ test('a Content-Type you pass replaces the default, whatever its case', function
 
 	expect($request->headers)->toBe(['content-type' => 'application/merge-patch+json']);
 });
+
+test('a header with a line break or NUL in it is refused', function (array $headers) {
+	expect(fn() => new ClientRequest('GET', '/', headers: $headers))->toThrow(InvalidArgumentException::class);
+})->with([
+	'in the value' => [['X-Id' => "1\r\nX-Injected: yes"]],
+	'in the name' => [["X-Id\nX-Injected" => 'yes']],
+	'NUL' => [['X-Id' => "1\0"]],
+]);
